@@ -21,11 +21,15 @@ interface Trophies {
 
 function getStoredTrophies(): Trophies {
   const saved = localStorage.getItem('mini_brawl_trophies_v2');
-  if (saved) return JSON.parse(saved);
-  return {
-    total: 0,
-    brawlers: { shelly: 0, colt: 0, spike: 0 }
-  };
+  let trophies: Trophies = { total: 0, brawlers: { shelly: 0, colt: 0, spike: 0, colette: 0, edgar: 0, griff: 0, penny: 0, darryl: 0, tick: 0 } as Record<BrawlerType, number> };
+  if (saved) {
+    const parsed = JSON.parse(saved);
+    trophies.total = parsed.total || 0;
+    Object.keys(BRAWLERS).forEach(k => {
+      trophies.brawlers[k as BrawlerType] = parsed.brawlers[k] || 0;
+    });
+  }
+  return trophies;
 }
 
 function saveTrophies(trophies: Trophies) {
@@ -46,6 +50,7 @@ class GameEngine {
   player: Player | null = null;
   bots: Player[] = [];
   boxes: Box[] = [];
+  walls: {x: number, y: number, width: number, height: number}[] = [];
   bullets: Bullet[] = [];
   cubes: PowerCube[] = [];
   zones: Zone[] = [];
@@ -247,7 +252,7 @@ class GameEngine {
     // HUD setup (vanilla way)
     this.uiContainer.innerHTML = `
       <div class="absolute top-4 left-4 flex gap-4 pointer-events-none">
-        <div class="bg-black/50 backdrop-blur-md px-6 py-2 rounded-full border-2 border-yellow-400 flex items-center gap-2">
+        <div id="cube-container" class="bg-black/50 backdrop-blur-md px-6 py-2 rounded-full border-2 border-yellow-400 flex items-center gap-2 transition-all duration-200 origin-center ease-out">
             <span class="text-yellow-400 text-xl">⚡</span>
             <span id="cube-counter" class="text-2xl font-black italic">0</span>
         </div>
@@ -272,6 +277,8 @@ class GameEngine {
         <div id="hp-text" class="text-center text-xs font-bold uppercase mt-2 drop-shadow-md">
             HP 0 / 0
         </div>
+        <div id="ammo-indicator" class="mt-4 flex justify-between gap-1 h-3 pointer-events-none">
+        </div>
       </div>
     `;
 
@@ -288,7 +295,11 @@ class GameEngine {
       lastShot: 0,
       angle: 0,
       superCharge: 0,
-      lastSuper: 0
+      lastSuper: 0,
+      ammo: 3,
+      maxAmmo: 3,
+      reloadTimer: 0,
+      lastCombatTime: 0
     };
 
     // Pre-center camera
@@ -296,13 +307,50 @@ class GameEngine {
     this.camera.y = this.player.y - this.viewport.h / 2;
     this.isAimingSuper = false;
 
+    this.boxes = [];
+    while (this.boxes.length < BOX_COUNT) {
+      let wx = Math.floor(Math.random() * (WORLD_SIZE / 100)) * 100;
+      let wy = Math.floor(Math.random() * (WORLD_SIZE / 100)) * 100;
+      if (Math.hypot(wx + 50 - WORLD_SIZE/2, wy + 50 - WORLD_SIZE/2) > 200) {
+        if (!this.boxes.some(b => b.x === wx + 50 && b.y === wy + 50)) {
+           this.boxes.push({
+             id: `box-${this.boxes.length}`,
+             x: wx + 50, y: wy + 50, size: BOX_SIZE, hp: 1500, maxHp: 1500, powerCubes: 0, isDestroyed: false
+           });
+        }
+      }
+    }
+
+    this.walls = [];
+    while (this.walls.length < 80) {
+      let wx = Math.floor(Math.random() * (WORLD_SIZE / 100)) * 100;
+      let wy = Math.floor(Math.random() * (WORLD_SIZE / 100)) * 100;
+      if (Math.hypot(wx + 50 - WORLD_SIZE/2, wy + 50 - WORLD_SIZE/2) > 300) {
+        if (!this.boxes.some(b => b.x === wx + 50 && b.y === wy + 50) && !this.walls.some(w => w.x === wx && w.y === wy)) {
+          this.walls.push({ x: wx, y: wy, width: 100, height: 100 });
+        }
+      }
+    }
+
     this.bots = Array.from({ length: BOT_COUNT }).map((_, i) => {
-      const types: BrawlerType[] = ['shelly', 'colt', 'spike'];
-      const config = BRAWLERS[types[Math.floor(Math.random() * 3)]];
+      const types = Object.keys(BRAWLERS) as BrawlerType[];
+      const config = BRAWLERS[types[Math.floor(Math.random() * types.length)]];
+      
+      let bx = 0, by = 0;
+      for(let k=0; k<20; k++) {
+          bx = Math.floor(Math.random() * (WORLD_SIZE / 100)) * 100 + 50;
+          by = Math.floor(Math.random() * (WORLD_SIZE / 100)) * 100 + 50;
+          if (Math.hypot(bx - WORLD_SIZE/2, by - WORLD_SIZE/2) > 400 &&
+              !this.walls.some(w => w.x <= bx && w.x+100 >= bx && w.y <= by && w.y+100 >= by) &&
+              !this.boxes.some(b => b.x === bx && b.y === by)) {
+              break;
+          }
+      }
+
       return {
         id: `bot-${i}`,
-        x: Math.random() * (WORLD_SIZE - 400) + 200,
-        y: Math.random() * (WORLD_SIZE - 400) + 200,
+        x: bx,
+        y: by,
         size: PLAYER_SIZE,
         hp: config.hp,
         maxHp: config.hp,
@@ -312,20 +360,13 @@ class GameEngine {
         lastShot: 0,
         angle: Math.random() * Math.PI * 2,
         superCharge: 0,
-        lastSuper: 0
+        lastSuper: 0,
+        ammo: 3,
+        maxAmmo: 3,
+        reloadTimer: 0,
+        lastCombatTime: 0
       };
     });
-
-    this.boxes = Array.from({ length: BOX_COUNT }).map((_, i) => ({
-      id: `box-${i}`,
-      x: Math.random() * (WORLD_SIZE - 600) + 300,
-      y: Math.random() * (WORLD_SIZE - 600) + 300,
-      size: BOX_SIZE,
-      hp: 1500,
-      maxHp: 1500,
-      powerCubes: 0,
-      isDestroyed: false
-    }));
 
     this.bullets = [];
     this.cubes = [];
@@ -335,14 +376,18 @@ class GameEngine {
 
   shoot(shooter: Player, targetX: number, targetY: number, isSuper = false) {
     const now = Date.now();
-    if (!isSuper && now - shooter.lastShot < shooter.config.reloadTime) return;
 
-    if (isSuper) {
+    if (!isSuper) {
+      if (shooter.ammo < 1) return;
+      if (now - shooter.lastShot < 250) return;
+      shooter.ammo--;
+      shooter.lastShot = now;
+      shooter.lastCombatTime = now;
+    } else {
       if (shooter.superCharge < 100) return;
       shooter.superCharge = 0;
       shooter.lastSuper = now;
-    } else {
-      shooter.lastShot = now;
+      shooter.lastCombatTime = now;
     }
 
     const angle = Math.atan2(targetY - shooter.y, targetX - shooter.x);
@@ -361,7 +406,8 @@ class GameEngine {
         size: isSuperBullet ? shooter.config.bulletSize * 1.5 : shooter.config.bulletSize,
         color: isSuperBullet ? '#fbbf24' : shooter.config.color,
         type: shooter.config.type,
-        isSuper: isSuperBullet
+        isSuper: isSuperBullet,
+        hitIds: []
       };
       this.bullets.push(bullet);
     };
@@ -385,10 +431,85 @@ class GameEngine {
           ownerId: shooter.id, x: shooter.x, y: shooter.y,
           dx: Math.cos(angle) * 10, dy: Math.sin(angle) * 10,
           damage: shooter.config.damage * (1 + shooter.powerCubes * 0.1),
-          rangeRemaining: 400, size: 20, color: '#166534', type: 'spike', isSuper: true
+          rangeRemaining: 400, size: 20, color: '#166534', type: 'spike', isSuper: true, hitIds: []
         });
       } else {
         spawnBullet(angle);
+      }
+    } else if (shooter.config.type === 'colette') {
+      if (isSuper) {
+        const dist = Math.min(Math.hypot(targetX - shooter.x, targetY - shooter.y), 450);
+        shooter.dashState = {
+            origin: {x: shooter.x, y: shooter.y},
+            target: {x: shooter.x + Math.cos(angle)*dist, y: shooter.y + Math.sin(angle)*dist},
+            return: false, isBounce: true, speed: 25, hitIds: []
+        };
+      } else {
+        spawnBullet(angle);
+      }
+    } else if (shooter.config.type === 'edgar') {
+      if (isSuper) {
+        const dist = Math.hypot(targetX - shooter.x, targetY - shooter.y);
+        const jumpRange = Math.min(dist, 400);
+        shooter.x += Math.cos(angle) * jumpRange;
+        shooter.y += Math.sin(angle) * jumpRange;
+        shooter.x = Math.max(0, Math.min(WORLD_SIZE, shooter.x));
+        shooter.y = Math.max(0, Math.min(WORLD_SIZE, shooter.y));
+      } else {
+        setTimeout(() => spawnBullet(angle - 0.05), 0);
+        setTimeout(() => spawnBullet(angle + 0.05), 150);
+      }
+    } else if (shooter.config.type === 'griff') {
+      if (isSuper) {
+        for (let i = -2; i <= 2; i++) {
+          spawnBullet(angle + (i * 0.15), 200, true);
+        }
+      } else {
+        for (let i = 0; i < 3; i++) {
+          setTimeout(() => {
+            spawnBullet(angle - 0.1);
+            spawnBullet(angle);
+            spawnBullet(angle + 0.1);
+          }, i * 150);
+        }
+      }
+    } else if (shooter.config.type === 'penny') {
+      if (isSuper) {
+        spawnBullet(angle, 350, true); // giant bag of coins
+      } else {
+        spawnBullet(angle);
+      }
+    } else if (shooter.config.type === 'darryl') {
+      if (isSuper) {
+        shooter.dashState = {
+            origin: {x: shooter.x, y: shooter.y},
+            target: {x: shooter.x + Math.cos(angle)*500, y: shooter.y + Math.sin(angle)*500},
+            return: false, isBounce: false, speed: 22, hitIds: []
+        };
+      } else {
+        for(let wave = 0; wave < 2; wave++) {
+            for(let p = -2; p <= 2; p++) {
+                setTimeout(() => spawnBullet(angle + p*0.1, 0, false), wave * 150);
+            }
+        }
+      }
+    } else if (shooter.config.type === 'tick') {
+      const dist = Math.min(Math.hypot(targetX - shooter.x, targetY - shooter.y), shooter.config.range);
+      if (isSuper) {
+        this.bullets.push({
+            id: Math.random()+'', ownerId: shooter.id, x: shooter.x, y: shooter.y,
+            dx: Math.cos(angle) * 12, dy: Math.sin(angle) * 12, damage: shooter.config.damage * 3 * (1 + shooter.powerCubes * 0.1),
+            rangeRemaining: dist, size: 25, color: '#ef4444', type: 'tick', isSuper: true
+        });
+      } else {
+        for (let i = -1; i <= 1; i++) {
+            const spread = angle + i * 0.2;
+            this.bullets.push({
+                id: Math.random()+'', ownerId: shooter.id, x: shooter.x, y: shooter.y,
+                dx: Math.cos(spread) * 14, dy: Math.sin(spread) * 14, damage: shooter.config.damage * (1 + shooter.powerCubes * 0.1),
+                rangeRemaining: dist, size: 12 + (i===0?4:0), color: '#9ca3af', type: 'tick', isSuper: false
+            });
+        }
       }
     }
   }
@@ -399,25 +520,124 @@ class GameEngine {
     const dt = now - this.lastTick;
     this.lastTick = now;
 
-    // Movement
-    let dx = 0, dy = 0;
-    if (this.keys['w']) dy -= 1;
-    if (this.keys['s']) dy += 1;
-    if (this.keys['a']) dx -= 1;
-    if (this.keys['d']) dx += 1;
+    [this.player!, ...this.bots].forEach(p => {
+        if (p.ammo < p.maxAmmo) {
+            p.reloadTimer += dt;
+            if (p.reloadTimer >= p.config.reloadTime) {
+                p.ammo++;
+                p.reloadTimer -= p.config.reloadTime;
+            }
+        } else {
+            p.reloadTimer = 0;
+        }
 
-    if (dx !== 0 || dy !== 0) {
-      const length = Math.sqrt(dx * dx + dy * dy);
-      this.player.x += (dx / length) * this.player.config.speed;
-      this.player.y += (dy / length) * this.player.config.speed;
+        if (now - p.lastCombatTime > 3000 && p.hp < p.maxHp) {
+            p.hp = Math.min(p.maxHp, p.hp + p.maxHp * 0.13 * (dt / 1000));
+        }
+
+        if (p.dashState) {
+            const dest = p.dashState.return ? p.dashState.origin : p.dashState.target;
+            const len = Math.hypot(dest.x - p.x, dest.y - p.y);
+            if (len < p.dashState.speed) {
+                p.x = dest.x; p.y = dest.y;
+                if (!p.dashState.return && p.dashState.isBounce) {
+                    p.dashState.return = true;
+                    p.dashState.hitIds = [];
+                } else {
+                    p.dashState = undefined;
+                }
+            } else {
+                p.x += ((dest.x - p.x) / len) * p.dashState.speed;
+                p.y += ((dest.y - p.y) / len) * p.dashState.speed;
+            }
+
+            if (p.dashState) {
+               [this.player!, ...this.bots, ...this.boxes.filter(bx => !bx.isDestroyed)].forEach(t => {
+                   if (t.id === p.id || p.dashState!.hitIds.includes(t.id)) return;
+                   if (Math.hypot(p.x - t.x, p.y - t.y) < p.size + t.size) {
+                       t.hp -= (p.config.type === 'colette' ? p.config.damage * 2 : 800) * (1 + p.powerCubes * 0.1);
+                       t.lastCombatTime = now;
+                       p.lastCombatTime = now;
+                       p.dashState!.hitIds.push(t.id);
+                       if (!t.id.startsWith('box')) p.superCharge = Math.min(100, p.superCharge + 25);
+                   }
+               });
+            }
+        }
+    });
+
+    const resolveCollisions = (entity: { x: number, y: number, size: number }) => {
+        let maxIter = 4;
+        while(maxIter-- > 0) {
+            let collision = false;
+            
+            // Check walls
+            this.walls.forEach(w => {
+                let testX = entity.x;
+                let testY = entity.y;
+                if (entity.x < w.x) testX = w.x; else if (entity.x > w.x + w.width) testX = w.x + w.width;
+                if (entity.y < w.y) testY = w.y; else if (entity.y > w.y + w.height) testY = w.y + w.height;
+                let dist = Math.hypot(entity.x - testX, entity.y - testY);
+                if (dist < entity.size) {
+                     collision = true;
+                     if (dist === 0) dist = 1;
+                     let overlap = entity.size - dist;
+                     let nx = (entity.x - testX) / dist;
+                     let ny = (entity.y - testY) / dist;
+                     entity.x += nx * overlap;
+                     entity.y += ny * overlap;
+                }
+            });
+
+            // Check boxes
+            this.boxes.forEach(b => {
+                if (b.isDestroyed) return;
+                let half = b.size / 2;
+                let w = { x: b.x - half, y: b.y - half, width: b.size, height: b.size };
+                let testX = entity.x;
+                let testY = entity.y;
+                if (entity.x < w.x) testX = w.x; else if (entity.x > w.x + w.width) testX = w.x + w.width;
+                if (entity.y < w.y) testY = w.y; else if (entity.y > w.y + w.height) testY = w.y + w.height;
+                let dist = Math.hypot(entity.x - testX, entity.y - testY);
+                if (dist < entity.size) {
+                     collision = true;
+                     if (dist === 0) dist = 1;
+                     let overlap = entity.size - dist;
+                     let nx = (entity.x - testX) / dist;
+                     let ny = (entity.y - testY) / dist;
+                     entity.x += nx * overlap;
+                     entity.y += ny * overlap;
+                }
+            });
+            if (!collision) break;
+        }
+    };
+
+    if (!this.player.dashState) {
+        let dx = 0, dy = 0;
+        if (this.keys['w']) dy -= 1;
+        if (this.keys['s']) dy += 1;
+        if (this.keys['a']) dx -= 1;
+        if (this.keys['d']) dx += 1;
+
+        if (dx !== 0 || dy !== 0) {
+          const length = Math.sqrt(dx * dx + dy * dy);
+          this.player.x += (dx / length) * this.player.config.speed;
+          this.player.y += (dy / length) * this.player.config.speed;
+        }
+
+        // Rotation
+        const worldMouseX = this.mouse.x + this.camera.x;
+        const worldMouseY = this.mouse.y + this.camera.y;
+        this.player.angle = Math.atan2(worldMouseY - this.player.y, worldMouseX - this.player.x);
+
+        // Action
+        if (this.mouse.down && !this.isAimingSuper) this.shoot(this.player, worldMouseX, worldMouseY);
     }
+    
+    resolveCollisions(this.player);
     this.player.x = Math.max(0, Math.min(WORLD_SIZE, this.player.x));
     this.player.y = Math.max(0, Math.min(WORLD_SIZE, this.player.y));
-
-    // Rotation
-    const worldMouseX = this.mouse.x + this.camera.x;
-    const worldMouseY = this.mouse.y + this.camera.y;
-    this.player.angle = Math.atan2(worldMouseY - this.player.y, worldMouseX - this.player.x);
 
     // Camera
     const lookAhead = 100;
@@ -428,11 +648,15 @@ class GameEngine {
     this.camera.x = Math.max(0, Math.min(WORLD_SIZE - this.viewport.w, this.camera.x));
     this.camera.y = Math.max(0, Math.min(WORLD_SIZE - this.viewport.h, this.camera.y));
 
-    // Action
-    if (this.mouse.down && !this.isAimingSuper) this.shoot(this.player, worldMouseX, worldMouseY);
-
     // Bots AI
     this.bots.forEach(bot => {
+      if (bot.dashState) {
+          resolveCollisions(bot);
+          bot.x = Math.max(0, Math.min(WORLD_SIZE, bot.x));
+          bot.y = Math.max(0, Math.min(WORLD_SIZE, bot.y));
+          return;
+      }
+
       const targets = [this.player!, ...this.bots.filter(b => b.id !== bot.id), ...this.boxes.filter(b => !b.isDestroyed)];
       let nearest: any = null, minDist = 2000;
       targets.forEach(t => {
@@ -447,6 +671,9 @@ class GameEngine {
           bot.x += Math.cos(ang) * bot.config.speed;
           bot.y += Math.sin(ang) * bot.config.speed;
         }
+        resolveCollisions(bot);
+        bot.x = Math.max(0, Math.min(WORLD_SIZE, bot.x));
+        bot.y = Math.max(0, Math.min(WORLD_SIZE, bot.y));
         if (minDist < bot.config.range) this.shoot(bot, nearest.x, nearest.y);
         if (bot.superCharge >= 100) this.shoot(bot, nearest.x, nearest.y, true);
       }
@@ -462,6 +689,22 @@ class GameEngine {
     const playerCounter = document.getElementById('player-counter');
     const superFill = document.getElementById('super-fill');
     const superButton = document.getElementById('super-button');
+    const ammoIndicator = document.getElementById('ammo-indicator');
+
+    if (ammoIndicator) {
+        ammoIndicator.innerHTML = '';
+        for (let i = 0; i < this.player.maxAmmo; i++) {
+            let fillPercent = 0;
+            if (i < this.player.ammo) fillPercent = 100;
+            else if (i === this.player.ammo) fillPercent = (this.player.reloadTimer / this.player.config.reloadTime) * 100;
+            
+            ammoIndicator.innerHTML += `
+               <div class="h-full flex-1 bg-slate-900 border border-black/50 rounded-sm overflow-hidden shadow-sm">
+                   <div class="h-full bg-orange-500 transition-all duration-75" style="width: ${fillPercent}%"></div>
+               </div>
+            `;
+        }
+    }
 
     if (hpFill) hpFill.style.width = `${(this.player.hp / this.player.maxHp) * 100}%`;
     if (hpText) hpText.innerText = `HP ${Math.ceil(this.player.hp)} / ${this.player.maxHp}`;
@@ -504,6 +747,8 @@ class GameEngine {
     // Bullets
     for (let i = this.bullets.length - 1; i >= 0; i--) {
       const b = this.bullets[i];
+      if (b.duration && b.createdAt && now - b.createdAt > b.duration) { this.bullets.splice(i, 1); continue; }
+      
       b.x += b.dx; b.y += b.dy;
       b.rangeRemaining -= Math.hypot(b.dx, b.dy);
       if (b.rangeRemaining <= 0) {
@@ -513,30 +758,91 @@ class GameEngine {
             const ang = (j/6)*Math.PI*2;
             this.bullets.push({ ...b, id: b.id+j, dx: Math.cos(ang)*4, dy: Math.sin(ang)*4, rangeRemaining: 100, damage: b.damage*0.4, type: 'shelly' });
           }
+        } else if (b.type === 'tick') {
+            b.dx = 0; b.dy = 0;
+            b.rangeRemaining = 99999;
+            b.createdAt = now;
+            b.duration = b.isSuper ? 6000 : 2000;
+            b.type = 'tick_mine';
+            continue;
         }
-        this.bullets.splice(i, 1);
+        if (b.type !== 'tick_mine') this.bullets.splice(i, 1);
         continue;
       }
+
+      let hitWallIndex = -1;
+      for (let j = 0; j < this.walls.length; j++) {
+        const w = this.walls[j];
+        let testX = b.x;
+        let testY = b.y;
+        if (b.x < w.x) testX = w.x; else if (b.x > w.x + w.width) testX = w.x + w.width;
+        if (b.y < w.y) testY = w.y; else if (b.y > w.y + w.height) testY = w.y + w.height;
+        let dist = Math.hypot(b.x - testX, b.y - testY);
+        if (dist <= b.size) { hitWallIndex = j; break; }
+      }
+      
+      if (hitWallIndex !== -1 && !(b.type === 'spike' && b.isSuper) && b.type !== 'tick' && b.type !== 'tick_mine') {
+         if ((b.type === 'shelly' && b.isSuper) || (b.type === 'colt' && b.isSuper) || (b.type === 'griff' && b.isSuper) || (b.type === 'penny' && b.isSuper)) {
+             this.walls.splice(hitWallIndex, 1);
+         } else {
+             b.id = 'deleted';
+             this.bullets.splice(i, 1);
+             continue;
+         }
+      }
+
       [this.player!, ...this.bots, ...this.boxes.filter(bx => !bx.isDestroyed)].forEach(t => {
-        if (t.id === b.ownerId) return;
+        if (t.id === b.ownerId || b.id === 'deleted' || (b.hitIds && b.hitIds.includes(t.id))) return;
         if (Math.hypot(b.x - t.x, b.y - t.y) < t.size) {
           t.hp -= b.damage;
+          t.lastCombatTime = now;
+          if (t.id === this.player?.id) this.player.lastCombatTime = now;
+          
+          if (b.hitIds) b.hitIds.push(t.id);
           const shooter = [this.player!, ...this.bots].find(p => p.id === b.ownerId);
-          if (shooter) shooter.superCharge = Math.min(100, shooter.superCharge + (b.damage / 30));
-          this.bullets.splice(i, 1);
+          if (shooter && !t.id.startsWith('box')) shooter.superCharge = Math.min(100, shooter.superCharge + (b.damage / 30));
+          
+          if (b.type === 'penny' && !b.isSuper) {
+              for(let pi = -1; pi <= 1; pi++) {
+                  const ang = Math.atan2(b.dy, b.dx) + pi * 0.25;
+                  this.bullets.push({
+                      id: Math.random()+'', ownerId: b.ownerId,
+                      x: t.x + Math.cos(ang)*20, y: t.y + Math.sin(ang)*20,
+                      dx: Math.cos(ang)*20, dy: Math.sin(ang)*20,
+                      damage: b.damage * 1.5, rangeRemaining: 150,
+                      size: b.size, color: b.color, type: 'penny_splash'
+                  });
+              }
+          }
+
+          let pierce = false;
+          if (b.type === 'colette' && b.isSuper) pierce = true;
+          if (b.type === 'griff' && b.isSuper) pierce = true;
+          
+          if (!pierce) {
+            b.id = 'deleted';
+            this.bullets.splice(i, 1);
+          }
         }
       });
     }
 
     // Cubs
-    this.bots.forEach((b, idx) => { if (b.hp <= 0) { this.cubes.push({ id: b.id + 'c', x: b.x, y: b.y, size: 20, isCollected: false } as any); this.bots.splice(idx, 1); } });
-    this.boxes.forEach(b => { if (!b.isDestroyed && b.hp <= 0) { b.isDestroyed = true; this.cubes.push({ id: b.id + 'c', x: b.x, y: b.y, size: 20, isCollected: false } as any); } });
+    this.bots.forEach((b, idx) => { if (b.hp <= 0) { this.cubes.push({ id: b.id + 'c', x: b.x, y: b.y, size: 20, isCollected: false, createdAt: now }); this.bots.splice(idx, 1); } });
+    this.boxes.forEach(b => { if (!b.isDestroyed && b.hp <= 0) { b.isDestroyed = true; this.cubes.push({ id: b.id + 'c', x: b.x, y: b.y, size: 20, isCollected: false, createdAt: now }); } });
     
     for (let i = this.cubes.length - 1; i >= 0; i--) {
         const c = this.cubes[i];
         [this.player!, ...this.bots].forEach(p => {
             if (Math.hypot(p.x - c.x, p.y - c.y) < p.size + c.size) {
-                p.powerCubes++; p.maxHp += 400; p.hp += 400;
+                p.powerCubes++; p.maxHp += 400; // maxHp only, no current HP healing
+                if (p.id === this.player?.id) {
+                    const el = document.getElementById('cube-container');
+                    if (el) {
+                        el.classList.add('scale-125', '!bg-yellow-500');
+                        setTimeout(() => el.classList.remove('scale-125', '!bg-yellow-500'), 150);
+                    }
+                }
                 this.cubes.splice(i, 1);
             }
         });
@@ -544,11 +850,21 @@ class GameEngine {
   }
 
   draw() {
-    this.ctx.fillStyle = '#0f172a';
+    this.ctx.fillStyle = '#854d0e';
     this.ctx.fillRect(0, 0, this.viewport.w, this.viewport.h);
     
     this.ctx.save();
     this.ctx.translate(-this.camera.x, -this.camera.y);
+
+    // Floor
+    for (let y = 0; y < WORLD_SIZE; y += 100) {
+      if (y < this.camera.y - 100 || y > this.camera.y + this.viewport.h) continue;
+      for (let x = 0; x < WORLD_SIZE; x += 100) {
+        if (x < this.camera.x - 100 || x > this.camera.x + this.viewport.w) continue;
+        this.ctx.fillStyle = ((x/100 + y/100) % 2 === 0) ? '#a16207' : '#854d0e';
+        this.ctx.fillRect(x, y, 100, 100);
+      }
+    }
 
     // Aim Indicators
     if (this.state === 'GAME' && this.player) {
@@ -592,6 +908,42 @@ class GameEngine {
                 this.ctx.fillStyle = color;
                 this.ctx.fillRect(0, -10, p.config.range, 20);
             }
+        } else if (p.config.type === 'colette') {
+            const width = isSuper ? 60 : 30;
+            this.ctx.fillStyle = color;
+            this.ctx.fillRect(0, -width/2, range, width);
+        } else if (p.config.type === 'edgar') {
+            if (isSuper) {
+                this.ctx.strokeStyle = color;
+                this.ctx.setLineDash([10, 5]);
+                this.ctx.lineWidth = 4;
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, 0);
+                this.ctx.lineTo(400, 0);
+                this.ctx.stroke();
+                
+                this.ctx.setLineDash([]);
+                this.ctx.fillStyle = color;
+                this.ctx.beginPath();
+                this.ctx.arc(400, 0, 60, 0, Math.PI * 2);
+                this.ctx.fill();
+            } else {
+                const spread = 0.3;
+                this.ctx.fillStyle = color;
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, 0);
+                this.ctx.arc(0, 0, range, -spread/2, spread/2);
+                this.ctx.closePath();
+                this.ctx.fill();
+            }
+        } else if (p.config.type === 'griff') {
+            const spread = isSuper ? 0.8 : 0.4;
+            this.ctx.fillStyle = color;
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, 0);
+            this.ctx.arc(0, 0, range, -spread/2, spread/2);
+            this.ctx.closePath();
+            this.ctx.fill();
         }
         this.ctx.restore();
     }
@@ -601,13 +953,13 @@ class GameEngine {
     this.ctx.lineWidth = 10;
     this.ctx.strokeRect(0, 0, WORLD_SIZE, WORLD_SIZE);
 
-    // Grid
-    this.ctx.strokeStyle = '#1e293b';
-    this.ctx.lineWidth = 1;
-    for(let i=0; i<WORLD_SIZE; i+=100) {
-      this.ctx.beginPath(); this.ctx.moveTo(i, 0); this.ctx.lineTo(i, WORLD_SIZE); this.ctx.stroke();
-      this.ctx.beginPath(); this.ctx.moveTo(0, i); this.ctx.lineTo(WORLD_SIZE, i); this.ctx.stroke();
-    }
+    // Walls
+    this.walls.forEach(w => {
+      this.ctx.fillStyle = '#475569';
+      this.ctx.fillRect(w.x, w.y, w.width, w.height);
+      this.ctx.fillStyle = '#64748b';
+      this.ctx.fillRect(w.x + 10, w.y + 10, w.width - 20, w.height - 20);
+    });
 
     // Zones
     this.zones.forEach(z => {
@@ -626,13 +978,21 @@ class GameEngine {
 
     // Elements
     this.cubes.forEach(c => {
+      this.ctx.shadowColor = '#60a5fa';
+      this.ctx.shadowBlur = 10 + Math.sin((Date.now() - (c.createdAt || 0)) / 100) * 8;
       this.ctx.fillStyle = '#3b82f6';
       this.ctx.beginPath(); this.ctx.arc(c.x, c.y, c.size, 0, Math.PI*2); this.ctx.fill();
+      this.ctx.shadowBlur = 0;
     });
 
     this.bullets.forEach(b => {
       this.ctx.fillStyle = b.color;
+      if (b.type === 'tick_mine') {
+          this.ctx.shadowColor = '#ef4444';
+          this.ctx.shadowBlur = 15;
+      }
       this.ctx.beginPath(); this.ctx.arc(b.x, b.y, b.size, 0, Math.PI*2); this.ctx.fill();
+      this.ctx.shadowBlur = 0;
     });
 
     [this.player!, ...this.bots].filter(Boolean).forEach(p => {
