@@ -30,12 +30,14 @@ const ShowdownGame: React.FC<ShowdownGameProps> = ({ playerBrawler, onGameOver }
     boxes: [] as Box[],
     bullets: [] as Bullet[],
     cubes: [] as PowerCube[],
+    zones: [] as Zone[],
     keys: {} as Record<string, boolean>,
     mouse: { x: 0, y: 0, down: false },
-    lastTick: 0,
+    lastTick: Date.now(),
     startTime: Date.now(),
     gameOver: false,
-    camera: { x: 0, y: 0 }
+    camera: { x: 0, y: 0 },
+    cameraTarget: { x: 0, y: 0 }
   });
 
   useEffect(() => {
@@ -62,7 +64,9 @@ const ShowdownGame: React.FC<ShowdownGameProps> = ({ playerBrawler, onGameOver }
       config: playerBrawler,
       isBot: false,
       lastShot: 0,
-      angle: 0
+      angle: 0,
+      superCharge: 0,
+      lastSuper: 0
     };
 
     const bots: Player[] = Array.from({ length: BOT_COUNT }).map((_, i) => {
@@ -80,7 +84,9 @@ const ShowdownGame: React.FC<ShowdownGameProps> = ({ playerBrawler, onGameOver }
         config,
         isBot: true,
         lastShot: 0,
-        angle: Math.random() * Math.PI * 2
+        angle: Math.random() * Math.PI * 2,
+        superCharge: 0,
+        lastSuper: 0
       };
     });
 
@@ -133,53 +139,98 @@ const ShowdownGame: React.FC<ShowdownGameProps> = ({ playerBrawler, onGameOver }
     };
   }, []);
 
-  const shoot = (shooter: Player, targetX: number, targetY: number) => {
+  const shoot = (shooter: Player, targetX: number, targetY: number, isSuper = false) => {
     const now = Date.now();
-    if (now - shooter.lastShot < shooter.config.reloadTime) return;
+    if (!isSuper && now - shooter.lastShot < shooter.config.reloadTime) return;
 
-    shooter.lastShot = now;
+    if (isSuper) {
+      if (shooter.superCharge < 100) return;
+      shooter.superCharge = 0;
+      shooter.lastSuper = now;
+    } else {
+      shooter.lastShot = now;
+    }
+
     const angle = Math.atan2(targetY - shooter.y, targetX - shooter.x);
     shooter.angle = angle;
 
-    const spawnBullet = (ang: number) => {
+    const spawnBullet = (ang: number, extraRange = 0, isSuperBullet = false) => {
       const bullet: Bullet = {
         id: Math.random().toString(36).substr(2, 9),
         ownerId: shooter.id,
         x: shooter.x,
         y: shooter.y,
-        dx: Math.cos(ang) * shooter.config.bulletSpeed,
-        dy: Math.sin(ang) * shooter.config.bulletSpeed,
-        damage: shooter.config.damage * (1 + shooter.powerCubes * 0.1),
-        rangeRemaining: shooter.config.range,
-        size: shooter.config.bulletSize,
-        color: shooter.config.color,
-        type: shooter.config.type
+        dx: Math.cos(ang) * (isSuperBullet ? shooter.config.bulletSpeed * 1.2 : shooter.config.bulletSpeed),
+        dy: Math.sin(ang) * (isSuperBullet ? shooter.config.bulletSpeed * 1.2 : shooter.config.bulletSpeed),
+        damage: (isSuperBullet ? shooter.config.damage * 1.5 : shooter.config.damage) * (1 + shooter.powerCubes * 0.1),
+        rangeRemaining: shooter.config.range + extraRange,
+        size: isSuperBullet ? shooter.config.bulletSize * 1.5 : shooter.config.bulletSize,
+        color: isSuperBullet ? '#fbbf24' : shooter.config.color,
+        type: shooter.config.type,
+        isSuper: isSuperBullet
       };
       stateRef.current.bullets.push(bullet);
     };
 
-    if (shooter.config.projectileType === 'spread') {
-      // 3 shells for Shelly
-      for (let i = -1; i <= 1; i++) {
-        spawnBullet(angle + (i * 0.2));
+    if (shooter.config.type === 'shelly') {
+      if (isSuper) {
+        // Massive spread for Shelly Super
+        for (let i = -4; i <= 4; i++) {
+          spawnBullet(angle + (i * 0.15), 100, true);
+        }
+      } else {
+        for (let i = -1; i <= 1; i++) {
+          spawnBullet(angle + (i * 0.2));
+        }
       }
-    } else if (shooter.config.projectileType === 'burst') {
-      // 4 rapid shots for Colt
-      for (let i = 0; i < 4; i++) {
-        setTimeout(() => {
-          if (stateRef.current.gameOver) return;
-          spawnBullet(angle);
-        }, i * 100);
+    } else if (shooter.config.type === 'colt') {
+      if (isSuper) {
+        // 12 rapid armor-piercing shots for Colt
+        for (let i = 0; i < 12; i++) {
+          setTimeout(() => {
+            if (stateRef.current.gameOver) return;
+            spawnBullet(angle, 200, true);
+          }, i * 60);
+        }
+      } else {
+        for (let i = 0; i < 4; i++) {
+          setTimeout(() => {
+            if (stateRef.current.gameOver) return;
+            spawnBullet(angle);
+          }, i * 100);
+        }
       }
-    } else {
-      // Single shot for Spike
-      spawnBullet(angle);
+    } else if (shooter.config.type === 'spike') {
+      if (isSuper) {
+        // Spike Super: Projectile that creates a zone
+        const bullet: Bullet = {
+          id: Math.random().toString(36).substr(2, 9),
+          ownerId: shooter.id,
+          x: shooter.x,
+          y: shooter.y,
+          dx: Math.cos(angle) * 10,
+          dy: Math.sin(angle) * 10,
+          damage: shooter.config.damage * (1 + shooter.powerCubes * 0.1),
+          rangeRemaining: 400,
+          size: 20,
+          color: '#166534',
+          type: 'spike',
+          isSuper: true
+        };
+        stateRef.current.bullets.push(bullet);
+      } else {
+        spawnBullet(angle);
+      }
     }
   };
 
   const update = () => {
-    const { player, bots, boxes, bullets, cubes, keys, mouse, camera } = stateRef.current;
+    const { player, bots, boxes, bullets, cubes, zones, keys, mouse, camera, cameraTarget } = stateRef.current;
     if (!player || stateRef.current.gameOver) return;
+
+    const now = Date.now();
+    const dt = now - stateRef.current.lastTick;
+    stateRef.current.lastTick = now;
 
     // Player Movement
     let dx = 0;
@@ -189,35 +240,60 @@ const ShowdownGame: React.FC<ShowdownGameProps> = ({ playerBrawler, onGameOver }
     if (keys['a'] || keys['arrowleft']) dx -= 1;
     if (keys['d'] || keys['arrowright']) dx += 1;
 
+    let moveX = 0;
+    let moveY = 0;
     if (dx !== 0 || dy !== 0) {
       const length = Math.sqrt(dx * dx + dy * dy);
-      player.x += (dx / length) * player.config.speed;
-      player.y += (dy / length) * player.config.speed;
+      moveX = (dx / length) * player.config.speed;
+      moveY = (dy / length) * player.config.speed;
+      player.x += moveX;
+      player.y += moveY;
     }
 
     // World Bounds
     player.x = Math.max(player.size, Math.min(WORLD_SIZE - player.size, player.x));
     player.y = Math.max(player.size, Math.min(WORLD_SIZE - player.size, player.y));
 
-    // Camera follow (ensure we don't divide by zero or use uninitialized viewport)
-    if (viewport.w > 0 && viewport.h > 0) {
-      camera.x = player.x - viewport.w / 2;
-      camera.y = player.y - viewport.h / 2;
-    }
-
     // Player Rotation: Always face the mouse
     const worldMouseX = mouse.x + camera.x;
     const worldMouseY = mouse.y + camera.y;
     player.angle = Math.atan2(worldMouseY - player.y, worldMouseX - player.x);
 
+    // Camera follow (ensure we don't divide by zero or use uninitialized viewport)
+    if (viewport.w > 0 && viewport.h > 0) {
+      // Look-ahead bias calculation
+      const lookAheadMove = 50; // pixels to shift in move direction
+      const lookAheadAim = 150; // pixels to shift in aim direction
+      
+      const aimX = Math.cos(player.angle);
+      const aimY = Math.sin(player.angle);
+
+      // Target camera center
+      const targetX = player.x + (dx * lookAheadMove) + (aimX * lookAheadAim) - viewport.w / 2;
+      const targetY = player.y + (dy * lookAheadMove) + (aimY * lookAheadAim) - viewport.h / 2;
+
+      // Soft following (Lerp)
+      const lerpFactor = 0.08;
+      camera.x += (targetX - camera.x) * lerpFactor;
+      camera.y += (targetY - camera.y) * lerpFactor;
+
+      // Clamp camera to world bounds
+      camera.x = Math.max(0, Math.min(WORLD_SIZE - viewport.w, camera.x));
+      camera.y = Math.max(0, Math.min(WORLD_SIZE - viewport.h, camera.y));
+    }
+
     // Player Shooting
     if (mouse.down) {
       shoot(player, worldMouseX, worldMouseY);
     }
+    
+    // Super activation
+    if (keys['e'] || keys[' ']) {
+        shoot(player, worldMouseX, worldMouseY, true);
+    }
 
     // Update Bots
     bots.forEach(bot => {
-      // Very simple AI: Find nearest target (player, other bot, or box)
       const targets = [player, ...bots.filter(b => b.id !== bot.id), ...boxes.filter(b => !b.isDestroyed)];
       let nearest = null;
       let minDist = 1000;
@@ -233,7 +309,6 @@ const ShowdownGame: React.FC<ShowdownGameProps> = ({ playerBrawler, onGameOver }
       if (nearest) {
         const angle = Math.atan2(nearest.y - bot.y, nearest.x - bot.x);
         
-        // Move towards if far, stay back if close
         if (minDist > bot.config.range * 0.7) {
           bot.x += Math.cos(angle) * bot.config.speed;
           bot.y += Math.sin(angle) * bot.config.speed;
@@ -242,9 +317,13 @@ const ShowdownGame: React.FC<ShowdownGameProps> = ({ playerBrawler, onGameOver }
           bot.y -= Math.sin(angle) * bot.config.speed;
         }
 
-        // Shoot if in range
         if (minDist < bot.config.range) {
           shoot(bot, nearest.x, nearest.y);
+        }
+        
+        // Bot Super activation if charged
+        if (bot.superCharge >= 100 && minDist < bot.config.range * 1.5) {
+            shoot(bot, nearest.x, nearest.y, true);
         }
 
         bot.angle = angle;
@@ -253,6 +332,30 @@ const ShowdownGame: React.FC<ShowdownGameProps> = ({ playerBrawler, onGameOver }
       bot.x = Math.max(bot.size, Math.min(WORLD_SIZE - bot.size, bot.x));
       bot.y = Math.max(bot.size, Math.min(WORLD_SIZE - bot.size, bot.y));
     });
+
+    // Update Zones
+    for (let i = zones.length - 1; i >= 0; i--) {
+        const z = zones[i];
+        if (now - z.createdAt > z.duration) {
+            zones.splice(i, 1);
+            continue;
+        }
+
+        // Damage entities in zone every 500ms
+        if (Math.floor((now - z.createdAt) / 500) !== Math.floor((now - z.createdAt - dt) / 500)) {
+            const targets = [player, ...bots];
+            targets.forEach(t => {
+                if (t.id === z.ownerId) return;
+                const d = Math.hypot(t.x - z.x, t.y - z.y);
+                if (d < z.radius + t.size) {
+                    t.hp -= z.damage;
+                    // Charge super from zone damage
+                    const owner = [player, ...bots].find(p => p.id === z.ownerId);
+                    if (owner) owner.superCharge = Math.min(100, owner.superCharge + 2);
+                }
+            });
+        }
+    }
 
     // Update Bullets
     for (let i = bullets.length - 1; i >= 0; i--) {
@@ -263,19 +366,32 @@ const ShowdownGame: React.FC<ShowdownGameProps> = ({ playerBrawler, onGameOver }
       b.rangeRemaining -= dist;
 
       if (b.rangeRemaining <= 0) {
-        // Spike explosion logic
         if (b.type === 'spike') {
-             for(let j=0; j<6; j++) {
-                const ang = (j / 6) * Math.PI * 2;
-                bullets.push({
-                   ...b,
-                   id: b.id + '-shard-' + j,
-                   dx: Math.cos(ang) * (b.dx * 0.5),
-                   dy: Math.sin(ang) * (b.dy * 0.5),
-                   rangeRemaining: 100,
-                   damage: b.damage * 0.4,
-                   type: 'shelly' // prevent recursing
-                });
+             if (b.isSuper) {
+                 // Create Spike Super Zone
+                 zones.push({
+                     id: Math.random().toString(36).substr(2, 9),
+                     ownerId: b.ownerId,
+                     x: b.x,
+                     y: b.y,
+                     radius: 120,
+                     duration: 4000,
+                     createdAt: now,
+                     damage: 400
+                 });
+             } else {
+                for(let j=0; j<6; j++) {
+                    const ang = (j / 6) * Math.PI * 2;
+                    bullets.push({
+                    ...b,
+                    id: b.id + '-shard-' + j,
+                    dx: Math.cos(ang) * (b.dx * 0.5),
+                    dy: Math.sin(ang) * (b.dy * 0.5),
+                    rangeRemaining: 100,
+                    damage: b.damage * 0.4,
+                    type: 'shelly'
+                    });
+                }
              }
         }
         bullets.splice(i, 1);
@@ -289,6 +405,13 @@ const ShowdownGame: React.FC<ShowdownGameProps> = ({ playerBrawler, onGameOver }
         const distToTarget = Math.hypot(b.x - target.x, b.y - target.y);
         if (distToTarget < target.size) {
           target.hp -= b.damage;
+          
+          // Charge super on hit
+          const shooter = [player, ...bots].find(p => p.id === b.ownerId);
+          if (shooter) {
+              shooter.superCharge = Math.min(100, shooter.superCharge + (b.damage / 20));
+          }
+
           bullets.splice(i, 1);
           break;
         }
@@ -373,7 +496,7 @@ const ShowdownGame: React.FC<ShowdownGameProps> = ({ playerBrawler, onGameOver }
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const { player, bots, boxes, bullets, cubes, camera } = stateRef.current;
+    const { player, bots, boxes, bullets, cubes, zones, camera } = stateRef.current;
     if (!player) return;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -400,6 +523,28 @@ const ShowdownGame: React.FC<ShowdownGameProps> = ({ playerBrawler, onGameOver }
     ctx.strokeStyle = '#ef4444';
     ctx.lineWidth = 10;
     ctx.strokeRect(-camera.x, -camera.y, WORLD_SIZE, WORLD_SIZE);
+
+    // Draw Zones
+    zones.forEach(z => {
+        ctx.fillStyle = 'rgba(34, 197, 94, 0.2)';
+        ctx.strokeStyle = '#22c55e';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(z.x - camera.x, z.y - camera.y, z.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Animated spikes in zone
+        ctx.fillStyle = '#166534';
+        for(let i=0; i<8; i++) {
+            const ang = (i / 8) * Math.PI * 2 + (Date.now() / 1000);
+            ctx.beginPath();
+            ctx.moveTo(z.x - camera.x + Math.cos(ang) * (z.radius * 0.8), z.y - camera.y + Math.sin(ang) * (z.radius * 0.8));
+            ctx.lineTo(z.x - camera.x + Math.cos(ang + 0.2) * (z.radius * 0.6), z.y - camera.y + Math.sin(ang + 0.2) * (z.radius * 0.6));
+            ctx.lineTo(z.x - camera.x + Math.cos(ang - 0.2) * (z.radius * 0.6), z.y - camera.y + Math.sin(ang - 0.2) * (z.radius * 0.6));
+            ctx.fill();
+        }
+    });
 
     // Draw Cubes
     cubes.forEach(c => {
@@ -503,6 +648,22 @@ const ShowdownGame: React.FC<ShowdownGameProps> = ({ playerBrawler, onGameOver }
             <User className="text-slate-400" size={20} />
             <span className="text-2xl font-black italic">{activePlayers}</span>
         </div>
+      </div>
+
+      {/* Super Button UI */}
+      <div className="absolute bottom-4 right-4 flex flex-col items-end pointer-events-none">
+           <div className="relative w-24 h-24 rounded-full bg-slate-800 border-4 border-slate-700 overflow-hidden flex items-center justify-center">
+                {/* Super Fill */}
+                <motion.div 
+                    className="absolute bottom-0 w-full bg-yellow-400"
+                    animate={{ height: `${stateRef.current.player?.superCharge || 0}%` }}
+                    transition={{ duration: 0.1 }}
+                />
+                <div className={`relative z-10 brawl-font italic font-black text-2xl ${stateRef.current.player?.superCharge === 100 ? 'text-slate-900 animate-pulse' : 'text-slate-400'}`}>
+                    SUPER
+                </div>
+           </div>
+           <div className="mt-2 text-[10px] uppercase font-black text-slate-500">Press [E] or [SPACE]</div>
       </div>
 
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-64 pointer-events-none">

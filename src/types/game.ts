@@ -13,6 +13,7 @@ export interface BrawlerConfig {
   color: string;
   projectileType: 'spread' | 'single' | 'burst';
   emoji: string;
+  superDescription: string;
 }
 
 export const BRAWLERS: Record<BrawlerType, BrawlerConfig> = {
@@ -20,15 +21,16 @@ export const BRAWLERS: Record<BrawlerType, BrawlerConfig> = {
     type: 'shelly',
     name: 'Shelly',
     hp: 3600,
-    damage: 300, // per shell
+    damage: 300,
     speed: 4,
     range: 250,
     reloadTime: 1500,
     bulletSpeed: 10,
     bulletSize: 6,
-    color: '#a855f7', // purple
+    color: '#a855f7',
     projectileType: 'spread',
-    emoji: '🤠'
+    emoji: '🤠',
+    superDescription: 'Super Shell: A wide blast that destroys everything'
   },
   colt: {
     type: 'colt',
@@ -40,9 +42,10 @@ export const BRAWLERS: Record<BrawlerType, BrawlerConfig> = {
     reloadTime: 1200,
     bulletSpeed: 14,
     bulletSize: 4,
-    color: '#ef4444', // red
+    color: '#ef4444',
     projectileType: 'burst',
-    emoji: '🔫'
+    emoji: '🔫',
+    superDescription: 'Bullet Storm: Long range armor-piercing burst'
   },
   spike: {
     type: 'spike',
@@ -54,9 +57,10 @@ export const BRAWLERS: Record<BrawlerType, BrawlerConfig> = {
     reloadTime: 1800,
     bulletSpeed: 8,
     bulletSize: 10,
-    color: '#22c55e', // green
-    projectileType: 'single', // special explosion handled in logic
-    emoji: '🌵'
+    color: '#22c55e',
+    projectileType: 'single',
+    emoji: '🌵',
+    superDescription: 'Stick Around: Slowing and damaging area of effect'
   }
 };
 
@@ -77,6 +81,8 @@ export interface Player extends Entity {
   isBot: boolean;
   lastShot: number;
   angle: number;
+  superCharge: number; // 0 to 100
+  lastSuper: number;
 }
 
 export interface Box extends Entity {
@@ -95,6 +101,18 @@ export interface Bullet {
   size: number;
   color: string;
   type: BrawlerType;
+  isSuper?: boolean;
+}
+
+export interface Zone {
+  id: string;
+  ownerId: string;
+  x: number;
+  y: number;
+  radius: number;
+  duration: number; // ms
+  createdAt: number;
+  damage: number;
 }
 
 export interface PowerCube extends Entity {
