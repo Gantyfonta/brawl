@@ -735,7 +735,7 @@
                 this.ball.dy *= 0.98;
 
                 // Wall collisions for ball
-                this.walls.forEach(w => {
+                [...this.walls, ...this.tempWalls].forEach(w => {
                     if (this.ball.x + this.ball.radius > w.x && this.ball.x - this.ball.radius < w.x + w.width &&
                         this.ball.y + this.ball.radius > w.y && this.ball.y - this.ball.radius < w.y + w.height) {
                         if (this.ball.x < w.x || this.ball.x > w.x + w.width) this.ball.dx *= -1.1;
@@ -1191,16 +1191,36 @@
           let hit = false;
           const throwers = ["tick", "barley_main", "barley_super", "sprout_wall", "grom_main", "grom_super", "dynamike_main", "dynamike_super"];
           if (!throwers.includes(t.type)) {
-            for (let i = this.walls.length - 1; i >= 0; i--) {
-              let w = this.walls[i];
+            let allWalls = [...this.walls, ...this.tempWalls];
+            for (let i = allWalls.length - 1; i >= 0; i--) {
+              let w = allWalls[i];
               if (t.x >= w.x && t.x <= w.x + w.width && t.y >= w.y && t.y <= w.y + w.height) {
                 if (t.isSuper && (t.type === "shelly" || t.type === "colt")) {
-                  this.walls.splice(i, 1);
+                  let originalIndex = this.walls.indexOf(w);
+                  if (originalIndex !== -1) this.walls.splice(originalIndex, 1);
+                  else {
+                      let tempIndex = this.tempWalls.indexOf(w);
+                      if (tempIndex !== -1) this.tempWalls.splice(tempIndex, 1);
+                  }
                   // Pierce through walls
-                } else if (t.type === "sprout_main" && t.canBounce) {
-                  t.dx *= -1; t.dy *= -1;
-                  t.canBounce = false;
-                  t.rangeRemaining += 100;
+                } else if (t.canBounce) {
+                  let overlapLeft = Math.abs(t.x - w.x);
+                  let overlapRight = Math.abs(t.x - (w.x + w.width));
+                  let overlapTop = Math.abs(t.y - w.y);
+                  let overlapBottom = Math.abs(t.y - (w.y + w.height));
+                  let minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
+                  
+                  if (minOverlap === overlapLeft) { t.dx = -Math.abs(t.dx); t.x = w.x - 1; }
+                  else if (minOverlap === overlapRight) { t.dx = Math.abs(t.dx); t.x = w.x + w.width + 1; }
+                  else if (minOverlap === overlapTop) { t.dy = -Math.abs(t.dy); t.y = w.y - 1; }
+                  else if (minOverlap === overlapBottom) { t.dy = Math.abs(t.dy); t.y = w.y + w.height + 1; }
+
+                  if (t.type === "sprout_main") {
+                    t.canBounce = false;
+                    t.rangeRemaining += 100;
+                  } else if (t.type === "rico") {
+                    t.rangeRemaining += 150;
+                  }
                 } else {
                   hit = true;
                   break;
@@ -1224,8 +1244,11 @@
                   if (owner.config.type === "crow" && "hp" in target) {
                     target.poison = { ownerId: owner.id, damage: 80 * (1 + 0.1 * owner.powerCubes), ticks: 4, lastTick: e };
                   }
+                  if (owner.config.type === "carl" && t.type === "carl_main") {
+                    owner.hasPickaxe = false;
+                  }
                 }
-                if (!t.isSuper || t.type === "shelly" || t.type === "colt" || t.type === "crow") { hit = true; break; }
+                if (!t.isSuper && t.type !== "carl_main" && t.type !== "penny_cannon_shot" || t.type === "shelly" || t.type === "colt" || t.type === "crow") { hit = true; break; }
               }
             }
           }
