@@ -7,7 +7,6 @@ const BOT_COUNT = 9;
 const BOX_COUNT = 25;
 const PLAYER_SIZE = 30;
 const BOX_SIZE = 60;
-const POWER_CUBE_SIZE = 20;
 
 const TROPHY_CHANGES: Record<number, number> = {
   1: 10, 2: 8, 3: 6, 4: 4, 5: 2, 6: 1, 7: -1, 8: -2, 9: -3, 10: -4
@@ -556,7 +555,7 @@ class GameEngine {
                    if (t.id === p.id || p.dashState!.hitIds.includes(t.id)) return;
                    if (Math.hypot(p.x - t.x, p.y - t.y) < p.size + t.size) {
                        t.hp -= (p.config.type === 'colette' ? p.config.damage * 2 : 800) * (1 + p.powerCubes * 0.1);
-                       t.lastCombatTime = now;
+                       if ('lastCombatTime' in t) (t as Player).lastCombatTime = now;
                        p.lastCombatTime = now;
                        p.dashState!.hitIds.push(t.id);
                        if (!t.id.startsWith('box')) p.superCharge = Math.min(100, p.superCharge + 25);
@@ -737,6 +736,7 @@ class GameEngine {
           if (t.id === z.ownerId) return;
           if (Math.hypot(t.x - z.x, t.y - z.y) < z.radius + t.size) {
             t.hp -= z.damage;
+            if ('lastCombatTime' in t) (t as Player).lastCombatTime = now;
             const owner = [this.player!, ...this.bots].find(p => p.id === z.ownerId);
             if (owner) owner.superCharge = Math.min(100, owner.superCharge + 3);
           }
@@ -753,7 +753,7 @@ class GameEngine {
       b.rangeRemaining -= Math.hypot(b.dx, b.dy);
       if (b.rangeRemaining <= 0) {
         if (b.type === 'spike') {
-          if (b.isSuper) this.zones.push({ id: Math.random().toString(), ownerId: b.ownerId, x: b.x, y: b.y, radius: 120, duration: 4000, createdAt: now, damage: 400 });
+          if (b.isSuper) this.zones.push({ id: Math.random().toString(), ownerId: b.ownerId, x: b.x, y: b.y, size: 240, radius: 120, duration: 4000, createdAt: now, damage: 400 });
           else for(let j=0; j<6; j++) {
             const ang = (j/6)*Math.PI*2;
             this.bullets.push({ ...b, id: b.id+j, dx: Math.cos(ang)*4, dy: Math.sin(ang)*4, rangeRemaining: 100, damage: b.damage*0.4, type: 'shelly' });
@@ -812,8 +812,8 @@ class GameEngine {
         if (t.id === b.ownerId || b.id === 'deleted' || (b.hitIds && b.hitIds.includes(t.id))) return;
         if (Math.hypot(b.x - t.x, b.y - t.y) < t.size) {
           t.hp -= b.damage;
-          t.lastCombatTime = now;
-          if (t.id === this.player?.id) this.player.lastCombatTime = now;
+          if ('lastCombatTime' in t) (t as Player).lastCombatTime = now;
+          if (t.id === this.player?.id && this.player) this.player.lastCombatTime = now;
           
           if (b.hitIds) b.hitIds.push(t.id);
           const shooter = [this.player!, ...this.bots].find(p => p.id === b.ownerId);
@@ -852,7 +852,9 @@ class GameEngine {
         const c = this.cubes[i];
         [this.player!, ...this.bots].forEach(p => {
             if (Math.hypot(p.x - c.x, p.y - c.y) < p.size + c.size) {
-                p.powerCubes++; p.maxHp += 400; // maxHp only, no current HP healing
+                p.powerCubes++; 
+                p.maxHp += 400; 
+                p.hp = Math.min(p.maxHp, p.hp + 400); 
                 if (p.id === this.player?.id) {
                     const el = document.getElementById('cube-container');
                     if (el) {
