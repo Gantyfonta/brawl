@@ -74,6 +74,11 @@ export interface Entity {
   powerCubes: number;
 }
 
+export interface GameState {
+  totalTrophies: number;
+  brawlerTrophies: Record<BrawlerType, number>;
+}
+
 export interface Player extends Entity {
   config: BrawlerConfig;
   targetX?: number;
