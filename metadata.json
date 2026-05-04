@@ -1,0 +1,6 @@
+{
+  "name": "Mini Brawl Showdown",
+  "description": "A top-down 10-player battle royale clone inspired by Brawl Stars with power cubes and unique brawlers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
