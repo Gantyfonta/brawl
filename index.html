@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mini Brawl Showdown</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌵</text></svg>">
+    <title>Mini Brawl Ball</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚽</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -22,117 +22,994 @@
       canvas {
         display: block;
       }
+      .brawl-button-shadow {
+        box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3);
+      }
+      .brawl-button-shadow:active {
+        box-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+        transform: translateY(3px);
+      }
+      @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+      }
+      .animate-float {
+        animation: float 3s ease-in-out infinite;
+      }
+      .textShadow {
+        text-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+      }
+      @keyframes scaleIn {
+        from { transform: scale(0.8) translateY(20px); opacity: 0; }
+        to { transform: scale(1) translateY(0); opacity: 1; }
+      }
+      .scale-in {
+        animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      }
     </style>
   </head>
-  <body class="bg-slate-950 text-white overflow-hidden m-0 p-0">
+  <body class="bg-[#0284c7] text-white overflow-hidden m-0 p-0 select-none">
     <div id="game-ui" class="absolute inset-0 z-10 pointer-events-none"></div>
     <div id="game-container" class="absolute inset-0 z-0"></div>
+
     <script type="module">
-      var w={shelly:{name:"Shelly",type:"shelly",emoji:"\u{1F920}",hp:3600,speed:4,reloadTime:1500,damage:300,range:400,bulletSpeed:10,bulletSize:10,color:"#8b5cf6"},colt:{name:"Colt",type:"colt",emoji:"\u{1F52B}",hp:2800,speed:4,reloadTime:1600,damage:450,range:600,bulletSpeed:12,bulletSize:8,color:"#ec4899"},spike:{name:"Spike",type:"spike",emoji:"\u{1F335}",hp:2400,speed:4,reloadTime:2e3,damage:560,range:500,bulletSpeed:9,bulletSize:12,color:"#22c55e"},colette:{name:"Colette",type:"colette",emoji:"\u{1F4D6}",hp:3400,speed:4,reloadTime:1600,damage:500,range:550,bulletSpeed:11,bulletSize:9,color:"#f43f5e"},edgar:{name:"Edgar",type:"edgar",emoji:"\u{1F9E3}",hp:3e3,speed:5.5,reloadTime:1e3,damage:540,range:150,bulletSpeed:15,bulletSize:20,color:"#1e1b4b"},griff:{name:"Griff",type:"griff",emoji:"\u{1F4B0}",hp:3400,speed:4,reloadTime:1700,damage:260,range:450,bulletSpeed:11,bulletSize:10,color:"#eab308"},penny:{name:"Penny",type:"penny",emoji:"\u{1F3F4}\u200D\u2620\uFE0F",hp:3200,speed:4,reloadTime:1800,damage:900,range:550,bulletSpeed:10,bulletSize:10,color:"#fb7185"},darryl:{name:"Darryl",type:"darryl",emoji:"\u{1F6E2}\uFE0F",hp:5e3,speed:4,reloadTime:1800,damage:240,range:350,bulletSpeed:10,bulletSize:12,color:"#0ea5e9"},tick:{name:"Tick",type:"tick",emoji:"\u{1F4A3}",hp:2200,speed:4,reloadTime:2200,damage:640,range:600,bulletSpeed:8,bulletSize:10,color:"#9ca3af"}},d=2500,B=9,P=25,E=30,A=60,L={1:10,2:8,3:6,4:4,5:2,6:1,7:-1,8:-2,9:-3,10:-4};function R(){let v=localStorage.getItem("mini_brawl_trophies_v2"),e={total:0,brawlers:{shelly:0,colt:0,spike:0,colette:0,edgar:0,griff:0,penny:0,darryl:0,tick:0}};if(v){let l=JSON.parse(v);e.total=l.total||0,Object.keys(w).forEach(s=>{e.brawlers[s]=l.brawlers[s]||0})}return e}function j(v){localStorage.setItem("mini_brawl_trophies_v2",JSON.stringify(v))}var k=class{canvas;ctx;uiContainer;state="MENU";selectedBrawler=w.shelly;trophies=R();player=null;bots=[];boxes=[];walls=[];bullets=[];cubes=[];zones=[];keys={};mouse={x:0,y:0,down:!1};isAimingSuper=!1;viewport={w:window.innerWidth,h:window.innerHeight};camera={x:0,y:0};lastTick=Date.now();constructor(){this.canvas=document.createElement("canvas"),this.ctx=this.canvas.getContext("2d"),document.getElementById("game-container").appendChild(this.canvas),this.uiContainer=document.getElementById("game-ui"),window.addEventListener("resize",()=>{this.viewport.w=window.innerWidth,this.viewport.h=window.innerHeight,this.canvas.width=this.viewport.w,this.canvas.height=this.viewport.h}),window.addEventListener("keydown",e=>{let l=e.key.toLowerCase();this.keys[l]=!0,(l===" "||l==="e")&&e.preventDefault(),(l==="e"||l===" ")&&this.state==="GAME"&&this.player&&this.player.superCharge>=100&&(this.isAimingSuper=!0)}),window.addEventListener("keyup",e=>{let l=e.key.toLowerCase();if(this.keys[l]=!1,(l==="e"||l===" ")&&this.state==="GAME"&&this.isAimingSuper&&(this.isAimingSuper=!1,this.player)){let s=this.mouse.x+this.camera.x,t=this.mouse.y+this.camera.y;this.shoot(this.player,s,t,!0)}}),window.addEventListener("mousemove",e=>{this.mouse.x=e.clientX,this.mouse.y=e.clientY}),window.addEventListener("mousedown",()=>{this.mouse.down=!0}),window.addEventListener("mouseup",()=>{this.mouse.down=!1}),this.canvas.width=this.viewport.w,this.canvas.height=this.viewport.h,this.renderMenu(),this.loop()}clearUI(){this.uiContainer.innerHTML="",this.uiContainer.className="absolute inset-0 z-10 pointer-events-none"}renderMenu(){this.state="MENU",this.clearUI(),this.uiContainer.classList.remove("pointer-events-none"),this.uiContainer.classList.add("pointer-events-auto","flex","flex-col","items-center","justify-center");let e=Object.values(this.trophies.brawlers).reduce((l,s)=>l+s,0);this.uiContainer.innerHTML=`
-      <div class="absolute top-8 left-12 flex items-center gap-3 bg-black/40 backdrop-blur-md px-6 py-2 rounded-full border border-white/10">
-        <span class="text-yellow-400">\u{1F3C6}</span>
-        <span class="text-2xl brawl-font italic text-white">${e}</span>
-      </div>
+      const BRAWLERS = {
+        shelly: { name: "Shelly", type: "shelly", emoji: "🤠", hp: 3600, speed: 4, reloadTime: 1500, damage: 300, range: 400, bulletSpeed: 10, bulletSize: 10, color: "#8b5cf6" },
+        colt: { name: "Colt", type: "colt", emoji: "🔫", hp: 2800, speed: 4.2, reloadTime: 1600, damage: 450, range: 600, bulletSpeed: 12, bulletSize: 8, color: "#ec4899" },
+        spike: { name: "Spike", type: "spike", emoji: "🌵", hp: 2400, speed: 3.8, reloadTime: 2000, damage: 560, range: 500, bulletSpeed: 9, bulletSize: 12, color: "#22c55e" },
+        edgar: { name: "Edgar", type: "edgar", emoji: "🧣", hp: 3000, speed: 5, reloadTime: 1000, damage: 540, range: 250, bulletSpeed: 15, bulletSize: 15, color: "#1e1b4b" },
+        bull: { name: "Bull", type: "bull", emoji: "🐂", hp: 5000, speed: 4.2, reloadTime: 1800, damage: 300, range: 300, bulletSpeed: 11, bulletSize: 12, color: "#1e293b" },
+        poco: { name: "Poco", type: "poco", emoji: "🎸", hp: 4000, speed: 4, reloadTime: 1700, damage: 700, range: 450, bulletSpeed: 10, bulletSize: 25, color: "#eab308" }
+      };
 
-      <h1 class="text-6xl md:text-8xl brawl-font italic font-black text-yellow-400 mb-8 drop-shadow-[0_5px_0_rgba(0,0,0,0.5)]">
-        MINI BRAWL
-      </h1>
-      
-      <div id="brawler-selector" class="relative group cursor-pointer mb-8 bg-slate-800 rounded-3xl p-6 border-4 border-slate-700 hover:border-yellow-400 transition-colors w-64 text-center">
-        <div class="text-4xl mb-2">${this.selectedBrawler.emoji}</div>
-        <div class="text-xl font-bold uppercase">${this.selectedBrawler.name}</div>
-        <div class="flex items-center justify-center gap-2 mt-1 text-yellow-400 font-bold">
-          <span>\u{1F3C6}</span> ${this.trophies.brawlers[this.selectedBrawler.type]}
-        </div>
-        <div class="mt-2 text-xs opacity-50 uppercase font-bold">Tap to change</div>
-      </div>
+      const MODES = {
+        SHOWDOWN: { name: "Solo Showdown", icon: "💀", color: "bg-green-600" },
+        BRAWL_BALL: { name: "Brawl Ball", icon: "⚽", color: "bg-blue-600" }
+      };
 
-      <button id="play-button" class="bg-yellow-400 hover:bg-yellow-300 transform hover:scale-110 active:scale-95 transition-all text-slate-900 px-12 py-4 rounded-full text-3xl brawl-font italic font-black flex items-center gap-4 shadow-[0_6px_0_rgba(180,130,0,1)]">
-        PLAY
-      </button>
-    `,document.getElementById("brawler-selector").onclick=()=>this.renderSelect(),document.getElementById("play-button").onclick=()=>this.startGame()}renderSelect(){this.state="SELECT",this.clearUI(),this.uiContainer.classList.remove("pointer-events-none"),this.uiContainer.classList.add("pointer-events-auto","flex","flex-col","items-center","justify-center");let e=Object.values(w);this.uiContainer.innerHTML=`
-      <div class="w-full max-w-4xl px-4">
-        <h2 class="text-4xl brawl-font italic text-white mb-8 text-center uppercase">Select Brawler</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          ${e.map(l=>`
-            <div data-brawler="${l.type}" class="brawler-card cursor-pointer rounded-3xl p-6 border-4 transition-all hover:scale-105 ${this.selectedBrawler.type===l.type?"bg-yellow-400/20 border-yellow-400":"bg-slate-800/50 border-slate-700 border-dashed"}">
-              <div class="flex justify-between items-start mb-2">
-                <div class="flex items-center gap-1 text-yellow-400 font-bold text-sm">
-                  <span>\u{1F3C6}</span> ${this.trophies.brawlers[l.type]}
+      const WORLD_WIDTH = 1200;
+      const WORLD_HEIGHT = 2000;
+      const GOAL_WIDTH = 350;
+      const GOAL_DEPTH = 100;
+      const PLAYER_SIZE = 40;
+      const BALL_SIZE = 30;
+
+      class Game {
+        constructor() {
+          this.canvas = document.createElement('canvas');
+          this.ctx = this.canvas.getContext('2d');
+          document.getElementById('game-container').appendChild(this.canvas);
+          this.uiContainer = document.getElementById('game-ui');
+          
+          this.state = 'MENU';
+          this.selectedBrawler = BRAWLERS.shelly;
+          this.selectedMode = MODES.BRAWL_BALL;
+          this.trophies = this.loadTrophies();
+          this.coins = 168;
+          this.gems = 0;
+          this.playerName = "Brawler";
+          
+          this.viewport = { w: window.innerWidth, h: window.innerHeight };
+          this.camera = { x: 0, y: 0 };
+          this.keys = {};
+          this.mouse = { x: 0, y: 0, down: false };
+          
+          this.resetGameState();
+          
+          window.addEventListener('resize', () => this.handleResize());
+          window.addEventListener('keydown', (e) => this.keys[e.key.toLowerCase()] = true);
+          window.addEventListener('keyup', (e) => {
+            const key = e.key.toLowerCase();
+            this.keys[key] = false;
+            if (key === ' ' || key === 'e') {
+              if (this.state === 'GAME' && this.player && this.player.hp > 0) {
+                this.shoot(this.player, true);
+              }
+            }
+          });
+          window.addEventListener('mousemove', (e) => {
+            this.mouse.x = e.clientX;
+            this.mouse.y = e.clientY;
+          });
+          window.addEventListener('mousedown', () => this.mouse.down = true);
+          window.addEventListener('mouseup', () => this.mouse.down = false);
+          
+          this.handleResize();
+          this.renderMenu();
+          this.loop();
+        }
+
+        resetGameState() {
+          this.players = [];
+          this.player = null;
+          this.ball = { 
+            x: WORLD_WIDTH / 2, 
+            y: WORLD_HEIGHT / 2, 
+            dx: 0, 
+            dy: 0, 
+            ownerId: null, 
+            size: BALL_SIZE,
+            lastKicker: null
+          };
+          this.bullets = [];
+          this.walls = this.generateMap();
+          this.scores = { team1: 0, team2: 0 };
+          this.matchTimer = 150 * 60; // 2.5 mins in frames
+          this.isResetting = false;
+          this.resetTimer = 0;
+        }
+
+        generateMap() {
+          const walls = [];
+          const goalCenter = WORLD_WIDTH / 2;
+          // Posts
+          walls.push({ x: goalCenter - GOAL_WIDTH / 2 - 40, y: 0, w: 40, h: 40, type: 'post' });
+          walls.push({ x: goalCenter + GOAL_WIDTH / 2, y: 0, w: 40, h: 40, type: 'post' });
+          walls.push({ x: goalCenter - GOAL_WIDTH / 2 - 40, y: WORLD_HEIGHT - 40, w: 40, h: 40, type: 'post' });
+          walls.push({ x: goalCenter + GOAL_WIDTH / 2, y: WORLD_HEIGHT - 40, w: 40, h: 40, type: 'post' });
+
+          // Symmetrical Map Layout
+          for(let i=0; i<8; i++) {
+            const w = 120;
+            const h = 40;
+            const x = Math.random() * (WORLD_WIDTH - w);
+            const y = Math.random() * (WORLD_HEIGHT / 2 - 200) + 100;
+            
+            // Mirror it
+            walls.push({ x, y, w, h });
+            walls.push({ x: WORLD_WIDTH - x - w, y: WORLD_HEIGHT - y - h, w, h });
+          }
+          return walls;
+        }
+
+        loadTrophies() {
+          const saved = localStorage.getItem('mini_brawl_v3_trophies');
+          if (saved) return JSON.parse(saved);
+          return Object.keys(BRAWLERS).reduce((acc, key) => (acc[key] = 0, acc), {});
+        }
+
+        saveTrophies() {
+          localStorage.setItem('mini_brawl_v3_trophies', JSON.stringify(this.trophies));
+        }
+
+        handleResize() {
+          this.viewport.w = window.innerWidth;
+          this.viewport.h = window.innerHeight;
+          this.canvas.width = this.viewport.w;
+          this.canvas.height = this.viewport.h;
+        }
+
+        clearUI() {
+          this.uiContainer.innerHTML = '';
+          this.uiContainer.className = "absolute inset-0 z-10 pointer-events-none";
+        }
+
+        renderMenu() {
+          this.state = 'MENU';
+          this.clearUI();
+          this.uiContainer.className = "absolute inset-0 z-10 pointer-events-auto overflow-hidden";
+          
+          const totalTrophies = Object.values(this.trophies).reduce((a, b) => a + b, 0);
+
+          this.uiContainer.innerHTML = `
+            <!-- Top Bar -->
+            <div class="absolute top-0 left-0 right-0 h-20 flex items-center justify-between px-6 bg-black/40 backdrop-blur-md border-b-4 border-white/10 z-20">
+              <div class="flex items-center gap-6">
+                <!-- Profile -->
+                <div class="flex items-center bg-slate-800 rounded-full pl-1 pr-4 py-1 border-2 border-white/20 h-12">
+                  <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center font-black text-xl shadow-inner border border-blue-300">B</div>
+                  <div class="flex flex-col ml-2 leading-none">
+                    <span class="font-black text-sm uppercase tracking-tighter">${this.playerName}</span>
+                    <div class="h-1.5 w-24 bg-slate-700 rounded-full mt-1 overflow-hidden">
+                       <div class="h-full bg-blue-400" style="width: 40%"></div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Trophies -->
+                <div class="flex items-center bg-orange-600 rounded-full px-4 py-1 border-2 border-orange-300 h-10 shadow-lg">
+                  <span class="mr-2 text-xl drop-shadow-md">\u{1F3C6}</span>
+                  <span class="brawl-font italic text-lg drop-shadow-md">${totalTrophies}</span>
                 </div>
               </div>
-              <div class="text-7xl mb-4 text-center">${l.emoji}</div>
-              <h3 class="text-2xl font-bold text-center mb-4 uppercase">${l.name}</h3>
-              <div class="space-y-1 text-[10px] uppercase opacity-80">
-                <div class="flex justify-between"><span>HP</span> <span>${l.hp}</span></div>
-                <div class="flex justify-between"><span>DMG</span> <span>${l.damage}</span></div>
+              
+              <div class="flex items-center gap-6">
+                <!-- Coins -->
+                <div class="flex items-center bg-yellow-600 rounded-full px-4 py-1 border-2 border-yellow-300 h-10 shadow-lg">
+                  <span class="mr-2 text-xl drop-shadow-md">\u{1F4B0}</span>
+                  <span class="brawl-font italic text-lg drop-shadow-md">${this.coins}</span>
+                </div>
+                <!-- Gems -->
+                <div class="flex items-center bg-green-600 rounded-full px-4 py-1 border-2 border-green-300 h-10 shadow-lg">
+                  <span class="mr-2 text-xl drop-shadow-md">\u{1F48E}</span>
+                  <span class="brawl-font italic text-lg drop-shadow-md">${this.gems}</span>
+                </div>
+                <!-- Menu -->
+                <button class="w-12 h-12 bg-slate-800 rounded-xl border-4 border-slate-600 flex flex-col items-center justify-center gap-1.5 hover:scale-105 transition-transform">
+                  <div class="w-7 h-1.5 bg-white rounded-full"></div>
+                  <div class="w-7 h-1.5 bg-white rounded-full"></div>
+                  <div class="w-7 h-1.5 bg-white rounded-full"></div>
+                </button>
               </div>
             </div>
-          `).join("")}
-        </div>
-        <button id="back-button" class="mt-12 text-slate-400 hover:text-white uppercase font-bold w-full">Back to Menu</button>
-      </div>
-    `,document.querySelectorAll(".brawler-card").forEach(l=>{l.addEventListener("click",s=>{let t=s.currentTarget.dataset.brawler;this.selectedBrawler=w[t],this.renderMenu()})}),document.getElementById("back-button").onclick=()=>this.renderMenu()}renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classList.remove("pointer-events-none"),this.uiContainer.classList.add("pointer-events-auto","flex","flex-col","items-center","justify-center");let s=L[e]||-5;this.trophies.brawlers[this.selectedBrawler.type]=Math.max(0,this.trophies.brawlers[this.selectedBrawler.type]+s),j(this.trophies),this.uiContainer.innerHTML=`
-      <div class="text-center">
-        <div class="text-8xl brawl-font italic font-black mb-4 ${e===1?"text-yellow-400":"text-slate-400"}">
-          #${e}
-        </div>
-        <div class="text-2xl uppercase mb-8 opacity-60">
-          ${e===1?"Showdown Victory!":`Rank ${e} - Defeated`}
-        </div>
-        <div class="bg-slate-800 rounded-3xl p-6 mb-8 border-4 border-slate-700 min-w-80">
-          <div class="flex flex-col gap-6">
-            <div class="flex items-center justify-between gap-12">
-              <span class="text-yellow-400 font-bold uppercase text-xl">\u{1F3C6} Trophies</span>
-              <span class="text-4xl font-black ${s>=0?"text-green-400":"text-red-400"}">
-                ${s>=0?"+":""}${s}
-              </span>
-            </div>
-            <div class="flex items-center justify-between gap-12 border-t border-slate-700 pt-4">
-              <span class="text-blue-400 font-bold uppercase text-xl">\u26A1 Power Cubes</span>
-              <span class="text-4xl font-black">${l}</span>
-            </div>
-          </div>
-        </div>
-        <button id="restart-button" class="bg-slate-100 hover:bg-white text-slate-900 px-12 py-4 rounded-full text-2xl brawl-font italic font-black transition-transform hover:scale-110">
-          CONTINUE
-        </button>
-      </div>
-    `,document.getElementById("restart-button").onclick=()=>this.renderMenu()}startGame(){for(this.state="GAME",this.clearUI(),this.uiContainer.innerHTML=`
-      <div class="absolute top-4 left-4 flex gap-4 pointer-events-none">
-        <div id="cube-container" class="bg-black/50 backdrop-blur-md px-6 py-2 rounded-full border-2 border-yellow-400 flex items-center gap-2 transition-all duration-200 origin-center ease-out">
-            <span class="text-yellow-400 text-xl">\u26A1</span>
-            <span id="cube-counter" class="text-2xl font-black italic">0</span>
-        </div>
-        <div class="bg-black/50 backdrop-blur-md px-6 py-2 rounded-full border-2 border-slate-700 flex items-center gap-2">
-            <span class="text-slate-400 text-xl">\u{1F464}</span>
-            <span id="player-counter" class="text-2xl font-black italic">10</span>
-        </div>
-      </div>
 
-      <div class="absolute bottom-4 right-4 flex flex-col items-end pointer-events-none">
-           <div id="super-button" class="relative w-24 h-24 rounded-full bg-slate-800 border-4 border-slate-700 overflow-hidden flex items-center justify-center">
-                 <div id="super-fill" class="absolute bottom-0 w-full bg-yellow-400" style="height: 0%"></div>
-                 <div id="super-text" class="relative z-10 brawl-font italic font-black text-2xl text-slate-400">SUPER</div>
-           </div>
-           <div class="mt-2 text-[10px] uppercase font-black text-slate-400/50">Space / E</div>
-      </div>
+            <!-- Left Side Controls -->
+            <div class="absolute left-6 top-1/2 -translate-y-1/2 flex flex-col gap-6 z-20">
+              <button class="w-20 h-20 bg-slate-800/90 rounded-3xl border-4 border-slate-600 flex flex-col items-center justify-center hover:scale-110 transition-all brawl-button-shadow">
+                <span class="text-4xl mb-1">\u{1F6D2}</span>
+                <span class="text-[10px] font-black uppercase tracking-tighter">Shop</span>
+              </button>
+              <button id="brawlers-btn" class="w-20 h-20 bg-slate-800/90 rounded-3xl border-4 border-slate-600 flex flex-col items-center justify-center hover:scale-110 transition-all brawl-button-shadow">
+                <span class="text-4xl mb-1">\u{1F9D1}</span>
+                <span class="text-[10px] font-black uppercase tracking-tighter">Brawlers</span>
+              </button>
+              <button class="w-20 h-20 bg-slate-800/90 rounded-3xl border-4 border-slate-600 flex flex-col items-center justify-center hover:scale-110 transition-all brawl-button-shadow">
+                <span class="text-4xl mb-1">\u{1F4F0}</span>
+                <span class="text-[10px] font-black uppercase tracking-tighter">News</span>
+              </button>
+            </div>
 
-      <div class="absolute bottom-8 left-1/2 -translate-x-1/2 w-64 pointer-events-none">
-        <div class="h-4 bg-black/50 rounded-full border-2 border-white/20 overflow-hidden shadow-lg">
-            <div id="hp-fill" class="h-full bg-green-500 transition-all duration-200" style="width: 100%"></div>
-        </div>
-        <div id="hp-text" class="text-center text-xs font-bold uppercase mt-2 drop-shadow-md">
-            HP 0 / 0
-        </div>
-        <div id="ammo-indicator" class="mt-4 flex justify-between gap-1 h-3 pointer-events-none">
-        </div>
-      </div>
-    `,this.player={id:"player",x:d/2,y:d/2,size:E,hp:this.selectedBrawler.hp,maxHp:this.selectedBrawler.hp,powerCubes:0,config:this.selectedBrawler,isBot:!1,lastShot:0,angle:0,superCharge:0,lastSuper:0,ammo:3,maxAmmo:3,reloadTimer:0,lastCombatTime:0},this.camera.x=this.player.x-this.viewport.w/2,this.camera.y=this.player.y-this.viewport.h/2,this.isAimingSuper=!1,this.boxes=[];this.boxes.length<P;){let e=Math.floor(Math.random()*(d/100))*100,l=Math.floor(Math.random()*(d/100))*100;Math.hypot(e+50-d/2,l+50-d/2)>200&&(this.boxes.some(s=>s.x===e+50&&s.y===l+50)||this.boxes.push({id:`box-${this.boxes.length}`,x:e+50,y:l+50,size:A,hp:1500,maxHp:1500,powerCubes:0,isDestroyed:!1}))}for(this.walls=[];this.walls.length<80;){let e=Math.floor(Math.random()*(d/100))*100,l=Math.floor(Math.random()*(d/100))*100;Math.hypot(e+50-d/2,l+50-d/2)>300&&!this.boxes.some(s=>s.x===e+50&&s.y===l+50)&&!this.walls.some(s=>s.x===e&&s.y===l)&&this.walls.push({x:e,y:l,width:100,height:100})}this.bots=Array.from({length:B}).map((e,l)=>{let s=Object.keys(w),t=w[s[Math.floor(Math.random()*s.length)]],o=0,a=0;for(let n=0;n<20&&(o=Math.floor(Math.random()*(d/100))*100+50,a=Math.floor(Math.random()*(d/100))*100+50,!(Math.hypot(o-d/2,a-d/2)>400&&!this.walls.some(r=>r.x<=o&&r.x+100>=o&&r.y<=a&&r.y+100>=a)&&!this.boxes.some(r=>r.x===o&&r.y===a)));n++);return{id:`bot-${l}`,x:o,y:a,size:E,hp:t.hp,maxHp:t.hp,powerCubes:0,config:t,isBot:!0,lastShot:0,angle:Math.random()*Math.PI*2,superCharge:0,lastSuper:0,ammo:3,maxAmmo:3,reloadTimer:0,lastCombatTime:0}}),this.bullets=[],this.cubes=[],this.zones=[],this.lastTick=Date.now()}shoot(e,l,s,t=!1){let o=Date.now();if(t){if(e.superCharge<100)return;e.superCharge=0,e.lastSuper=o,e.lastCombatTime=o}else{if(e.ammo<1||o-e.lastShot<250)return;e.ammo--,e.lastShot=o,e.lastCombatTime=o}let a=Math.atan2(s-e.y,l-e.x);e.angle=a;let n=(r,c=0,x=!1)=>{let M={id:Math.random().toString(36).substr(2,9),ownerId:e.id,x:e.x,y:e.y,dx:Math.cos(r)*(x?e.config.bulletSpeed*1.2:e.config.bulletSpeed),dy:Math.sin(r)*(x?e.config.bulletSpeed*1.2:e.config.bulletSpeed),damage:(x?e.config.damage*1.5:e.config.damage)*(1+e.powerCubes*.1),rangeRemaining:e.config.range+c,size:x?e.config.bulletSize*1.5:e.config.bulletSize,color:x?"#fbbf24":e.config.color,type:e.config.type,isSuper:x,hitIds:[]};this.bullets.push(M)};if(e.config.type==="shelly")if(t)for(let r=-4;r<=4;r++)n(a+r*.15,100,!0);else for(let r=-1;r<=1;r++)n(a+r*.2);else if(e.config.type==="colt"){let r=t?12:4,c=t?60:100;for(let x=0;x<r;x++)setTimeout(()=>n(a,t?200:0,t),x*c)}else if(e.config.type==="spike")t?this.bullets.push({id:Math.random().toString(36).substr(2,4),ownerId:e.id,x:e.x,y:e.y,dx:Math.cos(a)*10,dy:Math.sin(a)*10,damage:e.config.damage*(1+e.powerCubes*.1),rangeRemaining:400,size:20,color:"#166534",type:"spike",isSuper:!0,hitIds:[]}):n(a);else if(e.config.type==="colette")if(t){let r=Math.min(Math.hypot(l-e.x,s-e.y),450);e.dashState={origin:{x:e.x,y:e.y},target:{x:e.x+Math.cos(a)*r,y:e.y+Math.sin(a)*r},return:!1,isBounce:!0,speed:25,hitIds:[]}}else n(a);else if(e.config.type==="edgar")if(t){let r=Math.hypot(l-e.x,s-e.y),c=Math.min(r,400);e.x+=Math.cos(a)*c,e.y+=Math.sin(a)*c,e.x=Math.max(0,Math.min(d,e.x)),e.y=Math.max(0,Math.min(d,e.y))}else setTimeout(()=>n(a-.05),0),setTimeout(()=>n(a+.05),150);else if(e.config.type==="griff")if(t)for(let r=-2;r<=2;r++)n(a+r*.15,200,!0);else for(let r=0;r<3;r++)setTimeout(()=>{n(a-.1),n(a),n(a+.1)},r*150);else if(e.config.type==="penny")t?n(a,350,!0):n(a);else if(e.config.type==="darryl")if(t)e.dashState={origin:{x:e.x,y:e.y},target:{x:e.x+Math.cos(a)*500,y:e.y+Math.sin(a)*500},return:!1,isBounce:!1,speed:22,hitIds:[]};else for(let r=0;r<2;r++)for(let c=-2;c<=2;c++)setTimeout(()=>n(a+c*.1,0,!1),r*150);else if(e.config.type==="tick"){let r=Math.min(Math.hypot(l-e.x,s-e.y),e.config.range);if(t)this.bullets.push({id:Math.random()+"",ownerId:e.id,x:e.x,y:e.y,dx:Math.cos(a)*12,dy:Math.sin(a)*12,damage:e.config.damage*3*(1+e.powerCubes*.1),rangeRemaining:r,size:25,color:"#ef4444",type:"tick",isSuper:!0});else for(let c=-1;c<=1;c++){let x=a+c*.2;this.bullets.push({id:Math.random()+"",ownerId:e.id,x:e.x,y:e.y,dx:Math.cos(x)*14,dy:Math.sin(x)*14,damage:e.config.damage*(1+e.powerCubes*.1),rangeRemaining:r,size:12+(c===0?4:0),color:"#9ca3af",type:"tick",isSuper:!1})}}}update(){if(this.state!=="GAME"||!this.player)return;let e=Date.now(),l=e-this.lastTick;this.lastTick=e,[this.player,...this.bots].forEach(i=>{if(i.ammo<i.maxAmmo?(i.reloadTimer+=l,i.reloadTimer>=i.config.reloadTime&&(i.ammo++,i.reloadTimer-=i.config.reloadTime)):i.reloadTimer=0,e-i.lastCombatTime>3e3&&i.hp<i.maxHp&&(i.hp=Math.min(i.maxHp,i.hp+i.maxHp*.13*(l/1e3))),i.dashState){let f=i.dashState.return?i.dashState.origin:i.dashState.target,u=Math.hypot(f.x-i.x,f.y-i.y);u<i.dashState.speed?(i.x=f.x,i.y=f.y,!i.dashState.return&&i.dashState.isBounce?(i.dashState.return=!0,i.dashState.hitIds=[]):i.dashState=void 0):(i.x+=(f.x-i.x)/u*i.dashState.speed,i.y+=(f.y-i.y)/u*i.dashState.speed),i.dashState&&[this.player,...this.bots,...this.boxes.filter(h=>!h.isDestroyed)].forEach(h=>{h.id===i.id||i.dashState.hitIds.includes(h.id)||Math.hypot(i.x-h.x,i.y-h.y)<i.size+h.size&&(h.hp-=(i.config.type==="colette"?i.config.damage*2:800)*(1+i.powerCubes*.1),"lastCombatTime"in h&&(h.lastCombatTime=e),i.lastCombatTime=e,i.dashState.hitIds.push(h.id),h.id.startsWith("box")||(i.superCharge=Math.min(100,i.superCharge+25)))})}});let s=i=>{let f=4;for(;f-- >0;){let u=!1;if(this.walls.forEach(h=>{let m=i.x,p=i.y;i.x<h.x?m=h.x:i.x>h.x+h.width&&(m=h.x+h.width),i.y<h.y?p=h.y:i.y>h.y+h.height&&(p=h.y+h.height);let y=Math.hypot(i.x-m,i.y-p);if(y<i.size){u=!0,y===0&&(y=1);let g=i.size-y,b=(i.x-m)/y,S=(i.y-p)/y;i.x+=b*g,i.y+=S*g}}),this.boxes.forEach(h=>{if(h.isDestroyed)return;let m=h.size/2,p={x:h.x-m,y:h.y-m,width:h.size,height:h.size},y=i.x,g=i.y;i.x<p.x?y=p.x:i.x>p.x+p.width&&(y=p.x+p.width),i.y<p.y?g=p.y:i.y>p.y+p.height&&(g=p.y+p.height);let b=Math.hypot(i.x-y,i.y-g);if(b<i.size){u=!0,b===0&&(b=1);let S=i.size-b,I=(i.x-y)/b,z=(i.y-g)/b;i.x+=I*S,i.y+=z*S}}),!u)break}};if(!this.player.dashState){let i=0,f=0;if(this.keys.w&&(f-=1),this.keys.s&&(f+=1),this.keys.a&&(i-=1),this.keys.d&&(i+=1),i!==0||f!==0){let m=Math.sqrt(i*i+f*f);this.player.x+=i/m*this.player.config.speed,this.player.y+=f/m*this.player.config.speed}let u=this.mouse.x+this.camera.x,h=this.mouse.y+this.camera.y;this.player.angle=Math.atan2(h-this.player.y,u-this.player.x),this.mouse.down&&!this.isAimingSuper&&this.shoot(this.player,u,h)}s(this.player),this.player.x=Math.max(0,Math.min(d,this.player.x)),this.player.y=Math.max(0,Math.min(d,this.player.y));let t=100,o=this.player.x+Math.cos(this.player.angle)*t-this.viewport.w/2,a=this.player.y+Math.sin(this.player.angle)*t-this.viewport.h/2;this.camera.x+=(o-this.camera.x)*.08,this.camera.y+=(a-this.camera.y)*.08,this.camera.x=Math.max(0,Math.min(d-this.viewport.w,this.camera.x)),this.camera.y=Math.max(0,Math.min(d-this.viewport.h,this.camera.y)),this.bots.forEach(i=>{if(i.dashState){s(i),i.x=Math.max(0,Math.min(d,i.x)),i.y=Math.max(0,Math.min(d,i.y));return}let f=[this.player,...this.bots.filter(m=>m.id!==i.id),...this.boxes.filter(m=>!m.isDestroyed)],u=null,h=2e3;if(f.forEach(m=>{let p=Math.hypot(m.x-i.x,m.y-i.y);p<h&&(h=p,u=m)}),u){let m=Math.atan2(u.y-i.y,u.x-i.x);i.angle=m,h>i.config.range*.7&&(i.x+=Math.cos(m)*i.config.speed,i.y+=Math.sin(m)*i.config.speed),s(i),i.x=Math.max(0,Math.min(d,i.x)),i.y=Math.max(0,Math.min(d,i.y)),h<i.config.range&&this.shoot(i,u.x,u.y),i.superCharge>=100&&this.shoot(i,u.x,u.y,!0)}}),this.updateWorldObjects(e,l);let n=document.getElementById("hp-fill"),r=document.getElementById("hp-text"),c=document.getElementById("cube-counter"),x=document.getElementById("player-counter"),M=document.getElementById("super-fill"),T=document.getElementById("super-button"),C=document.getElementById("ammo-indicator");if(C){C.innerHTML="";for(let i=0;i<this.player.maxAmmo;i++){let f=0;i<this.player.ammo?f=100:i===this.player.ammo&&(f=this.player.reloadTimer/this.player.config.reloadTime*100),C.innerHTML+=`
-               <div class="h-full flex-1 bg-slate-900 border border-black/50 rounded-sm overflow-hidden shadow-sm">
-                   <div class="h-full bg-orange-500 transition-all duration-75" style="width: ${f}%"></div>
+            <!-- Right Side Controls -->
+            <div class="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col gap-6 z-20">
+              <button class="w-20 h-20 bg-slate-800/90 rounded-3xl border-4 border-slate-600 flex flex-col items-center justify-center hover:scale-110 transition-all brawl-button-shadow">
+                 <span class="text-4xl mb-1">\u{1F3AE}</span>
+                 <span class="text-[10px] font-black uppercase tracking-tighter">Friends</span>
+              </button>
+              <button class="w-20 h-20 bg-slate-800/90 rounded-3xl border-4 border-slate-600 flex flex-col items-center justify-center hover:scale-110 transition-all brawl-button-shadow">
+                <span class="text-4xl mb-1">\u{1F6E1}</span>
+                <span class="text-[10px] font-black uppercase tracking-tighter">Club</span>
+              </button>
+              <button class="w-20 h-20 bg-slate-800/90 rounded-3xl border-4 border-slate-600 flex flex-col items-center justify-center hover:scale-110 transition-all brawl-button-shadow relative">
+                <span class="text-4xl mb-1">\u{1F4AC}</span>
+                <span class="text-[10px] font-black uppercase tracking-tighter">Chat</span>
+                <div class="absolute -top-1 -right-1 w-6 h-6 bg-red-600 rounded-full border-4 border-slate-800 flex items-center justify-center font-black text-xs">2</div>
+              </button>
+            </div>
+
+            <!-- Main Brawler View -->
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+              <div class="flex flex-col items-center">
+                 <div class="text-[250px] animate-float drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] select-none pointer-events-none" id="current-brawler-emoji">${this.selectedBrawler.emoji}</div>
+                 <div class="mt-8 bg-black/50 backdrop-blur-md px-12 py-3 rounded-[2rem] border-4 border-white/20 flex flex-col items-center shadow-2xl relative">
+                    <div class="absolute -top-6 bg-orange-500 px-4 py-1 rounded-lg border-2 border-orange-300 text-xs font-black uppercase shadow-lg">Rank 15</div>
+                    <span class="text-4xl brawl-font italic uppercase textShadow tracking-wider mt-2">${this.selectedBrawler.name}</span>
+                    <div class="flex items-center gap-2 mt-2">
+                       <span class="text-yellow-400 text-lg">\u{1F3C6}</span>
+                       <span class="brawl-font italic text-xl">${this.trophies[this.selectedBrawler.type]}</span>
+                    </div>
+                    <div class="h-3 w-48 bg-slate-700/80 rounded-full mt-4 p-0.5 border border-white/10 shadow-inner">
+                       <div class="h-full bg-blue-400 rounded-full shadow-[0_0_10px_rgba(96,165,250,0.5)]" style="width: 75%"></div>
+                    </div>
+                 </div>
+              </div>
+            </div>
+
+            <!-- Bottom Controls -->
+            <div class="absolute bottom-6 left-6 flex items-end gap-6 z-20">
+               <button class="w-32 h-32 bg-yellow-400 rounded-[30%] border-4 border-yellow-600 brawl-button-shadow overflow-hidden group relative flex flex-col">
+                  <div class="bg-yellow-600 py-1 flex items-center justify-center">
+                     <span class="text-white brawl-font italic text-[10px] scale-y-125">BRAWL PASS</span>
+                  </div>
+                  <div class="flex-1 flex items-center justify-center bg-yellow-400">
+                     <span class="text-6xl group-hover:scale-125 transition-transform drop-shadow-md">\u{1F195}</span>
+                  </div>
+                  <div class="absolute bottom-1 w-full px-2">
+                     <div class="h-2 bg-yellow-900/30 rounded-full overflow-hidden">
+                        <div class="h-full bg-white" style="width: 40%"></div>
+                     </div>
+                  </div>
+               </button>
+            </div>
+
+            <div class="absolute bottom-6 right-6 flex items-center gap-8 z-20">
+              <!-- Mode Selection -->
+              <div class="flex flex-col items-center gap-2">
+                 <button id="mode-btn" class="w-80 h-28 ${this.selectedMode.color} border-4 border-black/40 rounded-[2rem] flex items-center p-3 gap-5 brawl-button-shadow group hover:brightness-110 active:brightness-90 transition-all">
+                   <div class="w-20 h-20 bg-black/30 rounded-2xl flex items-center justify-center text-5xl group-hover:scale-110 transition-transform shadow-inner">
+                     ${this.selectedMode.icon}
+                   </div>
+                   <div class="flex-1 flex flex-col items-start overflow-hidden">
+                     <div class="flex items-center gap-2 mb-1">
+                        <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                        <span class="text-[10px] font-black uppercase opacity-70 tracking-widest">New Event Available!</span>
+                     </div>
+                     <span class="text-3xl brawl-font italic uppercase leading-none textShadow truncate w-full">${this.selectedMode.name}</span>
+                     <span class="text-[12px] font-bold uppercase opacity-80 mt-1">Symmetrical Stadium</span>
+                   </div>
+                   <div class="pr-2 opacity-40 hover:opacity-100">\u{2139}\u{FE0F}</div>
+                 </button>
+              </div>
+
+              <!-- Play Button -->
+              <button id="play-btn" class="w-64 h-28 bg-[#eab308] border-b-8 border-r-4 border-yellow-700 rounded-[2rem] brawl-button-shadow hover:brightness-110 active:translate-y-2 active:border-b-4 transition-all flex flex-col items-center justify-center group">
+                 <span class="text-6xl brawl-font italic text-slate-900 tracking-tighter scale-y-125 group-hover:scale-125 group-hover:rotate-1 transition-transform">PLAY</span>
+              </button>
+            </div>
+          `;
+
+          document.getElementById('play-btn').onclick = () => this.startGame();
+          document.getElementById('brawlers-btn').onclick = () => this.renderSelect();
+          document.getElementById('mode-btn').onclick = () => {
+            this.selectedMode = this.selectedMode.name === MODES.SHOWDOWN.name ? MODES.BRAWL_BALL : MODES.SHOWDOWN;
+            this.renderMenu();
+          };
+        }
+
+        renderSelect() {
+          this.state = 'SELECT';
+          this.clearUI();
+          this.uiContainer.className = "absolute inset-0 z-10 pointer-events-auto bg-[#0284c7] overflow-y-auto p-12";
+          
+          this.uiContainer.innerHTML = `
+            <div class="max-w-6xl mx-auto">
+               <div class="flex items-center justify-between mb-12">
+                  <button id="back-btn" class="bg-red-500 px-8 py-3 rounded-2xl brawl-font italic text-2xl border-b-8 border-red-700 hover:brightness-110 active:translate-y-2 active:border-b-4 transition-all">BACK</button>
+                  <h1 class="text-6xl brawl-font italic uppercase text-white drop-shadow-[0_5px_0_rgba(0,0,0,0.3)]">Brawlers</h1>
+                  <div class="w-24"></div>
                </div>
-            `}}if(n&&(n.style.width=`${this.player.hp/this.player.maxHp*100}%`),r&&(r.innerText=`HP ${Math.ceil(this.player.hp)} / ${this.player.maxHp}`),c&&(c.innerText=this.player.powerCubes.toString()),x&&(x.innerText=(this.bots.length+1).toString()),M&&(M.style.height=`${this.player.superCharge}%`),T)if(this.player.superCharge>=100){T.classList.add("border-yellow-400","animate-pulse");let i=document.getElementById("super-text");i&&(i.className="relative z-10 brawl-font italic font-black text-2xl text-slate-900")}else{T.classList.remove("border-yellow-400","animate-pulse");let i=document.getElementById("super-text");i&&(i.className="relative z-10 brawl-font italic font-black text-2xl text-slate-400")}this.player.hp<=0&&this.renderGameOver(this.bots.length+1,this.player.powerCubes),this.bots.length===0&&this.renderGameOver(1,this.player.powerCubes)}updateWorldObjects(e,l){for(let s=this.zones.length-1;s>=0;s--){let t=this.zones[s];if(e-t.createdAt>t.duration){this.zones.splice(s,1);continue}Math.floor((e-t.createdAt)/500)!==Math.floor((e-t.createdAt-l)/500)&&[this.player,...this.bots].forEach(o=>{if(o.id!==t.ownerId&&Math.hypot(o.x-t.x,o.y-t.y)<t.radius+o.size){o.hp-=t.damage,"lastCombatTime"in o&&(o.lastCombatTime=e);let a=[this.player,...this.bots].find(n=>n.id===t.ownerId);a&&(a.superCharge=Math.min(100,a.superCharge+3))}})}for(let s=this.bullets.length-1;s>=0;s--){let t=this.bullets[s];if(t.duration&&t.createdAt&&e-t.createdAt>t.duration){this.bullets.splice(s,1);continue}if(t.x+=t.dx,t.y+=t.dy,t.rangeRemaining-=Math.hypot(t.dx,t.dy),t.rangeRemaining<=0){if(t.type==="spike")if(t.isSuper)this.zones.push({id:Math.random().toString(),ownerId:t.ownerId,x:t.x,y:t.y,size:240,radius:120,duration:4e3,createdAt:e,damage:400});else for(let a=0;a<6;a++){let n=a/6*Math.PI*2;this.bullets.push({...t,id:t.id+a,dx:Math.cos(n)*4,dy:Math.sin(n)*4,rangeRemaining:100,damage:t.damage*.4,type:"shelly"})}else if(t.type==="tick"){t.dx=0,t.dy=0,t.rangeRemaining=99999,t.createdAt=e,t.duration=t.isSuper?6e3:2e3,t.type="tick_mine";continue}t.type!=="tick_mine"&&this.bullets.splice(s,1);continue}let o=-1;for(let a=0;a<this.walls.length;a++){let n=this.walls[a],r=t.x,c=t.y;if(t.x<n.x?r=n.x:t.x>n.x+n.width&&(r=n.x+n.width),t.y<n.y?c=n.y:t.y>n.y+n.height&&(c=n.y+n.height),Math.hypot(t.x-r,t.y-c)<=t.size){o=a;break}}if(o!==-1&&!(t.type==="spike"&&t.isSuper)&&t.type!=="tick"&&t.type!=="tick_mine")if(t.type==="shelly"&&t.isSuper||t.type==="colt"&&t.isSuper||t.type==="griff"&&t.isSuper||t.type==="penny"&&t.isSuper)this.walls.splice(o,1);else{t.id="deleted",this.bullets.splice(s,1);continue}if(t.type==="tick_mine"){let a=[this.player,...this.bots].filter(n=>n.id!==t.ownerId);for(let n of a)if(Math.hypot(n.x-t.x,n.y-t.y)<n.size+40){n.hp-=t.damage,n.lastCombatTime=e,n.id===this.player?.id&&(this.player.lastCombatTime=e);let r=[this.player,...this.bots].find(c=>c.id===t.ownerId);r&&(r.superCharge=Math.min(100,r.superCharge+10)),t.id="deleted",this.bullets.splice(s,1);break}if(t.id==="deleted")continue}[this.player,...this.bots,...this.boxes.filter(a=>!a.isDestroyed)].forEach(a=>{if(!(a.id===t.ownerId||t.id==="deleted"||t.hitIds&&t.hitIds.includes(a.id))&&Math.hypot(t.x-a.x,t.y-a.y)<a.size){a.hp-=t.damage,"lastCombatTime"in a&&(a.lastCombatTime=e),a.id===this.player?.id&&this.player&&(this.player.lastCombatTime=e),t.hitIds&&t.hitIds.push(a.id);let n=[this.player,...this.bots].find(c=>c.id===t.ownerId);if(n&&!a.id.startsWith("box")&&(n.superCharge=Math.min(100,n.superCharge+t.damage/30)),t.type==="penny"&&!t.isSuper)for(let c=-1;c<=1;c++){let x=Math.atan2(t.dy,t.dx)+c*.25;this.bullets.push({id:Math.random()+"",ownerId:t.ownerId,x:a.x+Math.cos(x)*20,y:a.y+Math.sin(x)*20,dx:Math.cos(x)*20,dy:Math.sin(x)*20,damage:t.damage*1.5,rangeRemaining:150,size:t.size,color:t.color,type:"penny_splash"})}let r=!1;t.type==="colette"&&t.isSuper&&(r=!0),t.type==="griff"&&t.isSuper&&(r=!0),r||(t.id="deleted",this.bullets.splice(s,1))}})}this.bots.forEach((s,t)=>{s.hp<=0&&(this.cubes.push({id:s.id+"c",x:s.x,y:s.y,size:20,isCollected:!1,createdAt:e}),this.bots.splice(t,1))}),this.boxes.forEach(s=>{!s.isDestroyed&&s.hp<=0&&(s.isDestroyed=!0,this.cubes.push({id:s.id+"c",x:s.x,y:s.y,size:20,isCollected:!1,createdAt:e}))});for(let s=this.cubes.length-1;s>=0;s--){let t=this.cubes[s];[this.player,...this.bots].forEach(o=>{if(Math.hypot(o.x-t.x,o.y-t.y)<o.size+t.size){if(o.powerCubes++,o.maxHp+=400,o.hp=Math.min(o.maxHp,o.hp+400),o.id===this.player?.id){let a=document.getElementById("cube-container");a&&(a.classList.add("scale-125","!bg-yellow-500"),setTimeout(()=>a.classList.remove("scale-125","!bg-yellow-500"),150))}this.cubes.splice(s,1)}})}}draw(){this.ctx.fillStyle="#854d0e",this.ctx.fillRect(0,0,this.viewport.w,this.viewport.h),this.ctx.save(),this.ctx.translate(-this.camera.x,-this.camera.y);for(let e=0;e<d;e+=100)if(!(e<this.camera.y-100||e>this.camera.y+this.viewport.h))for(let l=0;l<d;l+=100)l<this.camera.x-100||l>this.camera.x+this.viewport.w||(this.ctx.fillStyle=(l/100+e/100)%2===0?"#a16207":"#854d0e",this.ctx.fillRect(l,e,100,100));if(this.state==="GAME"&&this.player){let e=this.player,l=this.isAimingSuper,s=l?e.config.range+100:e.config.range,t=l?"rgba(251, 191, 36, 0.4)":"rgba(255, 255, 255, 0.15)";if(this.ctx.save(),this.ctx.translate(e.x,e.y),this.ctx.rotate(e.angle),e.config.type==="shelly"){let o=l?.6:.4;this.ctx.fillStyle=t,this.ctx.beginPath(),this.ctx.moveTo(0,0),this.ctx.arc(0,0,s,-o/2,o/2),this.ctx.closePath(),this.ctx.fill()}else if(e.config.type==="colt"){let o=l?40:20;this.ctx.fillStyle=t,this.ctx.fillRect(0,-o/2,s+(l?200:0),o)}else if(e.config.type==="spike")l?(this.ctx.strokeStyle=t,this.ctx.setLineDash([10,5]),this.ctx.lineWidth=4,this.ctx.beginPath(),this.ctx.moveTo(0,0),this.ctx.lineTo(400,0),this.ctx.stroke(),this.ctx.setLineDash([]),this.ctx.fillStyle=t,this.ctx.beginPath(),this.ctx.arc(400,0,120,0,Math.PI*2),this.ctx.fill()):(this.ctx.fillStyle=t,this.ctx.fillRect(0,-10,e.config.range,20));else if(e.config.type==="colette"){let o=l?60:30;this.ctx.fillStyle=t,this.ctx.fillRect(0,-o/2,s,o)}else if(e.config.type==="edgar")l?(this.ctx.strokeStyle=t,this.ctx.setLineDash([10,5]),this.ctx.lineWidth=4,this.ctx.beginPath(),this.ctx.moveTo(0,0),this.ctx.lineTo(400,0),this.ctx.stroke(),this.ctx.setLineDash([]),this.ctx.fillStyle=t,this.ctx.beginPath(),this.ctx.arc(400,0,60,0,Math.PI*2),this.ctx.fill()):(this.ctx.fillStyle=t,this.ctx.beginPath(),this.ctx.moveTo(0,0),this.ctx.arc(0,0,s,-.3/2,.3/2),this.ctx.closePath(),this.ctx.fill());else if(e.config.type==="griff"){let o=l?.8:.4;this.ctx.fillStyle=t,this.ctx.beginPath(),this.ctx.moveTo(0,0),this.ctx.arc(0,0,s,-o/2,o/2),this.ctx.closePath(),this.ctx.fill()}else e.config.type==="penny"?(this.ctx.fillStyle=t,this.ctx.fillRect(0,-10,s,20)):e.config.type==="darryl"?(this.ctx.fillStyle=t,this.ctx.beginPath(),this.ctx.moveTo(0,0),this.ctx.arc(0,0,s,-.5/2,.5/2),this.ctx.closePath(),this.ctx.fill()):e.config.type==="tick"&&(this.ctx.strokeStyle=t,this.ctx.setLineDash([10,5]),this.ctx.lineWidth=4,this.ctx.beginPath(),this.ctx.moveTo(0,0),this.ctx.lineTo(s,0),this.ctx.stroke(),this.ctx.setLineDash([]),this.ctx.fillStyle=t,this.ctx.beginPath(),this.ctx.arc(s,0,40,0,Math.PI*2),this.ctx.fill());this.ctx.restore()}this.ctx.strokeStyle="#ef4444",this.ctx.lineWidth=10,this.ctx.strokeRect(0,0,d,d),this.walls.forEach(e=>{this.ctx.fillStyle="#475569",this.ctx.fillRect(e.x,e.y,e.width,e.height),this.ctx.fillStyle="#64748b",this.ctx.fillRect(e.x+10,e.y+10,e.width-20,e.height-20)}),this.zones.forEach(e=>{this.ctx.fillStyle="rgba(34, 197, 94, 0.2)",this.ctx.beginPath(),this.ctx.arc(e.x,e.y,e.radius,0,Math.PI*2),this.ctx.fill()}),this.boxes.forEach(e=>{e.isDestroyed||(this.ctx.fillStyle="#b45309",this.ctx.fillRect(e.x-e.size/2,e.y-e.size/2,e.size,e.size),this.ctx.fillStyle="#f59e0b",this.ctx.fillRect(e.x-e.size/2,e.y-e.size/2-15,e.size*(e.hp/e.maxHp),6))}),this.cubes.forEach(e=>{this.ctx.shadowColor="#60a5fa",this.ctx.shadowBlur=10+Math.sin((Date.now()-(e.createdAt||0))/100)*8,this.ctx.fillStyle="#3b82f6",this.ctx.beginPath(),this.ctx.arc(e.x,e.y,e.size,0,Math.PI*2),this.ctx.fill(),this.ctx.shadowBlur=0}),this.bullets.forEach(e=>{this.ctx.fillStyle=e.color,e.type==="tick_mine"&&(this.ctx.shadowColor="#ef4444",this.ctx.shadowBlur=15),this.ctx.beginPath(),this.ctx.arc(e.x,e.y,e.size,0,Math.PI*2),this.ctx.fill(),this.ctx.shadowBlur=0}),[this.player,...this.bots].filter(Boolean).forEach(e=>{this.ctx.save(),this.ctx.translate(e.x,e.y),this.ctx.rotate(e.angle),this.ctx.fillStyle=e.config.color,this.ctx.beginPath(),this.ctx.arc(0,0,e.size,0,Math.PI*2),this.ctx.fill(),this.ctx.fillStyle="white",this.ctx.fillRect(e.size*.5,-5,10,10),this.ctx.restore(),this.ctx.font="24px Arial",this.ctx.textAlign="center",this.ctx.fillText(e.config.emoji,e.x,e.y+8),this.ctx.fillStyle="rgba(0,0,0,0.5)",this.ctx.fillRect(e.x-30,e.y-e.size-20,60,6),this.ctx.fillStyle=e.id==="player"?"#22c55e":"#ef4444",this.ctx.fillRect(e.x-30,e.y-e.size-20,60*(e.hp/e.maxHp),6)}),this.ctx.restore()}loop(){this.update(),this.draw(),requestAnimationFrame(()=>this.loop())}};new k;
+               <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                  ${Object.values(BRAWLERS).map(b => `
+                    <div data-brawler="${b.type}" class="brawler-card cursor-pointer group">
+                       <div class="bg-slate-800/80 border-4 border-slate-600 rounded-[2rem] p-8 flex flex-col items-center transition-all group-hover:rotate-1 group-active:scale-95 shadow-xl ${this.selectedBrawler.type === b.type ? 'border-yellow-400 bg-yellow-400/20' : ''}">
+                          <div class="text-[120px] mb-6 group-hover:scale-110 transition-transform drop-shadow-lg">${b.emoji}</div>
+                          <span class="text-3xl brawl-font italic uppercase tracking-wider text-white">${b.name}</span>
+                          
+                          <div class="mt-6 flex flex-col gap-2 w-full">
+                             <div class="bg-slate-900/50 rounded-full h-8 flex items-center px-4 border border-white/5">
+                                <span class="text-[10px] font-black uppercase text-green-400 w-12">HP</span>
+                                <div class="flex-1 h-3 bg-slate-700 rounded-full overflow-hidden">
+                                   <div class="h-full bg-green-500" style="width: ${b.hp/5000*100}%"></div>
+                                </div>
+                             </div>
+                             <div class="bg-slate-900/50 rounded-full h-8 flex items-center px-4 border border-white/5">
+                                <span class="text-[10px] font-black uppercase text-orange-400 w-12">ATK</span>
+                                <div class="flex-1 h-3 bg-slate-700 rounded-full overflow-hidden">
+                                   <div class="h-full bg-orange-500" style="width: ${b.damage/800*100}%"></div>
+                                </div>
+                             </div>
+                          </div>
+
+                          <div class="mt-6 flex items-center justify-center gap-2 bg-orange-600/50 px-4 py-1 rounded-full border border-orange-400">
+                             <span class="text-yellow-400 text-xl font-black">\u{1F3C6}</span>
+                             <span class="brawl-font italic text-xl">${this.trophies[b.type]}</span>
+                          </div>
+                       </div>
+                    </div>
+                  `).join('')}
+               </div>
+            </div>
+          `;
+
+          document.getElementById('back-btn').onclick = () => this.renderMenu();
+          document.querySelectorAll('.brawler-card').forEach(card => {
+            card.onclick = () => {
+              this.selectedBrawler = BRAWLERS[card.dataset.brawler];
+              this.renderMenu();
+            };
+          });
+        }
+
+        startGame() {
+          this.state = 'GAME';
+          this.clearUI();
+          this.resetGameState();
+          
+          const teamConfigs = [
+            { id: 'player', team: 1, config: this.selectedBrawler, x: WORLD_WIDTH / 2, y: WORLD_HEIGHT - 200, isBot: false },
+            { id: 'bot1', team: 1, config: BRAWLERS.colt, x: WORLD_WIDTH / 2 - 200, y: WORLD_HEIGHT - 200, isBot: true },
+            { id: 'bot2', team: 1, config: BRAWLERS.spike, x: WORLD_WIDTH / 2 + 200, y: WORLD_HEIGHT - 200, isBot: true },
+            { id: 'bot3', team: 2, config: BRAWLERS.shelly, x: WORLD_WIDTH / 2, y: 200, isBot: true },
+            { id: 'bot4', team: 2, config: BRAWLERS.bull, x: WORLD_WIDTH / 2 - 200, y: 200, isBot: true },
+            { id: 'bot5', team: 2, config: BRAWLERS.poco, x: WORLD_WIDTH / 2 + 200, y: 200, isBot: true },
+          ];
+
+          this.players = teamConfigs.map(cfg => ({
+            ...cfg,
+            hp: cfg.config.hp,
+            maxHp: cfg.config.hp,
+            ammo: 3,
+            reloadTimer: 0,
+            angle: cfg.team === 1 ? -Math.PI/2 : Math.PI/2,
+            lastShot: 0,
+            respawnTimer: 0,
+            size: PLAYER_SIZE
+          }));
+
+          this.player = this.players.find(p => p.id === 'player');
+          
+          this.uiContainer.className = "absolute inset-0 z-10 pointer-events-none";
+          this.uiContainer.innerHTML = `
+            <!-- Score & Timer -->
+            <div class="absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-8 bg-black/60 backdrop-blur-md px-10 py-4 rounded-[2rem] border-4 border-white/20 shadow-2xl">
+               <div class="flex items-center gap-6">
+                  <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center brawl-font italic text-4xl border-b-4 border-blue-400" id="score-blue">0</div>
+                  <div class="w-12 h-12 flex items-center justify-center brawl-font italic text-4xl opacity-30">:</div>
+                  <div class="w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center brawl-font italic text-4xl border-b-4 border-red-400" id="score-red">0</div>
+               </div>
+               <div class="text-4xl brawl-font italic text-white/90 drop-shadow-md" id="game-timer">2:30</div>
+            </div>
+
+            <!-- Global Kill Feed (Optional) -->
+            <div id="kill-feed" class="absolute top-32 right-6 flex flex-col gap-2 items-end"></div>
+
+            <!-- Player Controls (Virtual) -->
+            <div class="absolute bottom-10 left-10 w-48 h-48 rounded-full bg-white/5 border-4 border-white/10 hidden md:flex items-center justify-center opacity-30">
+               <div class="w-16 h-16 rounded-full bg-white/20"></div>
+            </div>
+
+            <!-- Status HUD -->
+            <div class="absolute bottom-10 left-1/2 -translate-x-1/2 w-80">
+               <!-- Health Bar -->
+               <div class="h-8 bg-black/70 rounded-full border-4 border-white/20 overflow-hidden mb-3 relative shadow-2xl">
+                  <div id="p-hp-fill" class="h-full bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.6)] transition-all duration-100"></div>
+                  <div class="absolute inset-0 flex items-center justify-center text-xs font-black uppercase tracking-[0.2em] textShadow" id="p-hp-text">0 / 0</div>
+               </div>
+               <!-- Ammo -->
+               <div class="flex gap-2.5 h-4" id="p-ammo">
+               </div>
+            </div>
+
+            <!-- Super Button / Action -->
+            <div class="absolute bottom-10 right-10 flex flex-col items-center">
+               <div id="action-btn" class="w-32 h-32 rounded-full bg-slate-800/80 border-8 border-slate-700 flex flex-col items-center justify-center shadow-2xl relative">
+                  <div id="super-fill" class="absolute bottom-0 w-full bg-yellow-500 opacity-20" style="height: 40%"></div>
+                  <span id="action-icon" class="text-5xl drop-shadow-md">👊</span>
+                  <span class="text-[10px] font-black uppercase text-slate-500 mt-1">SPACE / E</span>
+               </div>
+            </div>
+
+            <!-- Overlay Announcement -->
+            <div id="announcement" class="absolute inset-0 flex items-center justify-center opacity-0 transition-all duration-500 pointer-events-none z-50">
+               <div class="flex flex-col items-center">
+                  <h2 id="announcement-text" class="text-[10rem] brawl-font italic uppercase drop-shadow-[0_15px_0_rgba(0,0,0,0.5)] leading-none mb-4">GOAL!</h2>
+                  <div class="w-full h-8 bg-white/20 rounded-full animate-pulse"></div>
+               </div>
+            </div>
+          `;
+        }
+
+        renderGameOver(winnerTeam) {
+            this.state = 'GAMEOVER';
+            this.clearUI();
+            this.uiContainer.className = "absolute inset-0 z-50 pointer-events-auto bg-black/90 flex flex-col items-center justify-center p-8 backdrop-blur-xl translate-z-0";
+            
+            const isWin = (winnerTeam === 1);
+            const trophyChange = isWin ? 8 : -4;
+            this.trophies[this.selectedBrawler.type] = Math.max(0, this.trophies[this.selectedBrawler.type] + trophyChange);
+            this.saveTrophies();
+
+            this.uiContainer.innerHTML = `
+                <div class="bg-gradient-to-b from-slate-700 to-slate-900 border-[6px] border-slate-500 rounded-[4rem] p-16 text-center max-w-2xl w-full scale-in shadow-[0_0_100px_rgba(0,0,0,0.8)]">
+                    <h1 class="text-8xl brawl-font italic uppercase mb-4 tracking-tighter ${isWin ? 'text-yellow-400 drop-shadow-[0_8px_0_rgba(180,130,0,0.5)]' : 'text-slate-400 drop-shadow-[0_8px_0_rgba(0,0,0,0.5)]'}">${isWin ? 'VICTORY' : 'DEFEAT'}</h1>
+                    <div class="text-[150px] mb-12 drop-shadow-2xl animate-float">${isWin ? '\u{1F3C6}' : '\u{1F480}'}</div>
+                    
+                    <div class="grid grid-cols-2 gap-8 mb-12">
+                        <div class="bg-black/40 rounded-[2rem] p-8 border-2 border-white/5">
+                            <span class="block text-orange-400 brawl-font italic text-3xl uppercase mb-2">Trophies</span>
+                            <span class="text-6xl font-black ${trophyChange > 0 ? 'text-green-400' : 'text-red-400'}">${trophyChange > 0 ? '+' : ''}${trophyChange}</span>
+                        </div>
+                        <div class="bg-black/40 rounded-[2rem] p-8 border-2 border-white/5">
+                            <span class="block text-blue-400 brawl-font italic text-3xl uppercase mb-2">XP</span>
+                            <span class="text-6xl font-black text-white">+20</span>
+                        </div>
+                    </div>
+
+                    <button id="exit-btn" class="w-full bg-[#fde047] text-slate-900 py-6 rounded-full brawl-font italic text-5xl border-b-[10px] border-yellow-600 hover:brightness-110 active:translate-y-4 active:border-b-2 transition-all shadow-lg uppercase tracking-wider">CONTINUE</button>
+                    <div class="mt-8 text-xs font-black uppercase text-slate-500 opacity-50 tracking-[0.5em]">Game Mode: ${this.selectedMode.name}</div>
+                </div>
+            `;
+            document.getElementById('exit-btn').onclick = () => this.renderMenu();
+        }
+
+        shoot(p, isSuper = false) {
+          if (p.ammo < 1 || p.hp <= 0) return;
+          
+          if (this.ball.ownerId === p.id) {
+             // Kick ball
+             const angle = p.angle;
+             this.ball.ownerId = null;
+             this.ball.dx = Math.cos(angle) * 22;
+             this.ball.dy = Math.sin(angle) * 22;
+             this.ball.lastKicker = p.id;
+             p.ammo--;
+             return;
+          }
+
+          p.ammo--;
+          const config = p.config;
+          const count = config.type === 'shelly' ? 5 : (config.type === 'poco' ? 5 : (config.type === 'bull' ? 5 : 1));
+          const spread = config.type === 'shelly' ? 0.4 : (config.type === 'poco' ? 1.0 : (config.type === 'bull' ? 0.6 : 0));
+          
+          for(let i=0; i<count; i++) {
+             const angleOffset = count > 1 ? (i / (count - 1) - 0.5) * spread : 0;
+             const finalAngle = p.angle + angleOffset;
+             this.bullets.push({
+               x: p.x + Math.cos(p.angle) * 30,
+               y: p.y + Math.sin(p.angle) * 30,
+               dx: Math.cos(finalAngle) * config.bulletSpeed,
+               dy: Math.sin(finalAngle) * config.bulletSpeed,
+               damage: config.damage,
+               ownerId: p.id,
+               team: p.team,
+               range: config.range,
+               dist: 0,
+               size: config.bulletSize,
+               color: config.color,
+               type: config.type
+             });
+          }
+          p.lastShot = Date.now();
+        }
+
+        update() {
+          if (this.state !== 'GAME' || !this.player) return;
+
+          if (this.isResetting) {
+             this.resetTimer--;
+             if (this.resetTimer <= 0) {
+                this.isResetting = false;
+                this.resetMatchPositions();
+             }
+             return;
+          }
+
+          this.matchTimer--;
+          if (this.matchTimer <= 0) {
+             const winner = this.scores.team1 >= this.scores.team2 ? 1 : 2;
+             this.renderGameOver(winner);
+             return;
+          }
+
+          // Handle Players
+          this.players.forEach(p => {
+             if (p.hp <= 0) {
+                p.respawnTimer--;
+                if (p.respawnTimer <= 0) {
+                   p.hp = p.maxHp;
+                   p.x = p.team === 1 ? WORLD_WIDTH / 2 : WORLD_WIDTH / 2;
+                   p.y = p.team === 1 ? WORLD_HEIGHT - 200 : 200;
+                   p.ammo = 3;
+                }
+                return;
+             }
+
+             // Reload
+             if (p.ammo < 3) {
+                p.reloadTimer += 16.6;
+                if (p.reloadTimer >= p.config.reloadTime) {
+                   p.ammo++;
+                   p.reloadTimer = 0;
+                }
+             }
+
+             if (!p.isBot) {
+                let dx = 0, dy = 0;
+                if (this.keys.w) dy -= 1;
+                if (this.keys.s) dy += 1;
+                if (this.keys.a) dx -= 1;
+                if (this.keys.d) dx += 1;
+                
+                if (dx !== 0 || dy !== 0) {
+                   const m = Math.hypot(dx, dy);
+                   const speed = p.config.speed;
+                   p.x += (dx / m) * speed;
+                   p.y += (dy / m) * speed;
+                   
+                   // Holding ball logic
+                   if (this.ball.ownerId === p.id) {
+                      p.angle = Math.atan2(dy, dx);
+                   } else {
+                      p.angle = Math.atan2(this.mouse.y + this.camera.y - p.y, this.mouse.x + this.camera.x - p.x);
+                   }
+                } else if (this.ball.ownerId !== p.id) {
+                   p.angle = Math.atan2(this.mouse.y + this.camera.y - p.y, this.mouse.x + this.camera.x - p.x);
+                }
+                
+                if (this.mouse.down) {
+                   const now = Date.now();
+                   if (now - p.lastShot > (this.ball.ownerId === p.id ? 250 : 300)) {
+                      this.shoot(p);
+                   }
+                }
+             } else {
+                // Better AI
+                const target = this.ball.ownerId ? 
+                              (this.players.find(pl => pl.id === this.ball.ownerId).team === p.team ? this.ball : this.players.find(pl => pl.id === this.ball.ownerId)) : 
+                              this.ball;
+                
+                const distBall = Math.hypot(target.x - p.x, target.y - p.y);
+                const enemyGoalY = p.team === 1 ? 0 : WORLD_HEIGHT;
+
+                if (this.ball.ownerId === p.id) {
+                   // Run to goal
+                   const ang = Math.atan2(enemyGoalY - p.y, WORLD_WIDTH/2 - p.x);
+                   p.x += Math.cos(ang) * p.config.speed;
+                   p.y += Math.sin(ang) * p.config.speed;
+                   p.angle = ang;
+                   
+                   const distGoal = Math.abs(p.y - enemyGoalY);
+                   if (distGoal < 500) this.shoot(p);
+                } else {
+                   // Chase ball or carrier
+                   const ang = Math.atan2(target.y - p.y, target.x - p.x);
+                   p.x += Math.cos(ang) * p.config.speed;
+                   p.y += Math.sin(ang) * p.config.speed;
+                   p.angle = ang;
+                   
+                   if (distBall < p.config.range && (!this.ball.ownerId || this.players.find(pl => pl.id === this.ball.ownerId).team !== p.team)) {
+                      const now = Date.now();
+                      if (now - p.lastShot > 1500) {
+                         this.shoot(p);
+                      }
+                   }
+                }
+             }
+
+             // Bounds
+             p.x = Math.max(PLAYER_SIZE, Math.min(WORLD_WIDTH - PLAYER_SIZE, p.x));
+             p.y = Math.max(PLAYER_SIZE, Math.min(WORLD_HEIGHT - PLAYER_SIZE, p.y));
+
+             // Wall Collisions
+             this.walls.forEach(w => this.resolveRectCircleCollision(p, w));
+
+             // Ball Pickup
+             if (this.ball.ownerId === null && Math.hypot(p.x - this.ball.x, p.y - this.ball.y) < PLAYER_SIZE + 10) {
+                this.ball.ownerId = p.id;
+                this.ball.dx = 0;
+                this.ball.dy = 0;
+             }
+          });
+
+          // Update Ball
+          if (this.ball.ownerId) {
+             const owner = this.players.find(p => p.id === this.ball.ownerId);
+             if (owner) {
+                if (owner.hp <= 0) {
+                   this.ball.ownerId = null;
+                } else {
+                   this.ball.x = owner.x + Math.cos(owner.angle) * 40;
+                   this.ball.y = owner.y + Math.sin(owner.angle) * 40;
+                }
+             }
+          } else {
+             this.ball.x += this.ball.dx;
+             this.ball.y += this.ball.dy;
+             this.ball.dx *= 0.98;
+             this.ball.dy *= 0.98;
+
+             // Wall Bouncing
+             this.walls.forEach(w => {
+                const collided = this.resolveRectCircleCollision(this.ball, w);
+                if (collided) {
+                   if (collided === 'x') this.ball.dx *= -0.8;
+                   if (collided === 'y') this.ball.dy *= -0.8;
+                }
+             });
+
+             // World Bounds
+             if (this.ball.x < BALL_SIZE || this.ball.x > WORLD_WIDTH - BALL_SIZE) this.ball.dx *= -1;
+             
+             // Goal Detection
+             const inGoalX = Math.abs(this.ball.x - WORLD_WIDTH/2) < GOAL_WIDTH/2;
+             if (this.ball.y < 0 && inGoalX) this.scoreGoal(1); // Team 1 scores at Top (Actually Team 1 spawns at bottom)
+             else if (this.ball.y > WORLD_HEIGHT && inGoalX) this.scoreGoal(2);
+
+             if (this.ball.y < 0 || this.ball.y > WORLD_HEIGHT) {
+                if (!inGoalX) this.ball.dy *= -1;
+             }
+
+             this.ball.x = Math.max(0, Math.min(WORLD_WIDTH, this.ball.x));
+             this.ball.y = Math.max(-50, Math.min(WORLD_HEIGHT + 50, this.ball.y));
+          }
+
+          // Bullets
+          for(let i = this.bullets.length-1; i>=0; i--) {
+             const b = this.bullets[i];
+             b.x += b.dx;
+             b.y += b.dy;
+             b.dist += Math.hypot(b.dx, b.dy);
+             
+             let deleted = b.dist > b.range;
+             
+             if (!deleted) {
+                for(const wall of this.walls) {
+                   if (this.isCircleRectCollision(b, wall)) { deleted = true; break; }
+                }
+             }
+
+             if (!deleted) {
+                for(const p of this.players) {
+                   if (p.hp > 0 && p.team !== b.team && Math.hypot(p.x - b.x, p.y - b.y) < PLAYER_SIZE + b.size) {
+                      p.hp -= b.damage;
+                      if (this.ball.ownerId === p.id) {
+                         this.ball.ownerId = null;
+                         this.ball.dx = (Math.random() - 0.5) * 8;
+                         this.ball.dy = (Math.random() - 0.5) * 8;
+                      }
+                      if (p.hp <= 0) p.respawnTimer = 300;
+                      deleted = true;
+                      break;
+                   }
+                }
+             }
+
+             if (deleted) this.bullets.splice(i, 1);
+          }
+
+          // Camera
+          if (this.player) {
+             const targetX = this.player.x - this.viewport.w / 2;
+             const targetY = this.player.y - this.viewport.h / 2;
+             this.camera.x += (targetX - this.camera.x) * 0.1;
+             this.camera.y += (targetY - this.camera.y) * 0.1;
+          }
+
+          this.updateHUD();
+        }
+
+        scoreGoal(team) {
+           if (team === 1) this.scores.team1++;
+           else this.scores.team2++;
+
+           const announcer = document.getElementById('announcement');
+           const aText = document.getElementById('announcement-text');
+           announcer.classList.add('opacity-100');
+           aText.innerText = team === 1 ? 'BLUE SCORE!' : 'RED SCORE!';
+           aText.className = `text-[8rem] brawl-font italic uppercase drop-shadow-[0_15px_0_rgba(0,0,0,0.5)] leading-none mb-4 ${team === 1 ? 'text-blue-400' : 'text-red-400'}`;
+           
+           this.isResetting = true;
+           this.resetTimer = 180;
+           
+           if (this.scores.team1 >= 2) setTimeout(() => this.renderGameOver(1), 1000);
+           else if (this.scores.team2 >= 2) setTimeout(() => this.renderGameOver(2), 1000);
+        }
+
+        resetMatchPositions() {
+           const announcer = document.getElementById('announcement');
+           announcer.classList.remove('opacity-100');
+           
+           this.players.forEach(p => {
+              p.hp = p.maxHp;
+              p.ammo = 3;
+              p.x = WORLD_WIDTH / 2 + (p.id === 'bot1'? -250 : (p.id === 'bot2'? 250 : (p.id === 'bot4'? -250 : (p.id === 'bot5'? 250 : 0))));
+              p.y = p.team === 1 ? WORLD_HEIGHT - 200 : 200;
+           });
+           this.ball.x = WORLD_WIDTH/2;
+           this.ball.y = WORLD_HEIGHT/2;
+           this.ball.dx = 0;
+           this.ball.dy = 0;
+           this.ball.ownerId = null;
+           this.bullets = [];
+        }
+
+        updateHUD() {
+           const blueScore = document.getElementById('score-blue');
+           const redScore = document.getElementById('score-red');
+           const timer = document.getElementById('game-timer');
+           const hpFill = document.getElementById('p-hp-fill');
+           const hpText = document.getElementById('p-hp-text');
+           const ammoBox = document.getElementById('p-ammo');
+           const actionIcon = document.getElementById('action-icon');
+
+           if (blueScore) blueScore.innerText = this.scores.team1;
+           if (redScore) redScore.innerText = this.scores.team2;
+           
+           if (timer) {
+              const secTotal = Math.max(0, Math.floor(this.matchTimer / 60));
+              const mins = Math.floor(secTotal / 60);
+              const secs = secTotal % 60;
+              timer.innerText = `${mins}:${secs.toString().padStart(2, '0')}`;
+           }
+
+           if (hpFill && this.player) {
+              const pct = (Math.max(0, this.player.hp) / this.player.maxHp) * 100;
+              hpFill.style.width = `${pct}%`;
+              hpText.innerText = `${Math.ceil(this.player.hp)} / ${this.player.maxHp}`;
+           }
+           if (ammoBox && this.player) {
+              ammoBox.innerHTML = Array.from({length: 3}).map((_, i) => {
+                 let fill = 0;
+                 if (i < this.player.ammo) fill = 100;
+                 else if (i === this.player.ammo) fill = (this.player.reloadTimer / this.player.config.reloadTime) * 100;
+                 return `<div class="flex-1 bg-slate-900 rounded-full border border-black/40 overflow-hidden shadow-inner"><div class="h-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)]" style="width: ${fill}%"></div></div>`;
+              }).join('');
+           }
+           if (actionIcon) {
+              actionIcon.innerText = this.ball.ownerId === this.player?.id ? '⚽' : '👊';
+           }
+        }
+
+        resolveRectCircleCollision(circle, rect) {
+          const closestX = Math.max(rect.x, Math.min(circle.x, rect.x + rect.w));
+          const closestY = Math.max(rect.y, Math.min(circle.y, rect.y + rect.h));
+          const distX = circle.x - closestX;
+          const distY = circle.y - closestY;
+          const distSq = distX * distX + distY * distY;
+
+          if (distSq < circle.size * circle.size) {
+            const dist = Math.sqrt(distSq) || 1;
+            const overlap = circle.size - dist;
+            circle.x += (distX / dist) * overlap;
+            circle.y += (distY / dist) * overlap;
+            return Math.abs(distX) > Math.abs(distY) ? 'x' : 'y';
+          }
+          return null;
+        }
+
+        isCircleRectCollision(circle, rect) {
+          const closestX = Math.max(rect.x, Math.min(circle.x, rect.x + rect.w));
+          const closestY = Math.max(rect.y, Math.min(circle.y, rect.y + rect.h));
+          const distX = circle.x - closestX;
+          const distY = circle.y - closestY;
+          return (distX * distX + distY * distY) < (circle.size * circle.size);
+        }
+
+        draw() {
+          this.ctx.fillStyle = "#14532d";
+          this.ctx.fillRect(0, 0, this.viewport.w, this.viewport.h);
+
+          this.ctx.save();
+          this.ctx.translate(-this.camera.x, -this.camera.y);
+
+          // Pitch Pattern
+          this.ctx.fillStyle = "#166534";
+          for(let x=0; x<WORLD_WIDTH; x+=100) {
+            for(let y=0; y<WORLD_HEIGHT; y+=200) {
+              this.ctx.fillRect(x, y, 100, 100);
+              this.ctx.fillRect(x, y+100, 100, 100);
+            }
+          }
+          this.ctx.fillStyle = "#15803d";
+          for(let x=0; x<WORLD_WIDTH; x+=100) {
+            for(let y=0; y<WORLD_HEIGHT; y+=100) {
+               if ((x/100 + y/100) % 2 === 0) this.ctx.fillRect(x, y, 100, 100);
+            }
+          }
+
+          // Pitch Markings
+          this.ctx.strokeStyle = "rgba(255,255,255,0.15)";
+          this.ctx.lineWidth = 12;
+          this.ctx.strokeRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+          this.ctx.beginPath();
+          this.ctx.moveTo(0, WORLD_HEIGHT/2);
+          this.ctx.lineTo(WORLD_WIDTH, WORLD_HEIGHT/2);
+          this.ctx.stroke();
+          this.ctx.beginPath();
+          this.ctx.arc(WORLD_WIDTH/2, WORLD_HEIGHT/2, 200, 0, Math.PI*2);
+          this.ctx.stroke();
+
+          // Goal Areas
+          this.ctx.fillStyle = "rgba(59, 130, 246, 0.2)";
+          this.ctx.fillRect(WORLD_WIDTH/2 - GOAL_WIDTH/2, WORLD_HEIGHT, GOAL_WIDTH, GOAL_DEPTH);
+          this.ctx.strokeStyle = "#3b82f6";
+          this.ctx.strokeRect(WORLD_WIDTH/2 - GOAL_WIDTH/2, WORLD_HEIGHT - 5, GOAL_WIDTH, 10);
+          
+          this.ctx.fillStyle = "rgba(239, 68, 68, 0.2)";
+          this.ctx.fillRect(WORLD_WIDTH/2 - GOAL_WIDTH/2, -GOAL_DEPTH, GOAL_WIDTH, GOAL_DEPTH);
+          this.ctx.strokeStyle = "#ef4444";
+          this.ctx.strokeRect(WORLD_WIDTH/2 - GOAL_WIDTH/2, -5, GOAL_WIDTH, 10);
+
+          // Walls
+          this.walls.forEach(w => {
+            if (w.type === 'post') {
+               this.ctx.fillStyle = "#e2e8f0";
+               this.ctx.beginPath();
+               this.ctx.arc(w.x + w.w/2, w.y + w.h/2, 20, 0, Math.PI*2);
+               this.ctx.fill();
+               this.ctx.strokeStyle = "#94a3b8";
+               this.ctx.stroke();
+            } else {
+               const grad = this.ctx.createLinearGradient(w.x, w.y, w.x + w.w, w.y + w.h);
+               grad.addColorStop(0, "#1e293b");
+               grad.addColorStop(1, "#334155");
+               this.ctx.fillStyle = grad;
+               this.ctx.fillRect(w.x, w.y, w.w, w.h);
+               this.ctx.strokeStyle = "#475569";
+               this.ctx.lineWidth = 4;
+               this.ctx.strokeRect(w.x, w.y, w.w, w.h);
+            }
+          });
+
+          // Ball Shadow
+          this.ctx.fillStyle = "rgba(0,0,0,0.3)";
+          this.ctx.beginPath();
+          this.ctx.ellipse(this.ball.x, this.ball.y + 10, BALL_SIZE, BALL_SIZE/2, 0, 0, Math.PI*2);
+          this.ctx.fill();
+
+          // Ball
+          this.ctx.save();
+          this.ctx.translate(this.ball.x, this.ball.y);
+          this.ctx.rotate(Date.now() * 0.005 * (Math.abs(this.ball.dx) + Math.abs(this.ball.dy)));
+          this.ctx.font = "40px Arial";
+          this.ctx.textAlign = "center";
+          this.ctx.textBaseline = "middle";
+          this.ctx.fillText("⚽", 0, 0);
+          this.ctx.restore();
+
+          // Bullets
+          this.bullets.forEach(b => {
+             this.ctx.fillStyle = b.color;
+             this.ctx.shadowBlur = 10;
+             this.ctx.shadowColor = b.color;
+             this.ctx.beginPath();
+             this.ctx.arc(b.x, b.y, b.size, 0, Math.PI*2);
+             this.ctx.fill();
+             this.ctx.shadowBlur = 0;
+             this.ctx.strokeStyle = "rgba(0,0,0,0.5)";
+             this.ctx.lineWidth = 2;
+             this.ctx.stroke();
+          });
+
+          // Players
+          this.players.forEach(p => {
+             if (p.hp <= 0) return;
+
+             this.ctx.save();
+             this.ctx.translate(p.x, p.y);
+             
+             // Shadow
+             this.ctx.fillStyle = "rgba(0,0,0,0.3)";
+             this.ctx.beginPath();
+             this.ctx.ellipse(0, 15, PLAYER_SIZE, PLAYER_SIZE/2, 0, 0, Math.PI*2);
+             this.ctx.fill();
+
+             // Ring
+             this.ctx.strokeStyle = p.team === 1 ? "#3b82f6" : "#ef4444";
+             this.ctx.lineWidth = 6;
+             this.ctx.beginPath();
+             this.ctx.arc(0, 0, PLAYER_SIZE, 0, Math.PI*2);
+             this.ctx.stroke();
+
+             // Name
+             this.ctx.fillStyle = "white";
+             this.ctx.font = "bold 14px Arial";
+             this.ctx.textAlign = "center";
+             this.ctx.fillText(p.id === 'player'? this.playerName : p.config.name, 0, -PLAYER_SIZE - 35);
+
+             // Aiming
+             if (!p.isBot || this.ball.ownerId === p.id) {
+                this.ctx.save();
+                this.ctx.rotate(p.angle);
+                const grad = this.ctx.createLinearGradient(PLAYER_SIZE, 0, PLAYER_SIZE + 100, 0);
+                grad.addColorStop(0, "rgba(255,255,255,0.4)");
+                grad.addColorStop(1, "rgba(255,255,255,0)");
+                this.ctx.fillStyle = grad;
+                this.ctx.beginPath();
+                this.ctx.moveTo(PLAYER_SIZE, -15);
+                this.ctx.lineTo(PLAYER_SIZE + 100, -5);
+                this.ctx.lineTo(PLAYER_SIZE + 100, 5);
+                this.ctx.lineTo(PLAYER_SIZE, 15);
+                this.ctx.fill();
+                this.ctx.restore();
+             }
+
+             // Character
+             this.ctx.font = "50px Arial";
+             this.ctx.textAlign = "center";
+             this.ctx.textBaseline = "middle";
+             this.ctx.fillText(p.config.emoji, 0, 0);
+
+             // Health Bar
+             this.ctx.fillStyle = "rgba(0,0,0,0.7)";
+             this.ctx.roundRect(-40, -PLAYER_SIZE - 25, 80, 8, 4);
+             this.ctx.fill();
+             this.ctx.fillStyle = p.team === 1 ? "#22c55e" : "#ef4444";
+             this.ctx.roundRect(-40, -PLAYER_SIZE - 25, 80 * (p.hp/p.maxHp), 8, 4);
+             this.ctx.fill();
+
+             this.ctx.restore();
+          });
+
+          this.ctx.restore();
+        }
+
+        loop() {
+          this.update();
+          this.draw();
+          requestAnimationFrame(() => this.loop());
+        }
+      }
+
+      new Game();
     </script>
   </body>
 </html>
