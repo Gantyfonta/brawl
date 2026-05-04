@@ -40,12 +40,13 @@
     <div id="game-ui" class="absolute inset-0 z-10 pointer-events-none"></div>
     <div id="game-container" class="absolute inset-0 z-0"></div>
     <script type="module">
-        var w={shelly:{name:"Shelly",type:"shelly",emoji:"\u{1F920}",hp:3600,speed:4,reloadTime:1500,fireRate:500,damage:300,range:400,bulletSpeed:10,bulletSize:10,color:"#8b5cf6",trio:"Western"},colt:{name:"Colt",type:"colt",emoji:"\u{1F52B}",hp:2800,speed:4,reloadTime:1600,fireRate:500,damage:450,range:600,bulletSpeed:12,bulletSize:8,color:"#ec4899",trio:"Western"},spike:{name:"Spike",type:"spike",emoji:"\u{1F335}",hp:2400,speed:4,reloadTime:2e3,fireRate:600,damage:560,range:500,bulletSpeed:9,bulletSize:12,color:"#22c55e",trio:"Western"},colette:{name:"Colette",type:"colette",emoji:"\u{1F4D6}",hp:3400,speed:4,reloadTime:1600,fireRate:500,damage:500,range:550,bulletSpeed:11,bulletSize:9,color:"#f43f5e",trio:"Gift Shop"},edgar:{name:"Edgar",type:"edgar",emoji:"\u{1F9E3}",hp:3e3,speed:5.5,reloadTime:1e3,fireRate:400,damage:540,range:150,bulletSpeed:15,bulletSize:20,color:"#1e1b4b",trio:"Gift Shop"},griff:{name:"Griff",type:"griff",emoji:"\u{1F4B0}",hp:3400,speed:4,reloadTime:1700,fireRate:600,damage:260,range:450,bulletSpeed:11,bulletSize:10,color:"#eab308",trio:"Gift Shop"},penny:{name:"Penny",type:"penny",emoji:"\u{1F3F4}\u200D\u2620\uFE0F",hp:3200,speed:4,reloadTime:1800,fireRate:700,damage:900,range:550,bulletSpeed:10,bulletSize:10,color:"#fb7185",trio:"Pirate"},darryl:{name:"Darryl",type:"darryl",emoji:"\u{1F6E2}\uFE0F",hp:5e3,speed:4,reloadTime:1800,fireRate:600,damage:240,range:350,bulletSpeed:10,bulletSize:12,color:"#0ea5e9",trio:"Pirate"},tick:{name:"Tick",type:"tick",emoji:"\u{1F4A3}",hp:2200,speed:4,reloadTime:2200,fireRate:800,damage:640,range:600,bulletSpeed:8,bulletSize:10,color:"#9ca3af",trio:"Pirate"},poco:{name:"Poco",type:"poco",emoji:"\u{1F3B8}",hp:4000,speed:4,reloadTime:1600,fireRate:500,damage:700,range:450,bulletSpeed:10,bulletSize:15,color:"#fbbf24",trio:"Bandstand"},el_primo:{name:"El Primo",type:"el_primo",emoji:"\u{1F93C}",hp:6000,speed:4.5,reloadTime:800,fireRate:600,damage:360,range:180,bulletSpeed:14,bulletSize:20,color:"#1e40af",trio:"Bandstand"},amber:{name:"Amber",type:"amber",emoji:"\u{1F525}",hp:3200,speed:4,reloadTime:150,fireRate:100,damage:200,range:500,bulletSpeed:13,bulletSize:8,color:"#f97316",trio:"Bandstand"},barley:{name:"Barley",type:"barley",emoji:"\u{1F37E}",hp:2400,speed:4,reloadTime:2e3,fireRate:600,damage:650,range:600,bulletSpeed:9,bulletSize:12,color:"#9333ea",trio:"Western"}},d=2500,B=9,P=25,E=30,A=60,L={1:10,2:8,3:6,4:4,5:2,6:1,7:-1,8:-2,9:-3,10:-4};function R(){let v=localStorage.getItem("mini_brawl_trophies_v2"),e={total:0,brawlers:{shelly:0,colt:0,spike:0,colette:0,edgar:0,griff:0,penny:0,darryl:0,tick:0,poco:0,el_primo:0,amber:0,barley:0}};if(v){let l=JSON.parse(v);e.total=l.total||0,Object.keys(w).forEach(s=>{e.brawlers[s]=l.brawlers[s]||0})}return e}function j(v){localStorage.setItem("mini_brawl_trophies_v2",JSON.stringify(v))}var k=class{canvas;ctx;uiContainer;state="MENU";selectedBrawler=w.shelly;trophies=R();player=null;bots=[];        boxes = [];
+        var w={shelly:{name:"Shelly",type:"shelly",emoji:"\u{1F920}",hp:3600,speed:4,reloadTime:1500,fireRate:500,damage:300,range:400,bulletSpeed:10,bulletSize:10,color:"#8b5cf6",trio:"Western"},colt:{name:"Colt",type:"colt",emoji:"\u{1F52B}",hp:2800,speed:4,reloadTime:1600,fireRate:500,damage:450,range:600,bulletSpeed:12,bulletSize:8,color:"#ec4899",trio:"Western"},spike:{name:"Spike",type:"spike",emoji:"\u{1F335}",hp:2400,speed:4,reloadTime:2e3,fireRate:600,damage:560,range:500,bulletSpeed:9,bulletSize:12,color:"#22c55e",trio:"Western"},colette:{name:"Colette",type:"colette",emoji:"\u{1F4D6}",hp:3400,speed:4,reloadTime:1600,fireRate:500,damage:500,range:550,bulletSpeed:11,bulletSize:9,color:"#f43f5e",trio:"Gift Shop"},edgar:{name:"Edgar",type:"edgar",emoji:"\u{1F9E3}",hp:3e3,speed:5.5,reloadTime:1e3,fireRate:400,damage:540,range:150,bulletSpeed:15,bulletSize:20,color:"#1e1b4b",trio:"Gift Shop"},griff:{name:"Griff",type:"griff",emoji:"\u{1F4B0}",hp:3400,speed:4,reloadTime:1700,fireRate:600,damage:260,range:450,bulletSpeed:11,bulletSize:10,color:"#eab308",trio:"Gift Shop"},penny:{name:"Penny",type:"penny",emoji:"\u{1F3F4}\u200D\u2620\uFE0F",hp:3200,speed:4,reloadTime:1800,fireRate:700,damage:900,range:550,bulletSpeed:10,bulletSize:10,color:"#fb7185",trio:"Pirate"},darryl:{name:"Darryl",type:"darryl",emoji:"\u{1F6E2}\uFE0F",hp:5e3,speed:4,reloadTime:1800,fireRate:600,damage:240,range:350,bulletSpeed:10,bulletSize:12,color:"#0ea5e9",trio:"Pirate"},tick:{name:"Tick",type:"tick",emoji:"\u{1F4A3}",hp:2200,speed:4,reloadTime:2200,fireRate:800,damage:640,range:600,bulletSpeed:8,bulletSize:10,color:"#9ca3af",trio:"Pirate"},poco:{name:"Poco",type:"poco",emoji:"\u{1F3B8}",hp:4000,speed:4,reloadTime:1600,fireRate:500,damage:700,range:450,bulletSpeed:10,bulletSize:15,color:"#fbbf24",trio:"Bandstand"},el_primo:{name:"El Primo",type:"el_primo",emoji:"\u{1F93C}",hp:6000,speed:4.5,reloadTime:800,fireRate:600,damage:360,range:180,bulletSpeed:14,bulletSize:20,color:"#1e40af",trio:"Bandstand"},amber:{name:"Amber",type:"amber",emoji:"\u{1F525}",hp:3200,speed:4,reloadTime:150,fireRate:100,damage:200,range:500,bulletSpeed:13,bulletSize:8,color:"#f97316",trio:"Bandstand"},barley:{name:"Barley",type:"barley",emoji:"\u{1F37E}",hp:2400,speed:4,reloadTime:2e3,fireRate:600,damage:650,range:600,bulletSpeed:9,bulletSize:12,color:"#9333ea",trio:"Western"},sprout:{name:"Sprout",type:"sprout",emoji:"\u{1F6AB}",hp:3000,speed:4,reloadTime:1700,fireRate:600,damage:980,range:400,bulletSpeed:9,bulletSize:12,color:"#4ade80",trio:"Botany"},crow:{name:"Crow",type:"crow",emoji:"\u{2B1B}",hp:2400,speed:5,reloadTime:1400,fireRate:400,damage:320,range:500,bulletSpeed:14,bulletSize:6,color:"#1e293b",trio:"Crow"}},d=2500,B=9,P=25,E=30,A=60,L={1:10,2:8,3:6,4:4,5:2,6:1,7:-1,8:-2,9:-3,10:-4};function R(){let v=localStorage.getItem("mini_brawl_trophies_v2"),e={total:0,brawlers:{shelly:0,colt:0,spike:0,colette:0,edgar:0,griff:0,penny:0,darryl:0,tick:0,poco:0,el_primo:0,amber:0,barley:0,sprout:0,crow:0}};if(v){let l=JSON.parse(v);e.total=l.total||0,Object.keys(w).forEach(s=>{e.brawlers[s]=l.brawlers[s]||0})}return e}function j(v){localStorage.setItem("mini_brawl_trophies_v2",JSON.stringify(v))}var k=class{canvas;ctx;uiContainer;state="MENU";selectedBrawler=w.shelly;trophies=R();player=null;bots=[];        boxes = [];
         walls = [];
         bullets = [];
         cubes = [];
         zones = [];
         creatures = [];
+        tempWalls = [];
         keys = {};
         mouse = { x: 0, y: 0, down: false };
         isAimingSuper = false;
@@ -126,7 +127,7 @@
           })
         }), document.getElementById("back-button").onclick = () => this.renderMenu()
       }
-renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classList.remove("pointer-events-none"),this.uiContainer.classList.add("pointer-events-auto","flex","flex-col","items-center","justify-center");let s=L[e]||-5;this.trophies.brawlers[this.selectedBrawler.type]=Math.max(0,this.trophies.brawlers[this.selectedBrawler.type]+s),j(this.trophies),this.uiContainer.innerHTML=`<div class="text-center"><div class="text-8xl brawl-font italic font-black mb-4 ${e===1?"text-yellow-400":"text-slate-400"}">#${e}</div><div class="text-2xl uppercase mb-8 opacity-60">${e===1?"Showdown Victory!":`Rank ${e} - Defeated`}</div><div class="bg-slate-800 rounded-3xl p-6 mb-8 border-4 border-slate-700 min-w-80"><div class="flex flex-col gap-6"><div class="flex items-center justify-between gap-12"><span class="text-yellow-400 font-bold uppercase text-xl">\u{1F3C6} Trophies</span><span class="text-4xl font-black ${s>=0?"text-green-400":"text-red-400"}">${s>=0?"+":""}${s}</span></div><div class="flex items-center justify-between gap-12 border-t border-slate-700 pt-4"><span class="text-blue-400 font-bold uppercase text-xl">\u26A1 Power Cubes</span><span class="text-4xl font-black">${l}</span></div></div></div><button id="restart-button" class="bg-slate-100 hover:bg-white text-slate-900 px-12 py-4 rounded-full text-2xl brawl-font italic font-black transition-transform hover:scale-110">CONTINUE</button></div>`,document.getElementById("restart-button").onclick=()=>this.renderMenu()}startGame(){this.state="GAME",this.clearUI(),this.uiContainer.innerHTML=`<div class="absolute top-4 left-4 flex gap-4 pointer-events-none"><div id="cube-container" class="bg-black/50 backdrop-blur-md px-6 py-2 rounded-full border-2 border-yellow-400 flex items-center gap-2 transition-all duration-200 origin-center ease-out"><span class="text-yellow-400 text-xl">\u26A1</span><span id="cube-counter" class="text-2xl font-black italic">0</span></div><div class="bg-black/50 backdrop-blur-md px-6 py-2 rounded-full border-2 border-slate-700 flex items-center gap-2"><span class="text-slate-400 text-xl">\u{1F464}</span><span id="player-counter" class="text-2xl font-black italic">10</span></div></div><div class="absolute bottom-4 right-4 flex flex-col items-end pointer-events-none"><div id="super-button" class="relative w-24 h-24 rounded-full bg-slate-800 border-4 border-slate-700 overflow-hidden flex items-center justify-center"><div id="super-fill" class="absolute bottom-0 w-full bg-yellow-400" style="height: 0%"></div><div id="super-text" class="relative z-10 brawl-font italic font-black text-2xl text-slate-400">SUPER</div></div><div class="mt-2 text-[10px] uppercase font-black text-slate-400/50">Space / E</div></div><div class="absolute bottom-8 left-1/2 -translate-x-1/2 w-64 pointer-events-none"><div class="h-4 bg-black/50 rounded-full border-2 border-white/20 overflow-hidden shadow-lg"><div id="hp-fill" class="h-full bg-green-500 transition-all duration-200" style="width: 100%"></div></div><div id="hp-text" class="text-center text-xs font-bold uppercase mt-2 drop-shadow-md">HP 0 / 0</div><div id="ammo-indicator" class="mt-4 flex justify-between gap-1 h-3 pointer-events-none"></div></div>`,this.player={id:"player",x:d/2,y:d/2,size:E,hp:this.selectedBrawler.hp,maxHp:this.selectedBrawler.hp,powerCubes:0,config:this.selectedBrawler,isBot:!1,lastShot:0,angle:0,superCharge:0,lastSuper:0,ammo:3,maxAmmo:3,reloadTimer:0,lastCombatTime:0},this.camera.x=this.player.x-this.viewport.w/2,this.camera.y=this.player.y-this.viewport.h/2,this.isAimingSuper=!1,this.boxes=[];for(;this.boxes.length<P;){let e=100*Math.floor(Math.random()*(d/100)),l=100*Math.floor(Math.random()*(d/100));Math.hypot(e+50-d/2,l+50-d/2)>200&&(this.boxes.some(s=>s.x===e+50&&s.y===l+50)||this.boxes.push({id:`box-${this.boxes.length}`,x:e+50,y:l+50,size:A,hp:1500,maxHp:1500,powerCubes:0,isDestroyed:!1}))}for(this.walls=[];this.walls.length<80;){let e=100*Math.floor(Math.random()*(d/100)),l=100*Math.floor(Math.random()*(d/100));Math.hypot(e+50-d/2,l+50-d/2)>300&&!this.boxes.some(s=>s.x===e+50&&s.y===l+50)&&!this.walls.some(s=>s.x===e&&s.y===l)&&this.walls.push({x:e,y:l,width:100,height:100})}this.bots=Array.from({length:B}).map((e,l)=>{let s=Object.keys(w),t=w[s[Math.floor(Math.random()*s.length)]],o=0,a=0;for(let n=0;n<20&&(o=100*Math.floor(Math.random()*(d/100))+50,a=100*Math.floor(Math.random()*(d/100))+50,!(Math.hypot(o-d/2,a-d/2)>400&&!this.walls.some(r=>r.x<=o&&r.x+100>=o&&r.y<=a&&r.y+100>=a)&&!this.boxes.some(r=>r.x===o&&r.y===a)));n++);return{id:`bot-${l}`,x:o,y:a,size:E,hp:t.hp,maxHp:t.hp,powerCubes:0,config:t,isBot:!0,lastShot:0,angle:2*Math.random()*Math.PI,superCharge:0,lastSuper:0,ammo:3,maxAmmo:3,reloadTimer:0,lastCombatTime:0}}),this.bullets = [], this.cubes = [], this.zones = [], this.creatures = [], this.lastTick = Date.now()}      shoot(e, l, s, t = !1) {
+renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classList.remove("pointer-events-none"),this.uiContainer.classList.add("pointer-events-auto","flex","flex-col","items-center","justify-center");let s=L[e]||-5;this.trophies.brawlers[this.selectedBrawler.type]=Math.max(0,this.trophies.brawlers[this.selectedBrawler.type]+s),j(this.trophies),this.uiContainer.innerHTML=`<div class="text-center"><div class="text-8xl brawl-font italic font-black mb-4 ${e===1?"text-yellow-400":"text-slate-400"}">#${e}</div><div class="text-2xl uppercase mb-8 opacity-60">${e===1?"Showdown Victory!":`Rank ${e} - Defeated`}</div><div class="bg-slate-800 rounded-3xl p-6 mb-8 border-4 border-slate-700 min-w-80"><div class="flex flex-col gap-6"><div class="flex items-center justify-between gap-12"><span class="text-yellow-400 font-bold uppercase text-xl">\u{1F3C6} Trophies</span><span class="text-4xl font-black ${s>=0?"text-green-400":"text-red-400"}">${s>=0?"+":""}${s}</span></div><div class="flex items-center justify-between gap-12 border-t border-slate-700 pt-4"><span class="text-blue-400 font-bold uppercase text-xl">\u26A1 Power Cubes</span><span class="text-4xl font-black">${l}</span></div></div></div><button id="restart-button" class="bg-slate-100 hover:bg-white text-slate-900 px-12 py-4 rounded-full text-2xl brawl-font italic font-black transition-transform hover:scale-110">CONTINUE</button></div>`,document.getElementById("restart-button").onclick=()=>this.renderMenu()}startGame(){this.state="GAME",this.clearUI(),this.uiContainer.innerHTML=`<div class="absolute top-4 left-4 flex gap-4 pointer-events-none"><div id="cube-container" class="bg-black/50 backdrop-blur-md px-6 py-2 rounded-full border-2 border-yellow-400 flex items-center gap-2 transition-all duration-200 origin-center ease-out"><span class="text-yellow-400 text-xl">\u26A1</span><span id="cube-counter" class="text-2xl font-black italic">0</span></div><div class="bg-black/50 backdrop-blur-md px-6 py-2 rounded-full border-2 border-slate-700 flex items-center gap-2"><span class="text-slate-400 text-xl">\u{1F464}</span><span id="player-counter" class="text-2xl font-black italic">10</span></div></div><div class="absolute bottom-4 right-4 flex flex-col items-end pointer-events-none"><div id="super-button" class="relative w-24 h-24 rounded-full bg-slate-800 border-4 border-slate-700 overflow-hidden flex items-center justify-center"><div id="super-fill" class="absolute bottom-0 w-full bg-yellow-400" style="height: 0%"></div><div id="super-text" class="relative z-10 brawl-font italic font-black text-2xl text-slate-400">SUPER</div></div><div class="mt-2 text-[10px] uppercase font-black text-slate-400/50">Space / E</div></div><div class="absolute bottom-8 left-1/2 -translate-x-1/2 w-64 pointer-events-none"><div class="h-4 bg-black/50 rounded-full border-2 border-white/20 overflow-hidden shadow-lg"><div id="hp-fill" class="h-full bg-green-500 transition-all duration-200" style="width: 100%"></div></div><div id="hp-text" class="text-center text-xs font-bold uppercase mt-2 drop-shadow-md">HP 0 / 0</div><div id="ammo-indicator" class="mt-4 flex justify-between gap-1 h-3 pointer-events-none"></div></div>`,this.player={id:"player",x:d/2,y:d/2,size:E,hp:this.selectedBrawler.hp,maxHp:this.selectedBrawler.hp,powerCubes:0,config:this.selectedBrawler,isBot:!1,lastShot:0,angle:0,superCharge:0,lastSuper:0,ammo:3,maxAmmo:3,reloadTimer:0,lastCombatTime:0},this.camera.x=this.player.x-this.viewport.w/2,this.camera.y=this.player.y-this.viewport.h/2,this.isAimingSuper=!1,this.boxes=[];for(;this.boxes.length<P;){let e=100*Math.floor(Math.random()*(d/100)),l=100*Math.floor(Math.random()*(d/100));Math.hypot(e+50-d/2,l+50-d/2)>200&&(this.boxes.some(s=>s.x===e+50&&s.y===l+50)||this.boxes.push({id:`box-${this.boxes.length}`,x:e+50,y:l+50,size:A,hp:1500,maxHp:1500,powerCubes:0,isDestroyed:!1}))}for(this.walls=[];this.walls.length<80;){let e=100*Math.floor(Math.random()*(d/100)),l=100*Math.floor(Math.random()*(d/100));Math.hypot(e+50-d/2,l+50-d/2)>300&&!this.boxes.some(s=>s.x===e+50&&s.y===l+50)&&!this.walls.some(s=>s.x===e&&s.y===l)&&this.walls.push({x:e,y:l,width:100,height:100})}this.bots=Array.from({length:B}).map((e,l)=>{let s=Object.keys(w),t=w[s[Math.floor(Math.random()*s.length)]],o=0,a=0;for(let n=0;n<20&&(o=100*Math.floor(Math.random()*(d/100))+50,a=100*Math.floor(Math.random()*(d/100))+50,!(Math.hypot(o-d/2,a-d/2)>400&&!this.walls.some(r=>r.x<=o&&r.x+100>=o&&r.y<=a&&r.y+100>=a)&&!this.boxes.some(r=>r.x===o&&r.y===a)));n++);return{id:`bot-${l}`,x:o,y:a,size:E,hp:t.hp,maxHp:t.hp,powerCubes:0,config:t,isBot:!0,lastShot:0,angle:2*Math.random()*Math.PI,superCharge:0,lastSuper:0,ammo:3,maxAmmo:3,reloadTimer:0,lastCombatTime:0,poison:null}}),this.bullets=[],this.cubes=[],this.zones=[],this.creatures=[],this.tempWalls=[],this.lastTick=Date.now()}      shoot(e, l, s, t = !1) {
         let o = Date.now();
         if (t) {
           if (e.superCharge < 100) return;
@@ -156,9 +157,12 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
           if (t) {
             let maxDist = "edgar" === e.config.type ? 400 : 500;
             let dist = Math.min(Math.hypot(l - e.x, s - e.y), maxDist);
-            e.x += Math.cos(a) * dist, e.y += Math.sin(a) * dist, e.x = Math.max(0, Math.min(d, e.x)), e.y = Math.max(0, Math.min(d, e.y)), "el_primo" === e.config.type && [...this.bots, this.player].forEach(x => {
-              x.id !== e.id && Math.hypot(x.x - e.x, x.y - e.y) < 100 && (x.hp -= 1000, e.superCharge = Math.min(100, e.superCharge + 30))
-            })
+            e.x += Math.cos(a) * dist, e.y += Math.sin(a) * dist, e.x = Math.max(0, Math.min(d, e.x)), e.y = Math.max(0, Math.min(d, e.y)), "el_primo" === e.config.type && (
+              [...this.bots, this.player].forEach(x => {
+                x.id !== e.id && Math.hypot(x.x - e.x, x.y - e.y) < 100 && (x.hp -= 1000, e.superCharge = Math.min(100, e.superCharge + 30))
+              }),
+              this.walls = this.walls.filter(w => Math.hypot(w.x + 50 - e.x, w.y + 50 - e.y) > 100)
+            )
           } else if ("edgar" === e.config.type) setTimeout(() => n(a - .05), 0), setTimeout(() => n(a + .05), 150);
           else for (let r = 0; r < 4; r++) setTimeout(() => n(a + .1 * (Math.random() - .5)), 100 * r);
         } else if ("griff" === e.config.type) if (t) for (let r = -2; r <= 2; r++) n(a + .15 * r, 200, !0); else for (let r = 0; r < 3; r++) setTimeout(() => {
@@ -187,6 +191,24 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
             this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: 12 * Math.cos(a), dy: 12 * Math.sin(a), damage: 400, rangeRemaining: r, size: 20, color: "#f97316", type: "barley_super", isSuper: !0 });
           } else {
             this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: 10 * Math.cos(a), dy: 10 * Math.sin(a), damage: 300, rangeRemaining: r, size: 15, color: "#9333ea", type: "barley_main", isSuper: !1 });
+          }
+        } else if ("sprout" === e.config.type) {
+          let r = Math.min(Math.hypot(l - e.x, s - e.y), e.config.range);
+          if (t) {
+            this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: 12 * Math.cos(a), dy: 12 * Math.sin(a), damage: 0, rangeRemaining: r, size: 25, color: "#4ade80", type: "sprout_wall", isSuper: !0 });
+          } else {
+            this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: 11 * Math.cos(a), dy: 11 * Math.sin(a), damage: e.config.damage * (1 + .1 * e.powerCubes), rangeRemaining: r, size: 15, color: "#4ade80", type: "sprout_main", isSuper: !1, canBounce: !0 });
+          }
+        } else if ("crow" === e.config.type) {
+          if (t) {
+            let dist = Math.min(Math.hypot(l - e.x, s - e.y), 500);
+            e.dashState = { origin: { x: e.x, y: e.y }, target: { x: e.x + Math.cos(a) * dist, y: e.y + Math.sin(a) * dist }, return: !1, isBounce: !1, speed: 20, isJump: !0 };
+            for (let i = 0; i < 12; i++) {
+              let ang = (i / 12) * Math.PI * 2;
+              n(ang, 0, !0);
+            }
+          } else {
+            for (let r = -1; r <= 1; r++) n(a + 0.2 * r);
           }
         } else if ("poco" === e.config.type) if (t) {
           e.hp = Math.min(e.maxHp, e.hp + 2500);
@@ -217,6 +239,13 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
         [this.player, ...this.bots].forEach(i => {
           i.speedBuff = 1;
           i.hasSynergy = false;
+          // Apply poison
+          if (i.poison && e - i.poison.lastTick > 400) {
+            i.hp -= i.poison.damage;
+            i.poison.lastTick = e;
+            i.poison.ticks--;
+            if (i.poison.ticks <= 0) i.poison = null;
+          }
         });
 
         // Trio Synergy: Bandstand Trio (Poco, El Primo, Amber)
@@ -244,6 +273,15 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
           for (; f-- > 0;) {
             let u = !1;
             if (this.walls.forEach(h => {
+              let m = i.x, p = i.y;
+              i.x < h.x ? m = h.x : i.x > h.x + h.width && (m = h.x + h.width), i.y < h.y ? p = h.y : i.y > h.y + h.height && (p = h.y + h.height);
+              let y = Math.hypot(i.x - m, i.y - p);
+              if (y < i.size) {
+                u = !0, 0 === y && (y = 1);
+                let g = i.size - y, b = (i.x - m) / y, S = (i.y - p) / y;
+                i.x += b * g, i.y += S * g
+              }
+            }), this.tempWalls.forEach(h => {
               let m = i.x, p = i.y;
               i.x < h.x ? m = h.x : i.x > h.x + h.width && (m = h.x + h.width), i.y < h.y ? p = h.y : i.y > h.y + h.height && (p = h.y + h.height);
               let y = Math.hypot(i.x - m, i.y - p);
@@ -321,6 +359,7 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
               if (minDist < 50) {
                 nearest.hp -= c.damage;
                 this.zones.push({ id: Math.random() + "", ownerId: c.ownerId, x: c.x, y: c.y, radius: 150, duration: 500, createdAt: e, damage: 0 });
+                this.walls = this.walls.filter(w => Math.hypot(w.x + 50 - c.x, w.y + 50 - c.y) > 150);
                 c.hp = 0;
               }
             }
@@ -340,6 +379,13 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
                 this.bullets.push({ id: Math.random() + "", ownerId: c.ownerId, x: c.x, y: c.y, dx: 8 * Math.cos(angle), dy: 8 * Math.sin(angle), damage: 500, rangeRemaining: dist, size: 15, color: "#f97316", type: "penny_cannon_shot", isSuper: !1, hitIds: [] });
               }
             }
+          }
+        }
+
+        // Temp walls expiration
+        for (let i = this.tempWalls.length - 1; i >= 0; i--) {
+          if (e - this.tempWalls[i].createdAt > this.tempWalls[i].duration) {
+            this.tempWalls.splice(i, 1);
           }
         }
 
@@ -373,19 +419,53 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
               this.zones.push({ id: Math.random() + "", ownerId: t.ownerId, x: t.x, y: t.y, radius: 80, duration: 2500, createdAt: e, damage: 600 });
             } else if (t.type === "barley_super") {
               this.zones.push({ id: Math.random() + "", ownerId: t.ownerId, x: t.x, y: t.y, radius: 150, duration: 4000, createdAt: e, damage: 800 });
+            } else if (t.type === "sprout_main") {
+              if (t.canBounce) {
+                t.rangeRemaining = 150; t.canBounce = false; continue;
+              }
+              this.zones.push({ id: Math.random() + "", ownerId: t.ownerId, x: t.x, y: t.y, radius: 80, duration: 800, createdAt: e, damage: t.damage });
+            } else if (t.type === "sprout_wall") {
+              this.tempWalls.push({ x: t.x - 50, y: t.y - 50, width: 100, height: 100, createdAt: e, duration: 6000 });
             }
             if (t.type !== "tick_mine") { this.bullets.splice(s, 1); continue; }
           }
-          // Simple wall/entity collision for bullets
+          // Wall collision for bullets
           let hit = false;
-          let targets = [this.player, ...this.bots, ...this.boxes.filter(b => !b.isDestroyed), ...this.creatures];
-          for (let target of targets) {
-            if (target.id !== t.ownerId && !t.hitIds?.includes(target.id) && Math.hypot(t.x - target.x, t.y - target.y) < target.size) {
-              target.hp -= t.damage; target.lastCombatTime = e;
-              if (t.hitIds) t.hitIds.push(target.id);
-              let owner = [this.player, ...this.bots].find(n => n.id === t.ownerId);
-              if (owner && !target.id.startsWith("box")) owner.superCharge = Math.min(100, owner.superCharge + t.damage / 30);
-              if (!t.isSuper || t.type === "shelly" || t.type === "colt") { hit = true; break; }
+          const throwers = ["tick", "barley_main", "barley_super", "sprout_wall"];
+          if (!throwers.includes(t.type)) {
+            for (let i = this.walls.length - 1; i >= 0; i--) {
+              let w = this.walls[i];
+              if (t.x >= w.x && t.x <= w.x + w.width && t.y >= w.y && t.y <= w.y + w.height) {
+                if (t.isSuper && (t.type === "shelly" || t.type === "colt")) {
+                  this.walls.splice(i, 1);
+                  // Pierce through walls
+                } else if (t.type === "sprout_main" && t.canBounce) {
+                  t.dx *= -1; t.dy *= -1;
+                  t.canBounce = false;
+                  t.rangeRemaining += 100;
+                } else {
+                  hit = true;
+                  break;
+                }
+              }
+            }
+          }
+
+          if (!hit) {
+            let targets = [this.player, ...this.bots, ...this.boxes.filter(b => !b.isDestroyed), ...this.creatures];
+            for (let target of targets) {
+              if (target.id !== t.ownerId && !t.hitIds?.includes(target.id) && Math.hypot(t.x - target.x, t.y - target.y) < target.size) {
+                target.hp -= t.damage; target.lastCombatTime = e;
+                if (t.hitIds) t.hitIds.push(target.id);
+                let owner = [this.player, ...this.bots].find(n => n.id === t.ownerId);
+                if (owner && !target.id.startsWith("box")) {
+                  owner.superCharge = Math.min(100, owner.superCharge + t.damage / 30);
+                  if (owner.config.type === "crow" && "hp" in target) {
+                    target.poison = { ownerId: owner.id, damage: 80 * (1 + 0.1 * owner.powerCubes), ticks: 4, lastTick: e };
+                  }
+                }
+                if (!t.isSuper || t.type === "shelly" || t.type === "colt" || t.type === "crow") { hit = true; break; }
+              }
             }
           }
           if (hit) { this.bullets.splice(s, 1); continue; }
@@ -463,7 +543,7 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
             this.ctx.arc(0, 0, range, -cone / 2, cone / 2);
             this.ctx.closePath();
             this.ctx.fill();
-          } else if (p.config.type === "tick" || p.config.type === "barley" || p.config.type === "spike" || p.config.type === "edgar" || p.config.type === "el_primo" || (p.config.type === "penny" && isSuper)) {
+          } else if (p.config.type === "tick" || p.config.type === "barley" || p.config.type === "sprout" || p.config.type === "spike" || p.config.type === "edgar" || p.config.type === "el_primo" || p.config.type === "crow" || (p.config.type === "penny" && isSuper)) {
             let dist = Math.min(Math.hypot(this.mouse.x + this.camera.x - p.x, this.mouse.y + this.camera.y - p.y), range);
             this.ctx.strokeStyle = color;
             this.ctx.setLineDash([10, 5]);
@@ -479,7 +559,8 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
             if (p.config.type === "spike" && isSuper) radius = 120;
             if (p.config.type === "barley" && isSuper) radius = 150;
             if (p.config.type === "tick" && !isSuper) radius = 60;
-            if (p.config.type === "edgar" || p.config.type === "el_primo") radius = 60;
+            if (p.config.type === "edgar" || p.config.type === "el_primo" || p.config.type === "crow") radius = 60;
+            if (p.config.type === "sprout") radius = isSuper ? 100 : 60;
             this.ctx.arc(dist, 0, radius, 0, Math.PI * 2);
             this.ctx.fill();
           } else if (p.config.type === "amber") {
@@ -568,6 +649,20 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
           this.ctx.shadowBlur = 0;
         });
 
+        // Temp Walls
+        this.tempWalls.forEach(h => {
+          this.ctx.fillStyle = "#4ade80";
+          this.ctx.globalAlpha = 0.8;
+          this.ctx.fillRect(h.x, h.y, h.width, h.height);
+          this.ctx.strokeStyle = "white";
+          this.ctx.lineWidth = 2;
+          this.ctx.strokeRect(h.x, h.y, h.width, h.height);
+          this.ctx.globalAlpha = 1.0;
+          this.ctx.font = "40px Arial";
+          this.ctx.textAlign = "center";
+          this.ctx.fillText("💠", h.x + h.width / 2, h.y + h.height / 2 + 15);
+        });
+
         // Brawlers
         [this.player, ...this.bots].filter(Boolean).forEach(b => {
           // Synergy Aura
@@ -597,6 +692,18 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
           this.ctx.fillRect(b.size * 0.5, -5, 10, 10);
 
           this.ctx.restore();
+
+          // Poison effect rendering
+          if (b.poison) {
+            this.ctx.save();
+            this.ctx.translate(b.x, b.y);
+            this.ctx.globalAlpha = 0.4;
+            this.ctx.fillStyle = "#a855f7";
+            this.ctx.beginPath();
+            this.ctx.arc(0, 0, b.size + 10, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.restore();
+          }
 
           // Emoji / Icon
           this.ctx.font = "24px Arial";
