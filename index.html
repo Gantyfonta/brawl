@@ -57,6 +57,7 @@
         zones = [];
         creatureCount = 0;
         creatures = [];
+        posts = [];
         tempWalls = [];
         keys = {};
         mouse = { x: 0, y: 0, down: false };
@@ -236,6 +237,7 @@
           this.cubes = [];
           this.zones = [];
           this.creatures = [];
+          this.posts = [];
           this.tempWalls = [];
           this.lastTick = Date.now();
 
@@ -470,7 +472,53 @@
           } else n(a);
         } else if ("chuck" === e.config.type) {
           if (t) {
-            e.dashState = { origin: { x: e.x, y: e.y }, target: { x: e.x + Math.cos(a) * 600, y: e.y + Math.sin(a) * 600 }, return: !1, isBounce: !1, speed: 30, hitIds: [] };
+            // Find closest post within range
+            let myPosts = this.posts.filter(p => p.ownerId === e.id);
+            let nearestPost = null, minDist = 800; // Increased range for dash initiation
+            myPosts.forEach(p => {
+              let d = Math.hypot(p.x - e.x, p.y - e.y);
+              if (d < minDist) { minDist = d; nearestPost = p; }
+            });
+
+            if (nearestPost) {
+              // Dash sequence logic
+              let queue = [];
+              let current = nearestPost;
+              let visited = new Set([current.id]);
+              queue.push({ x: current.x, y: current.y });
+
+              // Chain to other posts
+              let changed = true;
+              while (changed) {
+                changed = false;
+                let bestNext = null, bestNextDist = 800;
+                myPosts.forEach(p => {
+                  if (!visited.has(p.id)) {
+                    let d = Math.hypot(p.x - current.x, p.y - current.y);
+                    if (d < bestNextDist) { bestNextDist = d; bestNext = p; }
+                  }
+                });
+                if (bestNext) {
+                  visited.add(bestNext.id);
+                  current = bestNext;
+                  queue.push({ x: current.x, y: current.y });
+                  changed = true;
+                }
+              }
+              e.dashState = { queue: queue, target: queue[0], speed: 35, hitIds: [] };
+            } else {
+              // Throw a post
+              let dist = Math.min(Math.hypot(l - e.x, s - e.y), 500);
+              let postX = e.x + Math.cos(a) * dist;
+              let postY = e.y + Math.sin(a) * dist;
+              
+              // Remove oldest if more than 3
+              if (myPosts.length >= 3) {
+                let oldestIndex = this.posts.findIndex(p => p.id === myPosts[0].id);
+                this.posts.splice(oldestIndex, 1);
+              }
+              this.posts.push({ id: "post-" + Math.random(), ownerId: e.id, x: postX, y: postY, createdAt: Date.now() });
+            }
           } else n(a);
         } else if ("amber" === e.config.type) {
           if (t) {
@@ -500,6 +548,11 @@
           i.damageResist = 1;
           i.hasSynergy = false;
 
+          // Chuck Automatic Super Charge
+          if (i.config.type === "chuck" && i.hp > 0) {
+            i.superCharge = Math.min(100, i.superCharge + (l / 5000) * 100); // 5 seconds full charge
+          }
+          
           // Shield Zones effect
           this.zones.forEach(z => {
             if (z.isShield && Math.hypot(i.x - z.x, i.y - z.y) < z.radius) {
@@ -515,6 +568,11 @@
               i.speedBuff = 1.3;
               [this.player, ...this.bots, ...this.boxes.filter(h => !h.isDestroyed)].forEach(h => {
                 if (h.id !== i.id && Math.hypot(i.x - h.x, i.y - h.y) < 150) {
+                  // Brawl Ball Team Check
+                  if (this.gameMode === "BRAWL_BALL") {
+                    let hUnit = [this.player, ...this.bots].find(u => u.id === h.id);
+                    if (hUnit && hUnit.team === i.team) return;
+                  }
                   if (!i.lastSpinDamage || Date.now() - i.lastSpinDamage > 500) {
                     h.hp -= 500 * (1 + .1 * i.powerCubes) * (h.damageResist || 1);
                     i.lastSpinDamage = Date.now();
@@ -666,10 +724,53 @@
 
         [this.player, ...this.bots].forEach(i => {
           if (i.ammo < i.maxAmmo ? (i.reloadTimer += l * (i.reloadSpeedBuff || 1), i.reloadTimer >= i.config.reloadTime && (i.ammo++, i.reloadTimer -= i.config.reloadTime)) : i.reloadTimer = 0, e - i.lastCombatTime > 3e3 && i.hp < i.maxHp && (i.hp = Math.min(i.maxHp, i.hp + i.maxHp * .13 * (l / 1e3))), i.dashState) {
-            let f = i.dashState.return ? i.dashState.origin : i.dashState.target, u = Math.hypot(f.x - i.x, f.y - i.y);
-            u < i.dashState.speed ? (i.x = f.x, i.y = f.y, !i.dashState.return && i.dashState.isBounce ? (i.dashState.return = !0, i.dashState.hitIds = []) : i.dashState = void 0) : (i.x += (f.x - i.x) / u * i.dashState.speed, i.y += (f.y - i.y) / u * i.dashState.speed), i.dashState && [this.player, ...this.bots, ...this.boxes.filter(h => !h.isDestroyed)].forEach(h => {
-              h.id === i.id || (i.dashState.hitIds && i.dashState.hitIds.includes(h.id)) || Math.hypot(i.x - h.x, i.y - h.y) < i.size + h.size && (h.hp -= ("colette" === i.config.type ? 2 * i.config.damage : 800) * (1 + .1 * i.powerCubes), "lastCombatTime" in h && (h.lastCombatTime = e), i.lastCombatTime = e, i.dashState.hitIds && i.dashState.hitIds.push(h.id), h.id.startsWith("box") || (i.superCharge = Math.min(100, i.superCharge + 25)))
+            let f = i.dashState.queue ? i.dashState.target : (i.dashState.return ? i.dashState.origin : i.dashState.target);
+            let u = Math.hypot(f.x - i.x, f.y - i.y);
+            
+            if (u < i.dashState.speed) {
+              i.x = f.x; i.y = f.y;
+              if (i.dashState.queue) {
+                i.dashState.queue.shift();
+                if (i.dashState.queue.length > 0) {
+                  i.dashState.target = i.dashState.queue[0];
+                  i.dashState.hitIds = []; // Allow hitting same enemies in next segment? Usually yes in BS
+                } else {
+                  i.dashState = undefined;
+                }
+              } else if (!i.dashState.return && i.dashState.isBounce) {
+                i.dashState.return = !0; i.dashState.hitIds = [];
+              } else {
+                i.dashState = undefined;
+              }
+            } else {
+              i.x += (f.x - i.x) / u * i.dashState.speed;
+              i.y += (f.y - i.y) / u * i.dashState.speed;
+            }
+
+            if (i.dashState) {
+              [this.player, ...this.bots, ...this.boxes.filter(h => !h.isDestroyed)].forEach(h => {
+              // Brawl Ball Team Check
+              if (this.gameMode === "BRAWL_BALL") {
+                let hUnit = [this.player, ...this.bots].find(u => u.id === h.id);
+                if (hUnit && hUnit.team === i.team) return;
+              }
+              if (h.id === i.id || (i.dashState.hitIds && i.dashState.hitIds.includes(h.id))) return;
+              
+              if (Math.hypot(i.x - h.x, i.y - h.y) < i.size + h.size) {
+                let dashDamage = 800;
+                if (i.config.type === "colette") dashDamage = 2 * i.config.damage;
+                else if (i.config.type === "chuck") dashDamage = i.config.damage * 4;
+                else if (i.config.type === "darryl") dashDamage = i.config.damage * 2;
+                else if (i.config.type === "edgar" || i.config.type === "el_primo" || i.config.type === "crow") dashDamage = i.config.damage * 3;
+                
+                h.hp -= dashDamage * (1 + .1 * i.powerCubes) * (h.damageResist || 1);
+                if ("lastCombatTime" in h) h.lastCombatTime = e;
+                i.lastCombatTime = e;
+                if (i.dashState.hitIds) i.dashState.hitIds.push(h.id);
+                if (!h.id.startsWith("box")) i.superCharge = Math.min(100, i.superCharge + 25);
+              }
             })
+            }
           }
         });
         let s = i => {
@@ -733,7 +834,18 @@
           let minDist = 2000;
           let shouldShoot = false;
 
+          // Search for enemies first (Fight priority)
+          const brawlers = [this.player, ...this.bots.filter(b => b.id !== i.id && b.hp > 0)];
+          let nearestEnemy = null, enemyDist = 3000;
+          brawlers.forEach(b => {
+             if (b.team !== i.team) {
+               let d = Math.hypot(b.x - i.x, b.y - i.y);
+               if (d < enemyDist) { enemyDist = d; nearestEnemy = b; }
+             }
+          });
+
           if (this.gameMode === "BRAWL_BALL" && this.ball) {
+            // Prioritize fighting nearby enemies over the ball, unless we have the ball
             if (this.ball.carrierId === i.id) {
               let targetY = i.team === "blue" ? 0 : 2000;
               moveAngle = Math.atan2(targetY - i.y, 500 - i.x);
@@ -741,6 +853,11 @@
                 target = { x: 500, y: targetY };
                 shouldShoot = true;
               }
+            } else if (nearestEnemy && enemyDist < 600) {
+              target = nearestEnemy;
+              minDist = enemyDist;
+              moveAngle = Math.atan2(target.y - i.y, target.x - i.x);
+              if (minDist < i.config.range) shouldShoot = true;
             } else if (!this.ball.carrierId) {
               moveAngle = Math.atan2(this.ball.y - i.y, this.ball.x - i.x);
             } else {
@@ -756,29 +873,22 @@
               }
             }
           } else {
-            const brawlers = [this.player, ...this.bots.filter(b => b.id !== i.id && b.hp > 0)];
             const boxes = this.boxes.filter(b => !b.isDestroyed);
             
-            let nearestBrawler = null, bDist = 3000;
-            brawlers.forEach(b => {
-              let d = Math.hypot(b.x - i.x, b.y - i.y);
-              if (d < bDist) { bDist = d; nearestBrawler = b; }
-            });
-
             let nearestBox = null, boxDist = 3000;
             boxes.forEach(b => {
               let d = Math.hypot(b.x - i.x, b.y - i.y);
               if (d < boxDist) { boxDist = d; nearestBox = b; }
             });
 
-          // Prioritize brawlers (players/bots) over boxes heavily
-          if (nearestBrawler && (bDist < 1500 || !nearestBox)) {
-            target = nearestBrawler;
-            minDist = bDist;
-          } else if (nearestBox) {
-            target = nearestBox;
-            minDist = boxDist;
-          }
+            // Prioritize brawlers (players/bots) over boxes heavily
+            if (nearestEnemy && (enemyDist < 1500 || !nearestBox)) {
+              target = nearestEnemy;
+              minDist = enemyDist;
+            } else if (nearestBox) {
+              target = nearestBox;
+              minDist = boxDist;
+            }
 
             if (target) moveAngle = Math.atan2(target.y - i.y, target.x - i.x);
 
@@ -871,7 +981,12 @@
           if (c.hp <= 0) { this.creatures.splice(s, 1); continue; }
 
           if (c.type === "tick_head" || c.type === "ash_rat") {
-            let targets = [this.player, ...this.bots, ...this.boxes.filter(b => !b.isDestroyed)].filter(t => t.id !== c.ownerId);
+            let owner = [this.player, ...this.bots].find(b => b.id === c.ownerId);
+            let targets = [this.player, ...this.bots, ...this.boxes.filter(b => !b.isDestroyed)].filter(t => {
+              if (t.id === c.ownerId) return false;
+              if (this.gameMode === "BRAWL_BALL" && owner && t.team === owner.team) return false;
+              return true;
+            });
             let nearest = null, minDist = 2000;
             targets.forEach(t => {
               let d = Math.hypot(t.x - c.x, t.y - c.y);
@@ -895,7 +1010,12 @@
             }
           } else if (c.type === "penny_cannon") {
             if (e - c.lastShot > 2500) {
-              let targets = [this.player, ...this.bots].filter(t => t.id !== c.ownerId);
+              let owner = [this.player, ...this.bots].find(b => b.id === c.ownerId);
+              let targets = [this.player, ...this.bots].filter(t => {
+                if (t.id === c.ownerId) return false;
+                if (this.gameMode === "BRAWL_BALL" && owner && t.team === owner.team) return false;
+                return true;
+              });
               let nearest = null, minDist = 1000;
               targets.forEach(t => {
                 let d = Math.hypot(t.x - c.x, t.y - c.y);
@@ -1032,9 +1152,12 @@
             let targets = [this.player, ...this.bots, ...this.boxes.filter(b => !b.isDestroyed), ...this.creatures];
             for (let target of targets) {
               if (target.id !== t.ownerId && !t.hitIds?.includes(target.id) && Math.hypot(t.x - target.x, t.y - target.y) < target.size) {
+                let owner = [this.player, ...this.bots].find(n => n.id === t.ownerId);
+                // Friendly Fire Check for Brawl Ball
+                if (this.gameMode === "BRAWL_BALL" && target.team && owner && target.team === owner.team) continue;
+
                 target.hp -= t.damage * (target.damageResist || 1); target.lastCombatTime = e;
                 if (t.hitIds) t.hitIds.push(target.id);
-                let owner = [this.player, ...this.bots].find(n => n.id === t.ownerId);
                 if (owner && !target.id.startsWith("box")) {
                   owner.superCharge = Math.min(100, owner.superCharge + t.damage / 30);
                   if (owner.config.type === "crow" && "hp" in target) {
@@ -1236,6 +1359,37 @@
           this.ctx.fillRect(w.x, w.y, w.width, w.height);
           this.ctx.fillStyle = "#64748b";
           this.ctx.fillRect(w.x + 10, w.y + 10, w.width - 20, w.height - 20);
+        });
+
+        // Draw Chuck Track Connections
+        for (let i = 0; i < this.posts.length; i++) {
+          for (let j = i + 1; j < this.posts.length; j++) {
+            let p1 = this.posts[i], p2 = this.posts[j];
+            if (p1.ownerId === p2.ownerId && Math.hypot(p1.x - p2.x, p1.y - p2.y) < 800) {
+              this.ctx.strokeStyle = "rgba(185, 28, 28, 0.4)";
+              this.ctx.lineWidth = 15;
+              this.ctx.setLineDash([20, 10]);
+              this.ctx.beginPath();
+              this.ctx.moveTo(p1.x, p1.y);
+              this.ctx.lineTo(p2.x, p2.y);
+              this.ctx.stroke();
+              this.ctx.setLineDash([]);
+            }
+          }
+        }
+
+        // Draw Chuck Posts
+        this.posts.forEach(p => {
+          this.ctx.fillStyle = "#b91c1c";
+          this.ctx.beginPath();
+          this.ctx.arc(p.x, p.y, 25, 0, Math.PI * 2);
+          this.ctx.fill();
+          this.ctx.strokeStyle = "white";
+          this.ctx.lineWidth = 3;
+          this.ctx.stroke();
+          this.ctx.font = "24px Arial";
+          this.ctx.textAlign = "center";
+          this.ctx.fillText("🚩", p.x, p.y + 8);
         });
 
         // Zones (Poison/Aura)
