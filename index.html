@@ -40,7 +40,7 @@
     <div id="game-ui" class="absolute inset-0 z-10 pointer-events-none"></div>
     <div id="game-container" class="absolute inset-0 z-0"></div>
     <script type="module">
-        var w={shelly:{name:"Shelly",type:"shelly",emoji:"\u{1F920}",hp:3600,speed:4,reloadTime:1500,fireRate:500,damage:300,range:400,bulletSpeed:10,bulletSize:10,color:"#8b5cf6",trio:"Western"},colt:{name:"Colt",type:"colt",emoji:"\u{1F52B}",hp:2800,speed:4,reloadTime:1600,fireRate:500,damage:450,range:600,bulletSpeed:12,bulletSize:8,color:"#ec4899",trio:"Western"},spike:{name:"Spike",type:"spike",emoji:"\u{1F335}",hp:2400,speed:4,reloadTime:2e3,fireRate:600,damage:560,range:500,bulletSpeed:9,bulletSize:12,color:"#22c55e",trio:"Western"},colette:{name:"Colette",type:"colette",emoji:"\u{1F4D6}",hp:3400,speed:4,reloadTime:1600,fireRate:500,damage:500,range:550,bulletSpeed:11,bulletSize:9,color:"#f43f5e",trio:"Gift Shop"},edgar:{name:"Edgar",type:"edgar",emoji:"\u{1F9E3}",hp:3e3,speed:5.5,reloadTime:1e3,fireRate:400,damage:540,range:150,bulletSpeed:15,bulletSize:20,color:"#1e1b4b",trio:"Gift Shop"},griff:{name:"Griff",type:"griff",emoji:"\u{1F4B0}",hp:3400,speed:4,reloadTime:1700,fireRate:600,damage:260,range:450,bulletSpeed:11,bulletSize:10,color:"#eab308",trio:"Gift Shop"},penny:{name:"Penny",type:"penny",emoji:"\u{1F3F4}\u200D\u2620\uFE0F",hp:3200,speed:4,reloadTime:1800,fireRate:700,damage:900,range:550,bulletSpeed:10,bulletSize:10,color:"#fb7185",trio:"Pirate"},darryl:{name:"Darryl",type:"darryl",emoji:"\u{1F6E2}\uFE0F",hp:5e3,speed:4,reloadTime:1800,fireRate:600,damage:240,range:350,bulletSpeed:10,bulletSize:12,color:"#0ea5e9",trio:"Pirate"},tick:{name:"Tick",type:"tick",emoji:"\u{1F4A3}",hp:2200,speed:4,reloadTime:2200,fireRate:800,damage:640,range:600,bulletSpeed:8,bulletSize:10,color:"#9ca3af",trio:"Pirate"},poco:{name:"Poco",type:"poco",emoji:"\u{1F3B8}",hp:4000,speed:4,reloadTime:1600,fireRate:500,damage:700,range:450,bulletSpeed:10,bulletSize:15,color:"#fbbf24",trio:"Bandstand"},el_primo:{name:"El Primo",type:"el_primo",emoji:"\u{1F93C}",hp:6000,speed:4.5,reloadTime:800,fireRate:600,damage:360,range:180,bulletSpeed:14,bulletSize:20,color:"#1e40af",trio:"Bandstand"},amber:{name:"Amber",type:"amber",emoji:"\u{1F525}",hp:3200,speed:4,reloadTime:150,fireRate:100,damage:200,range:500,bulletSpeed:13,bulletSize:8,color:"#f97316",trio:"Bandstand"},barley:{name:"Barley",type:"barley",emoji:"\u{1F37E}",hp:2400,speed:4,reloadTime:2e3,fireRate:600,damage:650,range:600,bulletSpeed:9,bulletSize:12,color:"#9333ea",trio:"Western"},sprout:{name:"Sprout",type:"sprout",emoji:"\u{1F6AB}",hp:3000,speed:4,reloadTime:1700,fireRate:600,damage:980,range:400,bulletSpeed:9,bulletSize:12,color:"#4ade80",trio:"Botany"},crow:{name:"Crow",type:"crow",emoji:"\u{2B1B}",hp:2400,speed:5,reloadTime:1400,fireRate:400,damage:320,range:500,bulletSpeed:14,bulletSize:6,color:"#1e293b",trio:"Crow"}},d=2500,B=9,P=25,E=30,A=60,L={1:10,2:8,3:6,4:4,5:2,6:1,7:-1,8:-2,9:-3,10:-4};function R(){let v=localStorage.getItem("mini_brawl_trophies_v2"),e={total:0,brawlers:{shelly:0,colt:0,spike:0,colette:0,edgar:0,griff:0,penny:0,darryl:0,tick:0,poco:0,el_primo:0,amber:0,barley:0,sprout:0,crow:0}};if(v){let l=JSON.parse(v);e.total=l.total||0,Object.keys(w).forEach(s=>{e.brawlers[s]=l.brawlers[s]||0})}return e}function j(v){localStorage.setItem("mini_brawl_trophies_v2",JSON.stringify(v))}class Game {
+        var w={shelly:{name:"Shelly",type:"shelly",emoji:"\u{1F920}",hp:3600,speed:4,reloadTime:1500,fireRate:500,damage:300,range:400,bulletSpeed:10,bulletSize:10,color:"#8b5cf6",trio:"Western"},colt:{name:"Colt",type:"colt",emoji:"\u{1F52B}",hp:2800,speed:4,reloadTime:1600,fireRate:500,damage:450,range:600,bulletSpeed:12,bulletSize:8,color:"#ec4899",trio:"Western"},spike:{name:"Spike",type:"spike",emoji:"\u{1F335}",hp:2400,speed:4,reloadTime:2e3,fireRate:600,damage:560,range:500,bulletSpeed:9,bulletSize:12,color:"#22c55e",trio:"Western"},colette:{name:"Colette",type:"colette",emoji:"\u{1F4D6}",hp:3400,speed:4,reloadTime:1600,fireRate:500,damage:500,range:550,bulletSpeed:11,bulletSize:9,color:"#f43f5e",trio:"Gift Shop"},edgar:{name:"Edgar",type:"edgar",emoji:"\u{1F9E3}",hp:3e3,speed:5.5,reloadTime:1e3,fireRate:400,damage:540,range:150,bulletSpeed:15,bulletSize:20,color:"#1e1b4b",trio:"Gift Shop"},griff:{name:"Griff",type:"griff",emoji:"\u{1F4B0}",hp:3400,speed:4,reloadTime:1700,fireRate:600,damage:260,range:450,bulletSpeed:11,bulletSize:10,color:"#eab308",trio:"Gift Shop"},penny:{name:"Penny",type:"penny",emoji:"\u{1F3F4}\u200D\u2620\uFE0F",hp:3200,speed:4,reloadTime:1800,fireRate:700,damage:900,range:550,bulletSpeed:10,bulletSize:10,color:"#fb7185",trio:"Pirate"},darryl:{name:"Darryl",type:"darryl",emoji:"\u{1F6E2}\uFE0F",hp:5e3,speed:4,reloadTime:1800,fireRate:600,damage:240,range:350,bulletSpeed:10,bulletSize:12,color:"#0ea5e9",trio:"Pirate"},tick:{name:"Tick",type:"tick",emoji:"\u{1F4A3}",hp:2200,speed:4,reloadTime:2200,fireRate:800,damage:640,range:600,bulletSpeed:8,bulletSize:10,color:"#9ca3af",trio:"Pirate"},poco:{name:"Poco",type:"poco",emoji:"\u{1F3B8}",hp:4000,speed:4,reloadTime:1600,fireRate:500,damage:700,range:450,bulletSpeed:10,bulletSize:15,color:"#fbbf24",trio:"Bandstand"},el_primo:{name:"El Primo",type:"el_primo",emoji:"\u{1F93C}",hp:6000,speed:4.5,reloadTime:800,fireRate:600,damage:360,range:180,bulletSpeed:14,bulletSize:20,color:"#1e40af",trio:"Bandstand"},amber:{name:"Amber",type:"amber",emoji:"\u{1F525}",hp:3200,speed:4,reloadTime:150,fireRate:100,damage:200,range:500,bulletSpeed:13,bulletSize:8,color:"#f97316",trio:"Bandstand"},ash:{name:"Ash",type:"ash",emoji:"\u{1F5D1}\uFE0F",hp:5200,speed:4.2,reloadTime:1400,fireRate:500,damage:800,range:250,bulletSpeed:12,bulletSize:20,color:"#475569",trio:"Castle Courtyard"},grom:{name:"Grom",type:"grom",emoji:"\u{1F3F0}",hp:3000,speed:4,reloadTime:1800,fireRate:800,damage:1100,range:650,bulletSpeed:10,bulletSize:15,color:"#ef4444",trio:"Castle Courtyard"},dynamike:{name:"Dynamike",type:"dynamike",emoji:"\u{1F9E8}",hp:2800,speed:4,reloadTime:1700,fireRate:600,damage:800,range:600,bulletSpeed:9,bulletSize:12,color:"#dc2626",trio:"Gem Miners"},carl:{name:"Carl",type:"carl",emoji:"\u26CF\uFE0F",hp:4400,speed:4,reloadTime:200,fireRate:1000,damage:660,range:500,bulletSpeed:11,bulletSize:14,color:"#4b5563",trio:"Gem Miners"},jacky:{name:"Jacky",type:"jacky",emoji:"\u{1F6A7}",hp:5000,speed:4.2,reloadTime:1800,fireRate:500,damage:1200,range:200,bulletSpeed:15,bulletSize:25,color:"#ca8a04",trio:"Gem Miners"},barley:{name:"Barley",type:"barley",emoji:"\u{1F37E}",hp:2400,speed:4,reloadTime:2e3,fireRate:600,damage:650,range:600,bulletSpeed:9,bulletSize:12,color:"#9333ea",trio:"Western"},sprout:{name:"Sprout",type:"sprout",emoji:"\u{1F6AB}",hp:3000,speed:4,reloadTime:1700,fireRate:600,damage:980,range:400,bulletSpeed:9,bulletSize:12,color:"#4ade80",trio:"Botany"},crow:{name:"Crow",type:"crow",emoji:"\u{1F985}",hp:2400,speed:5,reloadTime:1400,fireRate:400,damage:320,range:500,bulletSpeed:14,bulletSize:6,color:"#1e293b",trio:"Crow"}},d=2500,B=9,P=25,E=30,A=60,L={1:10,2:8,3:6,4:4,5:2,6:1,7:-1,8:-2,9:-3,10:-4};function R(){let v=localStorage.getItem("mini_brawl_trophies_v2"),e={total:0,brawlers:{shelly:0,colt:0,spike:0,colette:0,edgar:0,griff:0,penny:0,darryl:0,tick:0,poco:0,el_primo:0,amber:0,ash:0,grom:0,dynamike:0,carl:0,jacky:0,barley:0,sprout:0,crow:0}};if(v){let l=JSON.parse(v);e.total=l.total||0,Object.keys(w).forEach(s=>{e.brawlers[s]=l.brawlers[s]||0})}return e}function j(v){localStorage.setItem("mini_brawl_trophies_v2",JSON.stringify(v))}class Game {
         canvas;
         ctx;
         uiContainer;
@@ -67,6 +67,8 @@
         poisonProgress = 0;
         ball = null;
         scores = { blue: 0, red: 0 };
+        mapW = 2500;
+        mapH = 2500;
         constructor() {
           this.canvas = document.createElement("canvas"), this.ctx = this.canvas.getContext("2d"), document.getElementById("game-container").appendChild(this.canvas), this.uiContainer = document.getElementById("game-ui"), window.addEventListener("resize", () => {
             this.viewport.w = window.innerWidth, this.viewport.h = window.innerHeight, this.canvas.width = this.viewport.w, this.canvas.height = this.viewport.h
@@ -198,8 +200,33 @@
           })
         }), document.getElementById("back-button").onclick = () => this.renderMenu()
       }
-renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classList.remove("pointer-events-none"),this.uiContainer.classList.add("pointer-events-auto","flex","flex-col","items-center","justify-center");let s=L[e]||-5;this.trophies.brawlers[this.selectedBrawler.type]=Math.max(0,this.trophies.brawlers[this.selectedBrawler.type]+s),j(this.trophies),this.uiContainer.innerHTML=`<div class="text-center"><div class="text-8xl brawl-font italic font-black mb-4 ${e===1?"text-yellow-400":"text-slate-400"}">#${e}</div><div class="text-2xl uppercase mb-8 opacity-60">${e===1?"Showdown Victory!":`Rank ${e} - Defeated`}</div><div class="bg-slate-800 rounded-3xl p-6 mb-8 border-4 border-slate-700 min-w-80"><div class="flex flex-col gap-6"><div class="flex items-center justify-between gap-12"><span class="text-yellow-400 font-bold uppercase text-xl">\u{1F3C6} Trophies</span><span class="text-4xl font-black ${s>=0?"text-green-400":"text-red-400"}">${s>=0?"+":""}${s}</span></div><div class="flex items-center justify-between gap-12 border-t border-slate-700 pt-4"><span class="text-blue-400 font-bold uppercase text-xl">\u26A1 Power Cubes</span><span class="text-4xl font-black">${l}</span></div></div></div><button id="restart-button" class="bg-slate-100 hover:bg-white text-slate-900 px-12 py-4 rounded-full text-2xl brawl-font italic font-black transition-transform hover:scale-110">CONTINUE</button></div>`,          document.getElementById("restart-button").onclick = () => this.renderMenu();
-        }
+      renderGameOver(e, l, customTitle) {
+        this.state = "GAMEOVER";
+        this.clearUI();
+        this.uiContainer.classList.remove("pointer-events-none");
+        this.uiContainer.classList.add("pointer-events-auto", "flex", "flex-col", "items-center", "justify-center");
+        let s = L[e] || -5;
+        this.trophies.brawlers[this.selectedBrawler.type] = Math.max(0, this.trophies.brawlers[this.selectedBrawler.type] + s);
+        j(this.trophies);
+        this.uiContainer.innerHTML = `<div class="text-center">
+            <div class="text-8xl brawl-font italic font-black mb-4 ${e === 1 ? "text-yellow-400" : "text-slate-400"}">#${e}</div>
+            <div class="text-2xl uppercase mb-8 opacity-60">${customTitle || (e === 1 ? "Showdown Victory!" : `Rank ${e} - Defeated`)}</div>
+            <div class="bg-slate-800 rounded-3xl p-6 mb-8 border-4 border-slate-700 min-w-80">
+              <div class="flex flex-col gap-6">
+                <div class="flex items-center justify-between gap-12">
+                  <span class="text-yellow-400 font-bold uppercase text-xl">\u{1F3C6} Trophies</span>
+                  <span class="text-4xl font-black ${s >= 0 ? "text-green-400" : "text-red-400"}">${s >= 0 ? "+" : ""}${s}</span>
+                </div>
+                <div class="flex items-center justify-between gap-12 border-t border-slate-700 pt-4">
+                  <span class="text-blue-400 font-bold uppercase text-xl">\u26A1 Power Cubes</span>
+                  <span class="text-4xl font-black">${l}</span>
+                </div>
+              </div>
+            </div>
+            <button id="restart-button" class="bg-slate-100 hover:bg-white text-slate-900 px-12 py-4 rounded-full text-2xl brawl-font italic font-black transition-transform hover:scale-110">CONTINUE</button>
+          </div>`;
+        document.getElementById("restart-button").onclick = () => this.renderMenu();
+      }
         startGame() {
           this.state = "GAME";
           this.clearUI();
@@ -213,6 +240,8 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
           this.lastTick = Date.now();
 
           if (this.gameMode === "SHOWDOWN") {
+            this.mapW = d;
+            this.mapH = d;
             this.uiContainer.innerHTML = `
               <div class="absolute top-4 left-4 flex gap-4 pointer-events-none">
                 <div id="cube-container" class="bg-black/50 backdrop-blur-md px-6 py-2 rounded-full border-2 border-yellow-400 flex items-center gap-2">
@@ -248,6 +277,8 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
             this.ball = null;
           } else if (this.gameMode === "BRAWL_BALL") {
             const arenaW = 1000, arenaH = 2000;
+            this.mapW = arenaW;
+            this.mapH = arenaH;
             this.uiContainer.innerHTML = `
               <div class="absolute top-4 left-1/2 -translate-x-1/2 flex gap-8 pointer-events-none">
                 <div class="bg-blue-600/50 backdrop-blur-md px-8 py-3 rounded-2xl border-2 border-blue-400 text-3xl font-black italic shadow-xl" id="score-blue">0</div>
@@ -340,7 +371,7 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
           if (t) {
             let maxDist = "edgar" === e.config.type ? 400 : 500;
             let dist = Math.min(Math.hypot(l - e.x, s - e.y), maxDist);
-            e.x += Math.cos(a) * dist, e.y += Math.sin(a) * dist, e.x = Math.max(0, Math.min(d, e.x)), e.y = Math.max(0, Math.min(d, e.y)), "el_primo" === e.config.type && (
+            e.x += Math.cos(a) * dist, e.y += Math.sin(a) * dist, e.x = Math.max(0, Math.min(this.mapW, e.x)), e.y = Math.max(0, Math.min(this.mapH, e.y)), "el_primo" === e.config.type && (
               [...this.bots, this.player].forEach(x => {
                 x.id !== e.id && Math.hypot(x.x - e.x, x.y - e.y) < 100 && (x.hp -= 1000, e.superCharge = Math.min(100, e.superCharge + 30))
               }),
@@ -393,6 +424,42 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
           } else {
             for (let r = -1; r <= 1; r++) n(a + 0.2 * r);
           }
+        } else if ("ash" === e.config.type) {
+          if (t) {
+            for (let i = 0; i < 5; i++) {
+              let ang = a + (Math.random() - 0.5);
+              this.creatures.push({ id: "rat-" + Math.random(), ownerId: e.id, type: "ash_rat", x: e.x + Math.cos(ang) * 50, y: e.y + Math.sin(ang) * 50, hp: 1200, maxHp: 1200, size: 15, speed: 7, damage: 600 });
+            }
+          } else {
+            for (let r = -2; r <= 2; r++) n(a + .15 * r);
+          }
+        } else if ("grom" === e.config.type) {
+          let r = Math.min(Math.hypot(l - e.x, s - e.y), e.config.range);
+          if (t) {
+            this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: 12 * Math.cos(a), dy: 12 * Math.sin(a), damage: 2000, rangeRemaining: r, size: 25, color: "#ef4444", type: "grom_super", isSuper: !0 });
+          } else {
+            this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: 11 * Math.cos(a), dy: 11 * Math.sin(a), damage: e.config.damage, rangeRemaining: r, size: 18, color: "#ef4444", type: "grom_main", isSuper: !1 });
+          }
+        } else if ("dynamike" === e.config.type) {
+          let r = Math.min(Math.hypot(l - e.x, s - e.y), e.config.range);
+          if (t) {
+            this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: 10 * Math.cos(a), dy: 10 * Math.sin(a), damage: 3000, rangeRemaining: r, size: 30, color: "#dc2626", type: "dynamike_super", isSuper: !0 });
+          } else {
+            this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: 12 * Math.cos(a), dy: 12 * Math.sin(a), damage: e.config.damage, rangeRemaining: r, size: 15, color: "#dc2626", type: "dynamike_main", isSuper: !1 });
+          }
+        } else if ("carl" === e.config.type) {
+          if (t) {
+            e.spinState = { startTime: Date.now(), duration: 3000 };
+          } else if (!e.hasPickaxe) {
+            e.hasPickaxe = true;
+            this.bullets.push({ id: "carl-pickaxe-" + e.id, ownerId: e.id, x: e.x, y: e.y, dx: 14 * Math.cos(a), dy: 14 * Math.sin(a), damage: e.config.damage, rangeRemaining: e.config.range, size: 18, color: "#4b5563", type: "carl_main", isSuper: !1, returning: false, hitIds: [] });
+          }
+        } else if ("jacky" === e.config.type) {
+          if (t) {
+            this.zones.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, radius: 250, duration: 500, createdAt: Date.now(), damage: 500, pull: true });
+          } else {
+            this.zones.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, radius: 180, duration: 200, createdAt: Date.now(), damage: e.config.damage, isCircle: true });
+          }
         } else if ("poco" === e.config.type) if (t) {
           e.hp = Math.min(e.maxHp, e.hp + 2500);
           for (let r = -2; r <= 2; r++) n(a + .3 * r, 200, !0)
@@ -418,12 +485,29 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
         let e = Date.now(), l = e - this.lastTick;
         this.lastTick = e;
 
-        let mapW = this.gameMode === "BRAWL_BALL" ? 1000 : d;
-        let mapH = this.gameMode === "BRAWL_BALL" ? 2000 : d;
-
         [this.player, ...this.bots].forEach(i => {
           i.speedBuff = 1;
+          i.reloadSpeedBuff = 1;
+          i.damageResist = 1;
           i.hasSynergy = false;
+          
+          if (i.config.type === "carl" && i.spinState) {
+            if (Date.now() - i.spinState.startTime > i.spinState.duration) {
+              i.spinState = null;
+            } else {
+              i.speedBuff = 1.3;
+              [this.player, ...this.bots, ...this.boxes.filter(h => !h.isDestroyed)].forEach(h => {
+                if (h.id !== i.id && Math.hypot(i.x - h.x, i.y - h.y) < 150) {
+                  if (!i.lastSpinDamage || Date.now() - i.lastSpinDamage > 500) {
+                    h.hp -= 500 * (1 + .1 * i.powerCubes) * (h.damageResist || 1);
+                    i.lastSpinDamage = Date.now();
+                    if (!h.id.startsWith("box")) i.superCharge = Math.min(100, i.superCharge + 5);
+                  }
+                }
+              });
+            }
+          }
+
           // Respawn logic for Brawl Ball
           if (this.gameMode === "BRAWL_BALL" && i.hp <= 0) {
             i.respawnTimer = (i.respawnTimer || 0) + l;
@@ -451,6 +535,30 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
             if (Math.hypot(u1.x - u2.x, u1.y - u2.y) < 300) {
               u1.speedBuff = 1.25; u2.speedBuff = 1.25;
               u1.hasSynergy = true; u2.hasSynergy = true;
+            }
+          }
+        }
+
+        // Castle Courtyard Synergy (Ash, Grom): Damage Resistance
+        let castleUnits = [this.player, ...this.bots].filter(i => i.config.trio === "Castle Courtyard");
+        for (let i = 0; i < castleUnits.length; i++) {
+          for (let j = i + 1; j < castleUnits.length; j++) {
+            let u1 = castleUnits[i], u2 = castleUnits[j];
+            if (Math.hypot(u1.x - u2.x, u1.y - u2.y) < 300) {
+              u1.hasSynergy = true; u2.hasSynergy = true;
+              u1.damageResist = 0.7; u2.damageResist = 0.7; // 30% reduction
+            }
+          }
+        }
+
+        // Gem Miners Synergy (Dynamike, Carl, Jacky): Faster Reload
+        let minerUnits = [this.player, ...this.bots].filter(i => i.config.trio === "Gem Miners");
+        for (let i = 0; i < minerUnits.length; i++) {
+          for (let j = i + 1; j < minerUnits.length; j++) {
+            let u1 = minerUnits[i], u2 = minerUnits[j];
+            if (Math.hypot(u1.x - u2.x, u1.y - u2.y) < 300) {
+              u1.hasSynergy = true; u2.hasSynergy = true;
+              u1.reloadSpeedBuff = 1.5; u2.reloadSpeedBuff = 1.5;
             }
           }
         }
@@ -500,10 +608,18 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
                 // Goal detection (Blue goal at y=0, Red goal at y=2000)
                 if (this.ball.y < 50 && this.ball.x > 350 && this.ball.x < 650) {
                     this.scores.blue++;
-                    this.resetBall();
+                    if (this.scores.blue >= 2) {
+                        this.renderGameOver(1, 0, "Brawl Ball Victory!");
+                    } else {
+                        this.resetBall();
+                    }
                 } else if (this.ball.y > 1950 && this.ball.x > 350 && this.ball.x < 650) {
                     this.scores.red++;
-                    this.resetBall();
+                    if (this.scores.red >= 2) {
+                        this.renderGameOver(10, 0, "Brawl Ball Defeat!");
+                    } else {
+                        this.resetBall();
+                    }
                 }
 
                 // Pickup ball
@@ -520,7 +636,7 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
         }
 
         [this.player, ...this.bots].forEach(i => {
-          if (i.ammo < i.maxAmmo ? (i.reloadTimer += l, i.reloadTimer >= i.config.reloadTime && (i.ammo++, i.reloadTimer -= i.config.reloadTime)) : i.reloadTimer = 0, e - i.lastCombatTime > 3e3 && i.hp < i.maxHp && (i.hp = Math.min(i.maxHp, i.hp + i.maxHp * .13 * (l / 1e3))), i.dashState) {
+          if (i.ammo < i.maxAmmo ? (i.reloadTimer += l * (i.reloadSpeedBuff || 1), i.reloadTimer >= i.config.reloadTime && (i.ammo++, i.reloadTimer -= i.config.reloadTime)) : i.reloadTimer = 0, e - i.lastCombatTime > 3e3 && i.hp < i.maxHp && (i.hp = Math.min(i.maxHp, i.hp + i.maxHp * .13 * (l / 1e3))), i.dashState) {
             let f = i.dashState.return ? i.dashState.origin : i.dashState.target, u = Math.hypot(f.x - i.x, f.y - i.y);
             u < i.dashState.speed ? (i.x = f.x, i.y = f.y, !i.dashState.return && i.dashState.isBounce ? (i.dashState.return = !0, i.dashState.hitIds = []) : i.dashState = void 0) : (i.x += (f.x - i.x) / u * i.dashState.speed, i.y += (f.y - i.y) / u * i.dashState.speed), i.dashState && [this.player, ...this.bots, ...this.boxes.filter(h => !h.isDestroyed)].forEach(h => {
               h.id === i.id || i.dashState.hitIds.includes(h.id) || Math.hypot(i.x - h.x, i.y - h.y) < i.size + h.size && (h.hp -= ("colette" === i.config.type ? 2 * i.config.damage : 800) * (1 + .1 * i.powerCubes), "lastCombatTime" in h && (h.lastCombatTime = e), i.lastCombatTime = e, i.dashState.hitIds.push(h.id), h.id.startsWith("box") || (i.superCharge = Math.min(100, i.superCharge + 25)))
@@ -572,16 +688,16 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
           let u = this.mouse.x + this.camera.x, h = this.mouse.y + this.camera.y;
           this.player.angle = Math.atan2(h - this.player.y, u - this.player.x), this.mouse.down && !this.isAimingSuper && this.shoot(this.player, u, h)
         }
-        s(this.player), this.player.x = Math.max(0, Math.min(d, this.player.x)), this.player.y = Math.max(0, Math.min(d, this.player.y));
+        s(this.player), this.player.x = Math.max(0, Math.min(this.mapW, this.player.x)), this.player.y = Math.max(0, Math.min(this.mapH, this.player.y));
         let t = 100, o = this.player.x + Math.cos(this.player.angle) * t - this.viewport.w / 2, a = this.player.y + Math.sin(this.player.angle) * t - this.viewport.h / 2;
         this.camera.x += .08 * (o - this.camera.x);
         this.camera.y += .08 * (a - this.camera.y);
-        this.camera.x = Math.max(0, Math.min(mapW - this.viewport.w, this.camera.x));
-        this.camera.y = Math.max(0, Math.min(mapH - this.viewport.h, this.camera.y));
+        this.camera.x = Math.max(0, Math.min(this.mapW - this.viewport.w, this.camera.x));
+        this.camera.y = Math.max(0, Math.min(this.mapH - this.viewport.h, this.camera.y));
 
         this.bots.forEach(i => {
           if (i.hp <= 0) return;
-          if (i.dashState) return s(i), i.x = Math.max(0, Math.min(d, i.x)), void (i.y = Math.max(0, Math.min(d, i.y)));
+          if (i.dashState) return s(i), i.x = Math.max(0, Math.min(this.mapW, i.x)), void (i.y = Math.max(0, Math.min(this.mapH, i.y)));
 
           if (this.gameMode === "BRAWL_BALL" && this.ball) {
             if (this.ball.carrierId === i.id) {
@@ -613,8 +729,8 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
               }
             }
             s(i);
-            i.x = Math.max(0, Math.min(mapW, i.x));
-            i.y = Math.max(0, Math.min(mapH, i.y));
+            i.x = Math.max(0, Math.min(this.mapW, i.x));
+            i.y = Math.max(0, Math.min(this.mapH, i.y));
           } else {
             let f = [this.player, ...this.bots.filter(m => m.id !== i.id), ...this.boxes.filter(m => !m.isDestroyed)], u = null, h = 2e3;
             if (f.forEach(m => {
@@ -622,7 +738,7 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
               p < h && (h = p, u = m)
             }), u) {
               let m = Math.atan2(u.y - i.y, u.x - i.x);
-              i.angle = m, h > .7 * i.config.range && (i.x += Math.cos(m) * i.config.speed * i.speedBuff, i.y += Math.sin(m) * i.config.speed * i.speedBuff), s(i), i.x = Math.max(0, Math.min(d, i.x)), i.y = Math.max(0, Math.min(d, i.y)), h < i.config.range && this.shoot(i, u.x, u.y), i.superCharge >= 100 && this.shoot(i, u.x, u.y, !0)
+              i.angle = m, h > .7 * i.config.range && (i.x += Math.cos(m) * i.config.speed * i.speedBuff, i.y += Math.sin(m) * i.config.speed * i.speedBuff), s(i), i.x = Math.max(0, Math.min(this.mapW, i.x)), i.y = Math.max(0, Math.min(this.mapH, i.y)), h < i.config.range && this.shoot(i, u.x, u.y), i.superCharge >= 100 && this.shoot(i, u.x, u.y, !0)
             }
           }
         }), this.updateWorldObjects(e, l);
@@ -638,12 +754,15 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
       }
 
       resetBall() {
-          this.ball = { x: 500, y: 1000, dx: 0, dy: 0, carrierId: null, radius: 25 };
-          [this.player, ...this.bots].forEach(b => {
-              b.x = b.team === "blue" ? 500 + (Math.random() - 0.5) * 400 : 500 + (Math.random() - 0.5) * 400;
-              b.y = b.team === "blue" ? 1800 : 200;
-              b.hp = b.maxHp;
-          });
+        const arenaW = 1000, arenaH = 2000;
+        this.ball = { x: arenaW / 2, y: arenaH / 2, dx: 0, dy: 0, carrierId: null, radius: 25 };
+        [this.player, ...this.bots].forEach((b, idx) => {
+          b.x = arenaW / 2 + (idx % 3 - 1) * 200;
+          b.y = b.team === "blue" ? arenaH - 200 : 200;
+          b.hp = b.maxHp;
+          b.ammo = 3;
+          b.superCharge = 0;
+        });
       }
 
       updateWorldObjects(e, l) {
@@ -652,8 +771,8 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
           let c = this.creatures[s];
           if (c.hp <= 0) { this.creatures.splice(s, 1); continue; }
 
-          if (c.type === "tick_head") {
-            let targets = [this.player, ...this.bots].filter(t => t.id !== c.ownerId);
+          if (c.type === "tick_head" || c.type === "ash_rat") {
+            let targets = [this.player, ...this.bots, ...this.boxes.filter(b => !b.isDestroyed)].filter(t => t.id !== c.ownerId);
             let nearest = null, minDist = 2000;
             targets.forEach(t => {
               let d = Math.hypot(t.x - c.x, t.y - c.y);
@@ -666,9 +785,12 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
               c.y += Math.sin(angle) * c.speed;
 
               if (minDist < 50) {
-                nearest.hp -= c.damage;
-                this.zones.push({ id: Math.random() + "", ownerId: c.ownerId, x: c.x, y: c.y, radius: 150, duration: 500, createdAt: e, damage: 0 });
-                this.walls = this.walls.filter(w => Math.hypot(w.x + 50 - c.x, w.y + 50 - c.y) > 150);
+                nearest.hp -= c.damage * (nearest.damageResist || 1);
+                if (c.type === "ash_rat") {
+                    let owner = [this.player, ...this.bots].find(b => b.id === c.ownerId);
+                    if (owner) owner.superCharge = Math.min(100, owner.superCharge + 8);
+                }
+                this.zones.push({ id: Math.random() + "", ownerId: c.ownerId, x: c.x, y: c.y, radius: 100, duration: 300, createdAt: e, damage: 0 });
                 c.hp = 0;
               }
             }
@@ -701,10 +823,21 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
         for (let s = this.zones.length - 1; s >= 0; s--) {
           let t = this.zones[s];
           if (e - t.createdAt > t.duration) { this.zones.splice(s, 1); continue; }
+          
+          if (t.pull) {
+            [this.player, ...this.bots].forEach(o => {
+              if (o.id !== t.ownerId && Math.hypot(o.x - t.x, o.y - t.y) < t.radius) {
+                let ang = Math.atan2(t.y - o.y, t.x - o.x);
+                o.x += Math.cos(ang) * 10;
+                o.y += Math.sin(ang) * 10;
+              }
+            });
+          }
+
           if (Math.floor((e - t.createdAt) / 500) !== Math.floor((e - t.createdAt - l) / 500)) {
             [this.player, ...this.bots].forEach(o => {
               if (o.id !== t.ownerId && Math.hypot(o.x - t.x, o.y - t.y) < t.radius + o.size) {
-                o.hp -= t.damage;
+                o.hp -= t.damage * (o.damageResist || 1);
                 o.lastCombatTime = e;
                 let a = [this.player, ...this.bots].find(n => n.id === t.ownerId);
                 if (a) a.superCharge = Math.min(100, a.superCharge + 3);
@@ -715,13 +848,42 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
         for (let s = this.bullets.length - 1; s >= 0; s--) {
           let t = this.bullets[s];
           if (t.duration && e - t.createdAt > t.duration) { this.bullets.splice(s, 1); continue; }
-          t.x += t.dx; t.y += t.dy;
-          t.rangeRemaining -= Math.hypot(t.dx, t.dy);
-          if (t.rangeRemaining <= 0) {
+          if (t.type === "carl_main") {
+            let owner = [this.player, ...this.bots].find(b => b.id === t.ownerId);
+            if (!owner || owner.hp <= 0) { this.bullets.splice(s, 1); continue; }
+
+            if (t.returning) {
+              let ang = Math.atan2(owner.y - t.y, owner.x - t.x);
+              t.dx = Math.cos(ang) * 15;
+              t.dy = Math.sin(ang) * 15;
+              if (Math.hypot(owner.x - t.x, owner.y - t.y) < 40) {
+                owner.hasPickaxe = false;
+                this.bullets.splice(s, 1);
+                continue;
+              }
+            } else if (t.rangeRemaining <= 0) {
+              t.returning = true;
+            }
+            t.x += t.dx; t.y += t.dy;
+            t.rangeRemaining -= Math.hypot(t.dx, t.dy);
+          } else {
+            t.x += t.dx; t.y += t.dy;
+            t.rangeRemaining -= Math.hypot(t.dx, t.dy);
+          }
+
+          if (t.rangeRemaining <= 0 && t.type !== "carl_main") {
             if (t.type === "spike" && t.isSuper) {
               this.zones.push({ id: Math.random() + "", ownerId: t.ownerId, x: t.x, y: t.y, radius: 120, duration: 4000, createdAt: e, damage: 400 });
             } else if (t.type === "tick") {
               t.dx = 0; t.dy = 0; t.rangeRemaining = 99999; t.createdAt = e; t.duration = t.isSuper ? 6000 : 2000; t.type = "tick_mine"; continue;
+            } else if (t.type === "grom_main" || t.type === "grom_super") {
+                let dirs = [0, Math.PI/2, Math.PI, 3*Math.PI/2];
+                let isSuper = t.type === "grom_super";
+                dirs.forEach(d => {
+                  this.bullets.push({ id: Math.random()+"", ownerId: t.ownerId, x: t.x, y: t.y, dx: Math.cos(d)*10, dy: Math.sin(d)*10, damage: t.damage, rangeRemaining: isSuper ? 300 : 200, size: isSuper ? 20 : 12, color: "#ef4444", type: "grom_sub", isSuper: isSuper, hitIds: [] });
+                });
+            } else if (t.type === "dynamike_main" || t.type === "dynamike_super") {
+                this.zones.push({ id: Math.random() + "", ownerId: t.ownerId, x: t.x, y: t.y, radius: t.type === "dynamike_super" ? 200 : 100, duration: 500, createdAt: e, damage: t.damage });
             } else if (t.type === "amber_oil" || t.type === "penny_cannon_shot") {
               this.zones.push({ id: Math.random() + "", ownerId: t.ownerId, x: t.x, y: t.y, radius: 100, duration: 6000, createdAt: e, damage: 500 });
             } else if (t.type === "barley_main") {
@@ -764,7 +926,7 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
             let targets = [this.player, ...this.bots, ...this.boxes.filter(b => !b.isDestroyed), ...this.creatures];
             for (let target of targets) {
               if (target.id !== t.ownerId && !t.hitIds?.includes(target.id) && Math.hypot(t.x - target.x, t.y - target.y) < target.size) {
-                target.hp -= t.damage; target.lastCombatTime = e;
+                target.hp -= t.damage * (target.damageResist || 1); target.lastCombatTime = e;
                 if (t.hitIds) t.hitIds.push(target.id);
                 let owner = [this.player, ...this.bots].find(n => n.id === t.ownerId);
                 if (owner && !target.id.startsWith("box")) {
@@ -800,11 +962,9 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
         this.ctx.translate(-this.camera.x, -this.camera.y);
 
         // Map grid
-        let mapW = this.gameMode === "BRAWL_BALL" ? 1000 : d;
-        let mapH = this.gameMode === "BRAWL_BALL" ? 2000 : d;
-        for (let y = 0; y < mapH; y += 100) {
+        for (let y = 0; y < this.mapH; y += 100) {
           if (y < this.camera.y - 100 || y > this.camera.y + this.viewport.h) continue;
-          for (let x = 0; x < mapW; x += 100) {
+          for (let x = 0; x < this.mapW; x += 100) {
             if (x < this.camera.x - 100 || x > this.camera.x + this.viewport.w) continue;
             this.ctx.fillStyle = (x / 100 + y / 100) % 2 === 0 ? "#a16207" : "#854d0e";
             this.ctx.fillRect(x, y, 100, 100);
@@ -907,7 +1067,7 @@ renderGameOver(e,l){this.state="GAMEOVER",this.clearUI(),this.uiContainer.classL
         // Map Border
         this.ctx.strokeStyle = "#ef4444";
         this.ctx.lineWidth = 10;
-        this.ctx.strokeRect(0, 0, mapW, mapH);
+        this.ctx.strokeRect(0, 0, this.mapW, this.mapH);
 
         if (this.gameMode === "SHOWDOWN" && this.currentPoisonRadius) {
           this.ctx.save();
