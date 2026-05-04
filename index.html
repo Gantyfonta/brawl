@@ -416,7 +416,7 @@
         } else if ("crow" === e.config.type) {
           if (t) {
             let dist = Math.min(Math.hypot(l - e.x, s - e.y), 500);
-            e.dashState = { origin: { x: e.x, y: e.y }, target: { x: e.x + Math.cos(a) * dist, y: e.y + Math.sin(a) * dist }, return: !1, isBounce: !1, speed: 20, isJump: !0 };
+            e.dashState = { origin: { x: e.x, y: e.y }, target: { x: e.x + Math.cos(a) * dist, y: e.y + Math.sin(a) * dist }, return: !1, isBounce: !1, speed: 20, isJump: !0, hitIds: [] };
             for (let i = 0; i < 12; i++) {
               let ang = (i / 12) * Math.PI * 2;
               n(ang, 0, !0);
@@ -436,16 +436,16 @@
         } else if ("grom" === e.config.type) {
           let r = Math.min(Math.hypot(l - e.x, s - e.y), e.config.range);
           if (t) {
-            this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: 12 * Math.cos(a), dy: 12 * Math.sin(a), damage: 2000, rangeRemaining: r, size: 25, color: "#ef4444", type: "grom_super", isSuper: !0 });
+            this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: 12 * Math.cos(a), dy: 12 * Math.sin(a), damage: 2000, rangeRemaining: r, size: 25, color: "#ef4444", type: "grom_super", isSuper: !0, hitIds: [] });
           } else {
-            this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: 11 * Math.cos(a), dy: 11 * Math.sin(a), damage: e.config.damage, rangeRemaining: r, size: 18, color: "#ef4444", type: "grom_main", isSuper: !1 });
+            this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: 11 * Math.cos(a), dy: 11 * Math.sin(a), damage: e.config.damage, rangeRemaining: r, size: 18, color: "#ef4444", type: "grom_main", isSuper: !1, hitIds: [] });
           }
         } else if ("dynamike" === e.config.type) {
           let r = Math.min(Math.hypot(l - e.x, s - e.y), e.config.range);
           if (t) {
-            this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: 10 * Math.cos(a), dy: 10 * Math.sin(a), damage: 3000, rangeRemaining: r, size: 30, color: "#dc2626", type: "dynamike_super", isSuper: !0 });
+            this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: 10 * Math.cos(a), dy: 10 * Math.sin(a), damage: 3000, rangeRemaining: r, size: 30, color: "#dc2626", type: "dynamike_super", isSuper: !0, hitIds: [] });
           } else {
-            this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: 12 * Math.cos(a), dy: 12 * Math.sin(a), damage: e.config.damage, rangeRemaining: r, size: 15, color: "#dc2626", type: "dynamike_main", isSuper: !1 });
+            this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: 12 * Math.cos(a), dy: 12 * Math.sin(a), damage: e.config.damage, rangeRemaining: r, size: 15, color: "#dc2626", type: "dynamike_main", isSuper: !1, hitIds: [] });
           }
         } else if ("carl" === e.config.type) {
           if (t) {
@@ -639,7 +639,7 @@
           if (i.ammo < i.maxAmmo ? (i.reloadTimer += l * (i.reloadSpeedBuff || 1), i.reloadTimer >= i.config.reloadTime && (i.ammo++, i.reloadTimer -= i.config.reloadTime)) : i.reloadTimer = 0, e - i.lastCombatTime > 3e3 && i.hp < i.maxHp && (i.hp = Math.min(i.maxHp, i.hp + i.maxHp * .13 * (l / 1e3))), i.dashState) {
             let f = i.dashState.return ? i.dashState.origin : i.dashState.target, u = Math.hypot(f.x - i.x, f.y - i.y);
             u < i.dashState.speed ? (i.x = f.x, i.y = f.y, !i.dashState.return && i.dashState.isBounce ? (i.dashState.return = !0, i.dashState.hitIds = []) : i.dashState = void 0) : (i.x += (f.x - i.x) / u * i.dashState.speed, i.y += (f.y - i.y) / u * i.dashState.speed), i.dashState && [this.player, ...this.bots, ...this.boxes.filter(h => !h.isDestroyed)].forEach(h => {
-              h.id === i.id || i.dashState.hitIds.includes(h.id) || Math.hypot(i.x - h.x, i.y - h.y) < i.size + h.size && (h.hp -= ("colette" === i.config.type ? 2 * i.config.damage : 800) * (1 + .1 * i.powerCubes), "lastCombatTime" in h && (h.lastCombatTime = e), i.lastCombatTime = e, i.dashState.hitIds.push(h.id), h.id.startsWith("box") || (i.superCharge = Math.min(100, i.superCharge + 25)))
+              h.id === i.id || (i.dashState.hitIds && i.dashState.hitIds.includes(h.id)) || Math.hypot(i.x - h.x, i.y - h.y) < i.size + h.size && (h.hp -= ("colette" === i.config.type ? 2 * i.config.damage : 800) * (1 + .1 * i.powerCubes), "lastCombatTime" in h && (h.lastCombatTime = e), i.lastCombatTime = e, i.dashState.hitIds && i.dashState.hitIds.push(h.id), h.id.startsWith("box") || (i.superCharge = Math.min(100, i.superCharge + 25)))
             })
           }
         });
@@ -699,49 +699,119 @@
           if (i.hp <= 0) return;
           if (i.dashState) return s(i), i.x = Math.max(0, Math.min(this.mapW, i.x)), void (i.y = Math.max(0, Math.min(this.mapH, i.y)));
 
+          let moveAngle = i.angle;
+          let target = null;
+          let minDist = 2000;
+          let shouldShoot = false;
+
           if (this.gameMode === "BRAWL_BALL" && this.ball) {
             if (this.ball.carrierId === i.id) {
               let targetY = i.team === "blue" ? 0 : 2000;
-              let m = Math.atan2(targetY - i.y, 500 - i.x);
-              i.angle = m;
-              i.x += Math.cos(m) * i.config.speed * i.speedBuff;
-              i.y += Math.sin(m) * i.config.speed * i.speedBuff;
-              if (Math.hypot(500 - i.x, targetY - i.y) < 400 || Math.random() < 0.02) this.shoot(i, 500, targetY);
+              moveAngle = Math.atan2(targetY - i.y, 500 - i.x);
+              if (Math.hypot(500 - i.x, targetY - i.y) < 400 || Math.random() < 0.02) {
+                target = { x: 500, y: targetY };
+                shouldShoot = true;
+              }
             } else if (!this.ball.carrierId) {
-              let m = Math.atan2(this.ball.y - i.y, this.ball.x - i.x);
-              i.angle = m;
-              i.x += Math.cos(m) * i.config.speed * i.speedBuff;
-              i.y += Math.sin(m) * i.config.speed * i.speedBuff;
+              moveAngle = Math.atan2(this.ball.y - i.y, this.ball.x - i.x);
             } else {
               let carrier = [this.player, ...this.bots].find(b => b.id === this.ball.carrierId);
               if (carrier && carrier.team !== i.team) {
-                let m = Math.atan2(carrier.y - i.y, carrier.x - i.x);
-                i.angle = m;
-                i.x += Math.cos(m) * i.config.speed * i.speedBuff;
-                i.y += Math.sin(m) * i.config.speed * i.speedBuff;
-                if (Math.hypot(carrier.x - i.x, carrier.y - i.y) < i.config.range) this.shoot(i, carrier.x, carrier.y);
+                moveAngle = Math.atan2(carrier.y - i.y, carrier.x - i.x);
+                target = carrier;
+                minDist = Math.hypot(target.x - i.x, target.y - i.y);
+                if (minDist < i.config.range) shouldShoot = true;
               } else {
                 let targetY = i.team === "blue" ? 500 : 1500;
-                let m = Math.atan2(targetY - i.y, 500 - i.x);
-                i.angle = m;
-                i.x += Math.cos(m) * i.config.speed * i.speedBuff;
-                i.y += Math.sin(m) * i.config.speed * i.speedBuff;
+                moveAngle = Math.atan2(targetY - i.y, 500 - i.x);
               }
             }
-            s(i);
-            i.x = Math.max(0, Math.min(this.mapW, i.x));
-            i.y = Math.max(0, Math.min(this.mapH, i.y));
           } else {
-            let f = [this.player, ...this.bots.filter(m => m.id !== i.id), ...this.boxes.filter(m => !m.isDestroyed)], u = null, h = 2e3;
-            if (f.forEach(m => {
-              let p = Math.hypot(m.x - i.x, m.y - i.y);
-              p < h && (h = p, u = m)
-            }), u) {
-              let m = Math.atan2(u.y - i.y, u.x - i.x);
-              i.angle = m, h > .7 * i.config.range && (i.x += Math.cos(m) * i.config.speed * i.speedBuff, i.y += Math.sin(m) * i.config.speed * i.speedBuff), s(i), i.x = Math.max(0, Math.min(this.mapW, i.x)), i.y = Math.max(0, Math.min(this.mapH, i.y)), h < i.config.range && this.shoot(i, u.x, u.y), i.superCharge >= 100 && this.shoot(i, u.x, u.y, !0)
+            const brawlers = [this.player, ...this.bots.filter(b => b.id !== i.id && b.hp > 0)];
+            const boxes = this.boxes.filter(b => !b.isDestroyed);
+            
+            let nearestBrawler = null, bDist = 3000;
+            brawlers.forEach(b => {
+              let d = Math.hypot(b.x - i.x, b.y - i.y);
+              if (d < bDist) { bDist = d; nearestBrawler = b; }
+            });
+
+            let nearestBox = null, boxDist = 3000;
+            boxes.forEach(b => {
+              let d = Math.hypot(b.x - i.x, b.y - i.y);
+              if (d < boxDist) { boxDist = d; nearestBox = b; }
+            });
+
+            // Prioritize brawlers if close or no boxes left
+            if (nearestBrawler && (bDist < 1000 || !nearestBox)) {
+              target = nearestBrawler;
+              minDist = bDist;
+            } else if (nearestBox) {
+              target = nearestBox;
+              minDist = boxDist;
+            }
+
+            if (target) moveAngle = Math.atan2(target.y - i.y, target.x - i.x);
+
+            // Poison avoidance (Showdown)
+            if (this.gameMode === "SHOWDOWN" && this.currentPoisonRadius) {
+              const distFromCenter = Math.hypot(i.x - 1250, i.y - 1250);
+              if (distFromCenter > this.currentPoisonRadius - 200) {
+                moveAngle = Math.atan2(1250 - i.y, 1250 - i.x);
+              }
             }
           }
-        }), this.updateWorldObjects(e, l);
+
+          // Movement with Wall Avoidance
+          i.angle = moveAngle;
+          let speed = i.config.speed * i.speedBuff;
+          let dx = Math.cos(moveAngle) * speed;
+          let dy = Math.sin(moveAngle) * speed;
+
+          // Simple "raycast" to check for wall ahead
+          const checkWall = (qx, qy) => {
+            for (const w of this.walls) {
+              if (qx > w.x && qx < w.x + w.width && qy > w.y && qy < w.y + w.height) return true;
+            }
+            return false;
+          };
+
+          if (checkWall(i.x + dx * 10, i.y + dy * 10)) {
+            // Try steering
+            for (let angleOff = 0.5; angleOff < 2.5; angleOff += 0.5) {
+              let adx = Math.cos(moveAngle + angleOff) * speed;
+              let ady = Math.sin(moveAngle + angleOff) * speed;
+              if (!checkWall(i.x + adx * 10, i.y + ady * 10)) {
+                dx = adx; dy = ady; break;
+              }
+              adx = Math.cos(moveAngle - angleOff) * speed;
+              ady = Math.sin(moveAngle - angleOff) * speed;
+              if (!checkWall(i.x + adx * 10, i.y + ady * 10)) {
+                dx = adx; dy = ady; break;
+              }
+            }
+          }
+
+          if (target && minDist > i.config.range * 0.7) {
+            i.x += dx; i.y += dy;
+          } else if (!target) {
+            i.x += dx; i.y += dy;
+          }
+
+          // Combat
+          if (target && minDist < i.config.range) {
+             this.shoot(i, target.x, target.y);
+             if (i.superCharge >= 100) this.shoot(i, target.x, target.y, true);
+          } else if (shouldShoot && target) {
+             this.shoot(i, target.x, target.y);
+          }
+
+          s(i);
+          i.x = Math.max(0, Math.min(this.mapW, i.x));
+          i.y = Math.max(0, Math.min(this.mapH, i.y));
+        });
+
+        this.updateWorldObjects(e, l);
         let n = document.getElementById("hp-fill"), r = document.getElementById("hp-text"), c = document.getElementById("cube-counter"), x = document.getElementById("player-counter"), M = document.getElementById("super-fill"), T = document.getElementById("super-button"), C = document.getElementById("ammo-indicator");
         if (C) {
           C.innerHTML = "";
@@ -902,7 +972,7 @@
           }
           // Wall collision for bullets
           let hit = false;
-          const throwers = ["tick", "barley_main", "barley_super", "sprout_wall"];
+          const throwers = ["tick", "barley_main", "barley_super", "sprout_wall", "grom_main", "grom_super", "dynamike_main", "dynamike_super"];
           if (!throwers.includes(t.type)) {
             for (let i = this.walls.length - 1; i >= 0; i--) {
               let w = this.walls[i];
