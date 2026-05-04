@@ -791,6 +791,23 @@ class GameEngine {
          }
       }
 
+      if (b.type === 'tick_mine') {
+          const targets = [this.player!, ...this.bots].filter(t => t.id !== b.ownerId);
+          for (const t of targets) {
+              if (Math.hypot(t.x - b.x, t.y - b.y) < t.size + 40) {
+                  t.hp -= b.damage;
+                  t.lastCombatTime = now;
+                  if (t.id === this.player?.id) this.player.lastCombatTime = now;
+                  const shooter = [this.player!, ...this.bots].find(p => p.id === b.ownerId);
+                  if (shooter) shooter.superCharge = Math.min(100, shooter.superCharge + 10);
+                  b.id = 'deleted';
+                  this.bullets.splice(i, 1);
+                  break;
+              }
+          }
+          if (b.id === 'deleted') continue;
+      }
+
       [this.player!, ...this.bots, ...this.boxes.filter(bx => !bx.isDestroyed)].forEach(t => {
         if (t.id === b.ownerId || b.id === 'deleted' || (b.hitIds && b.hitIds.includes(t.id))) return;
         if (Math.hypot(b.x - t.x, b.y - t.y) < t.size) {
@@ -943,6 +960,30 @@ class GameEngine {
             this.ctx.moveTo(0, 0);
             this.ctx.arc(0, 0, range, -spread/2, spread/2);
             this.ctx.closePath();
+            this.ctx.fill();
+        } else if (p.config.type === 'penny') {
+            this.ctx.fillStyle = color;
+            this.ctx.fillRect(0, -10, range, 20);
+        } else if (p.config.type === 'darryl') {
+            const spread = 0.5;
+            this.ctx.fillStyle = color;
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, 0);
+            this.ctx.arc(0, 0, range, -spread/2, spread/2);
+            this.ctx.closePath();
+            this.ctx.fill();
+        } else if (p.config.type === 'tick') {
+            this.ctx.strokeStyle = color;
+            this.ctx.setLineDash([10, 5]);
+            this.ctx.lineWidth = 4;
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, 0);
+            this.ctx.lineTo(range, 0);
+            this.ctx.stroke();
+            this.ctx.setLineDash([]);
+            this.ctx.fillStyle = color;
+            this.ctx.beginPath();
+            this.ctx.arc(range, 0, 40, 0, Math.PI * 2);
             this.ctx.fill();
         }
         this.ctx.restore();
