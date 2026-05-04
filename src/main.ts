@@ -53,6 +53,7 @@ class GameEngine {
   // Input
   keys: Record<string, boolean> = {};
   mouse = { x: 0, y: 0, down: false };
+  isAimingSuper = false;
   
   // Rendering
   viewport = { w: window.innerWidth, h: window.innerHeight };
@@ -72,14 +73,38 @@ class GameEngine {
       this.canvas.height = this.viewport.h;
     });
     
-    window.addEventListener('keydown', (e) => this.keys[e.key.toLowerCase()] = true);
-    window.addEventListener('keyup', (e) => this.keys[e.key.toLowerCase()] = false);
+    window.addEventListener('keydown', (e) => {
+      const key = e.key.toLowerCase();
+      this.keys[key] = true;
+      if (key === ' ' || key === 'e') e.preventDefault();
+      if ((key === 'e' || key === ' ') && this.state === 'GAME' && this.player && this.player.superCharge >= 100) {
+        this.isAimingSuper = true;
+      }
+    });
+    
+    window.addEventListener('keyup', (e) => {
+      const key = e.key.toLowerCase();
+      this.keys[key] = false;
+      if ((key === 'e' || key === ' ') && this.state === 'GAME' && this.isAimingSuper) {
+        this.isAimingSuper = false;
+        if (this.player) {
+          const worldMouseX = this.mouse.x + this.camera.x;
+          const worldMouseY = this.mouse.y + this.camera.y;
+          this.shoot(this.player, worldMouseX, worldMouseY, true);
+        }
+      }
+    });
+    
     window.addEventListener('mousemove', (e) => {
       this.mouse.x = e.clientX;
       this.mouse.y = e.clientY;
     });
-    window.addEventListener('mousedown', () => this.mouse.down = true);
-    window.addEventListener('mouseup', () => this.mouse.down = false);
+    window.addEventListener('mousedown', () => {
+      this.mouse.down = true;
+    });
+    window.addEventListener('mouseup', () => {
+      this.mouse.down = false;
+    });
     
     this.canvas.width = this.viewport.w;
     this.canvas.height = this.viewport.h;
@@ -97,6 +122,7 @@ class GameEngine {
   renderMenu() {
     this.state = 'MENU';
     this.clearUI();
+    this.uiContainer.classList.remove('pointer-events-none');
     this.uiContainer.classList.add('pointer-events-auto', 'flex', 'flex-col', 'items-center', 'justify-center');
     
     const totalTrophiesValue = Object.values(this.trophies.brawlers).reduce((a, b) => a + b, 0);
@@ -132,6 +158,7 @@ class GameEngine {
   renderSelect() {
     this.state = 'SELECT';
     this.clearUI();
+    this.uiContainer.classList.remove('pointer-events-none');
     this.uiContainer.classList.add('pointer-events-auto', 'flex', 'flex-col', 'items-center', 'justify-center');
     
     const brawlerList = Object.values(BRAWLERS);
@@ -174,6 +201,7 @@ class GameEngine {
   renderGameOver(rank: number, cubes: number) {
     this.state = 'GAMEOVER';
     this.clearUI();
+    this.uiContainer.classList.remove('pointer-events-none');
     this.uiContainer.classList.add('pointer-events-auto', 'flex', 'flex-col', 'items-center', 'justify-center');
     
     const change = TROPHY_CHANGES[rank] || -5;
@@ -262,6 +290,11 @@ class GameEngine {
       superCharge: 0,
       lastSuper: 0
     };
+
+    // Pre-center camera
+    this.camera.x = this.player.x - this.viewport.w / 2;
+    this.camera.y = this.player.y - this.viewport.h / 2;
+    this.isAimingSuper = false;
 
     this.bots = Array.from({ length: BOT_COUNT }).map((_, i) => {
       const types: BrawlerType[] = ['shelly', 'colt', 'spike'];
@@ -396,8 +429,7 @@ class GameEngine {
     this.camera.y = Math.max(0, Math.min(WORLD_SIZE - this.viewport.h, this.camera.y));
 
     // Action
-    if (this.mouse.down) this.shoot(this.player, worldMouseX, worldMouseY);
-    if (this.keys['e'] || this.keys[' ']) this.shoot(this.player, worldMouseX, worldMouseY, true);
+    if (this.mouse.down && !this.isAimingSuper) this.shoot(this.player, worldMouseX, worldMouseY);
 
     // Bots AI
     this.bots.forEach(bot => {
@@ -517,6 +549,52 @@ class GameEngine {
     
     this.ctx.save();
     this.ctx.translate(-this.camera.x, -this.camera.y);
+
+    // Aim Indicators
+    if (this.state === 'GAME' && this.player) {
+        const p = this.player;
+        const isSuper = this.isAimingSuper;
+        const range = isSuper ? p.config.range + 100 : p.config.range;
+        const color = isSuper ? 'rgba(251, 191, 36, 0.4)' : 'rgba(255, 255, 255, 0.15)';
+        
+        this.ctx.save();
+        this.ctx.translate(p.x, p.y);
+        this.ctx.rotate(p.angle);
+        
+        if (p.config.type === 'shelly') {
+            const spread = isSuper ? 0.6 : 0.4;
+            this.ctx.fillStyle = color;
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, 0);
+            this.ctx.arc(0, 0, range, -spread/2, spread/2);
+            this.ctx.closePath();
+            this.ctx.fill();
+        } else if (p.config.type === 'colt') {
+            const width = isSuper ? 40 : 20;
+            this.ctx.fillStyle = color;
+            this.ctx.fillRect(0, -width/2, range + (isSuper ? 200 : 0), width);
+        } else if (p.config.type === 'spike') {
+            if (isSuper) {
+                this.ctx.strokeStyle = color;
+                this.ctx.setLineDash([10, 5]);
+                this.ctx.lineWidth = 4;
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, 0);
+                this.ctx.lineTo(400, 0);
+                this.ctx.stroke();
+                
+                this.ctx.setLineDash([]);
+                this.ctx.fillStyle = color;
+                this.ctx.beginPath();
+                this.ctx.arc(400, 0, 120, 0, Math.PI * 2);
+                this.ctx.fill();
+            } else {
+                this.ctx.fillStyle = color;
+                this.ctx.fillRect(0, -10, p.config.range, 20);
+            }
+        }
+        this.ctx.restore();
+    }
 
     // Boundary
     this.ctx.strokeStyle = '#ef4444';
