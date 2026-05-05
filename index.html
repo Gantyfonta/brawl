@@ -370,6 +370,10 @@
           this.ball.dx = Math.cos(a) * speed;
           this.ball.dy = Math.sin(a) * speed;
           e.lastCombatTime = o;
+          if (t) {
+            if (e.superCharge < 100) return; // Should not happen but safety first
+            e.superCharge = 0, e.lastSuper = o;
+          }
           return;
         }
         if (t) {
@@ -876,7 +880,11 @@
                       target.hp -= dashDamage * (target.damageResist || 1);
                       if (target.hp < 0) target.hp = 0;
                       target.lastCombatTime = e;
-                      if (!target.id.startsWith("box")) i.superCharge = Math.min(100, i.superCharge + 20);
+                      if (!target.id.startsWith("box")) {
+                        // Reduced super charge from super dashes
+                        let chargeGain = i.config.type === "mortis" ? 20 : (i.config.type === "colette" ? 10 : 15);
+                        i.superCharge = Math.min(100, i.superCharge + chargeGain);
+                      }
                     }
                   }
                 });
@@ -1337,7 +1345,9 @@
                 target.hp -= (t.type === "colette" ? target.maxHp * 0.33 : t.damage) * (target.damageResist || 1); target.lastCombatTime = e;
                 if (t.hitIds) t.hitIds.push(target.id);
                 if (owner && !target.id.startsWith("box")) {
-                  owner.superCharge = Math.min(100, owner.superCharge + t.damage / 30);
+                  // Reduced super charge from super damage to prevent infinite chains
+                  let chargeRate = t.isSuper ? 60 : 30;
+                  owner.superCharge = Math.min(100, owner.superCharge + t.damage / chargeRate);
                   if (owner.config.type === "crow" && "hp" in target) {
                     target.poison = { ownerId: owner.id, damage: 80 * (1 + 0.1 * owner.powerCubes), ticks: 4, lastTick: e };
                   }
