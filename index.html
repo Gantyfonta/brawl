@@ -116,7 +116,7 @@
                         <div class="text-xs text-blue-400 uppercase font-black tracking-widest mb-1">Game Mode</div>
                         <div class="text-2xl brawl-font italic text-white uppercase">${this.gameMode.replace("_", " ")}</div>
                     </div>
-                    <div class="text-3xl">${this.gameMode === "SHOWDOWN" ? "☠️" : "⚽"}</div>
+                    <div class="text-3xl">${this.gameMode === "SHOWDOWN" ? "☠️" : this.gameMode === "BRAWL_BALL" ? "⚽" : "🚩"}</div>
                 </div>
               </div>
               <div class="flex-1 flex flex-col items-center justify-center text-center">
@@ -142,7 +142,7 @@
           document.getElementById("brawler-selector").onclick = () => this.renderSelect();
           document.getElementById("play-button").onclick = () => this.startGame();
           document.getElementById("mode-selector").onclick = () => {
-            this.gameMode = this.gameMode === "SHOWDOWN" ? "BRAWL_BALL" : "SHOWDOWN";
+            this.gameMode = this.gameMode === "SHOWDOWN" ? "BRAWL_BALL" : this.gameMode === "BRAWL_BALL" ? "HOTZONE" : "SHOWDOWN";
             this.renderMenu();
           };
         }
@@ -314,6 +314,19 @@
             ];
             this.ball = { x: arenaW/2, y: arenaH/2, dx: 0, dy: 0, carrierId: null, radius: 25 };
             this.boxes = [];
+            this.camera.x = this.player.x - this.viewport.w / 2;
+            this.camera.y = this.player.y - this.viewport.h / 2;
+          } else if (this.gameMode === "HOTZONE") {
+            const arenaW = 1000, arenaH = 2000;
+            this.mapW = arenaW;
+            this.mapH = arenaH;
+            this.uiContainer.innerHTML = `
+              <div class="absolute top-4 left-1/2 -translate-x-1/2 flex gap-8 pointer-events-none">
+                <div class="bg-blue-600/50 backdrop-blur-md px-8 py-3 rounded-2xl border-2 border-blue-400 text-3xl font-black italic shadow-xl" id="score-blue">0</div>
+                <div class="bg-red-600/50 backdrop-blur-md px-8 py-3 rounded-2xl border-2 border-red-400 text-3xl font-black italic shadow-xl" id="score-red">0</div>
+              </div>`;
+            this.player = { id: "player", x: arenaW / 2, y: arenaH - 200, size: E, hp: this.selectedBrawler.hp, maxHp: this.selectedBrawler.hp, powerCubes: 0, config: this.selectedBrawler, lastShot: 0, angle: 0, superCharge: 0, ammo: 3, maxAmmo: 3, reloadTimer: 0, lastCombatTime: 0, team: "blue" };
+            this.zones.push({ id: "hotzone", x: arenaW / 2, y: arenaH / 2, radius: 200, duration: 999999, createdAt: Date.now(), isZone: true });
             this.camera.x = this.player.x - this.viewport.w / 2;
             this.camera.y = this.player.y - this.viewport.h / 2;
           }
@@ -1140,7 +1153,8 @@
                      o.hp = Math.min(o.maxHp, o.hp - t.damage);
                    }
                 } else if (!isOwnerFamily && t.damage > 0) {
-                  o.hp -= t.damage * (o.damageResist || 1);
+                  let actualDamage = t.isPercentDamage ? (o.maxHp * 0.05) : t.damage;
+                  o.hp -= actualDamage * (o.damageResist || 1);
                   o.lastCombatTime = e;
                   let a = [this.player, ...this.bots].find(n => n.id === t.ownerId);
                   if (a) a.superCharge = Math.min(100, a.superCharge + 3);
