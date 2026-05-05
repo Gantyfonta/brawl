@@ -794,8 +794,30 @@
                 i.dashState = undefined;
               }
             } else {
-              i.x += (f.x - i.x) / u * i.dashState.speed;
-              i.y += (f.y - i.y) / u * i.dashState.speed;
+              let nextX = i.x + (f.x - i.x) / u * i.dashState.speed;
+              let nextY = i.y + (f.y - i.y) / u * i.dashState.speed;
+              let collided = false;
+              this.tempWalls.forEach(h => {
+                 let m = nextX, p = nextY;
+                 nextX < h.x ? m = h.x : nextX > h.x + h.width && (m = h.x + h.width), nextY < h.y ? p = h.y : nextY > h.y + h.height && (p = h.y + h.height);
+                 if (Math.hypot(nextX - m, nextY - p) < i.size) collided = true;
+              });
+              this.boxes.forEach(h => {
+                 if (!h.isDestroyed) {
+                     let m = h.size / 2, p = { x: h.x - m, y: h.y - m, width: h.size, height: h.size };
+                     let closestX = nextX, closestY = nextY;
+                     nextX < p.x ? closestX = p.x : nextX > p.x + p.width && (closestX = p.x + p.width);
+                     nextY < p.y ? closestY = p.y : nextY > p.y + p.height && (closestY = p.y + p.height);
+                     if (Math.hypot(nextX - closestX, nextY - closestY) < i.size) collided = true;
+                 }
+              });
+              
+              if (collided) {
+                i.dashState = undefined;
+              } else {
+                i.x = nextX;
+                i.y = nextY;
+              }
             }
 
             if (i.dashState) {
