@@ -621,6 +621,8 @@
                           b.x = 500 + (Math.random() - 0.5) * 400; 
                           b.y = b.team === "blue" ? 1800 : 200;
                      }
+                 } else {
+                     b.respawnTimer = 0;
                  }
             });
         }
@@ -687,16 +689,6 @@
             }
           }
 
-          // Respawn logic for Brawl Ball
-          if (this.gameMode === "BRAWL_BALL" && i.hp <= 0) {
-            i.respawnTimer = (i.respawnTimer || 0) + l;
-            if (i.respawnTimer > 5000) {
-                i.hp = i.maxHp;
-                i.respawnTimer = 0;
-                i.x = i.team === "blue" ? 500 : 500;
-                i.y = i.team === "blue" ? 1800 : 200;
-            }
-          }
           // Apply poison
           if (i.poison && e - i.poison.lastTick > 400) {
             i.hp -= i.poison.damage;
@@ -1346,7 +1338,22 @@
           }
           if (hit) { this.bullets.splice(s, 1); continue; }
         }
-        this.bots.forEach((s, t) => { if (s.hp <= 0) { this.cubes.push({ x: s.x, y: s.y, size: 20, createdAt: e }); this.bots.splice(t, 1); } });
+        this.bots.forEach((s, t) => { 
+          if (s.hp <= 0) { 
+            if (this.gameMode === "SHOWDOWN") {
+              this.cubes.push({ x: s.x, y: s.y, size: 20, createdAt: e }); 
+              this.bots.splice(t, 1); 
+            } else {
+              // In objective modes, don't remove bots, let them respawn
+              if (!s.deathHandled) {
+                this.cubes.push({ x: s.x, y: s.y, size: 20, createdAt: e });
+                s.deathHandled = true;
+              }
+            }
+          } else {
+            s.deathHandled = false;
+          }
+        });
         this.boxes.forEach(s => { if (!s.isDestroyed && s.hp <= 0) { s.isDestroyed = !0; this.cubes.push({ x: s.x, y: s.y, size: 20, createdAt: e }); } });
         for (let s = this.cubes.length - 1; s >= 0; s--) {
           let t = this.cubes[s];
