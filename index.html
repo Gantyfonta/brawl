@@ -1319,7 +1319,7 @@
           } else if (p.config.type === "carl" && !isSuper) {
               this.ctx.fillStyle = color;
               this.ctx.fillRect(0, -15, range, 30);
-          } else if (p.config.type === "colt" || p.config.type === "gus" || p.config.type === "chuck") {
+          } else if (p.config.type === "colt" || p.config.type === "gus" || p.config.type === "chuck" || p.config.type === "brock" || p.config.type === "rico" || p.config.type === "eightbit") {
             let width = isSuper ? 40 : 20;
             this.ctx.fillStyle = color;
             this.ctx.fillRect(0, -width / 2, range + (isSuper && p.config.type === "colt" ? 200 : 0), width);
@@ -1327,7 +1327,7 @@
             let width = isSuper ? 60 : 30;
             this.ctx.fillStyle = color;
             this.ctx.fillRect(0, -width / 2, range, width);
-          } else if (p.config.type === "griff") {
+          } else if (p.config.type === "griff" || p.config.type === "emz") {
             let cone = isSuper ? 0.8 : 0.4;
             this.ctx.fillStyle = color;
             this.ctx.beginPath();
@@ -1335,7 +1335,7 @@
             this.ctx.arc(0, 0, range, -cone / 2, cone / 2);
             this.ctx.closePath();
             this.ctx.fill();
-          } else if (p.config.type === "poco") {
+          } else if (p.config.type === "poco" || p.config.type === "frank") {
             let cone = isSuper ? 1.2 : 1.0;
             this.ctx.fillStyle = color;
             this.ctx.beginPath();
@@ -1343,7 +1343,7 @@
             this.ctx.arc(0, 0, range, -cone / 2, cone / 2);
             this.ctx.closePath();
             this.ctx.fill();
-          } else if (p.config.type === "tick" || p.config.type === "barley" || p.config.type === "sprout" || p.config.type === "spike" || p.config.type === "edgar" || p.config.type === "el_primo" || p.config.type === "grom" || p.config.type === "dynamike" || (p.config.type === "crow" && isSuper) || (p.config.type === "penny" && isSuper)) {
+          } else if (p.config.type === "tick" || p.config.type === "barley" || p.config.type === "sprout" || p.config.type === "spike" || p.config.type === "edgar" || p.config.type === "el_primo" || p.config.type === "grom" || p.config.type === "dynamike" || (p.config.type === "crow" && isSuper) || (p.config.type === "penny" && isSuper) || (p.config.type === "mortis" && isSuper)) {
             let dist = Math.min(Math.hypot(this.mouse.x + this.camera.x - p.x, this.mouse.y + this.camera.y - p.y), range);
             this.ctx.strokeStyle = color;
             this.ctx.setLineDash([10, 5]);
@@ -1363,8 +1363,17 @@
             if (p.config.type === "sprout") radius = isSuper ? 100 : 60;
             if (p.config.type === "grom") radius = isSuper ? 120 : 70;
             if (p.config.type === "dynamike") radius = isSuper ? 140 : 80;
+            if (p.config.type === "mortis" && isSuper) radius = 100;
             this.ctx.arc(dist, 0, radius, 0, Math.PI * 2);
             this.ctx.fill();
+          } else if (p.config.type === "mortis" && !isSuper) {
+              // Dash indicator line
+              this.ctx.strokeStyle = "rgba(255,255,255,0.5)";
+              this.ctx.lineWidth = 6;
+              this.ctx.beginPath();
+              this.ctx.moveTo(0, 0);
+              this.ctx.lineTo(300, 0);
+              this.ctx.stroke();
           } else if (p.config.type === "amber") {
             if (isSuper) {
               let dist = Math.min(Math.hypot(this.mouse.x + this.camera.x - p.x, this.mouse.y + this.camera.y - p.y), range);
