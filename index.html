@@ -495,29 +495,37 @@ class Game {
             <h2 class="text-6xl brawl-font italic text-white uppercase drop-shadow-lg mb-4">Daily Deals</h2>
             <p class="text-blue-400 font-black uppercase tracking-widest text-sm mb-12">New offers every 24 hours!</p>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
-               <div id="daily-coins-btn" class="bg-slate-800 rounded-3xl border-4 ${canClaimDaily ? "border-slate-700 hover:border-yellow-400 cursor-pointer" : "border-slate-800 opacity-50 cursor-not-allowed"} p-8 flex flex-col items-center group transition-all">
-                  <div class="text-7xl mb-6 ${canClaimDaily ? "group-hover:scale-110" : ""} transition-transform">🪙</div>
-                  <div class="text-2xl font-black text-white italic mb-2">1,000 Coins</div>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 w-full">
+               <div id="daily-coins-btn" class="bg-slate-800 rounded-3xl border-4 ${canClaimDaily ? "border-slate-700 hover:border-yellow-400 cursor-pointer" : "border-slate-800 opacity-50 cursor-not-allowed"} p-6 flex flex-col items-center group transition-all">
+                  <div class="text-6xl mb-4 ${canClaimDaily ? "group-hover:scale-110" : ""} transition-transform">🪙</div>
+                  <div class="text-xl font-black text-white italic mb-2">1,000 Coins</div>
                   ${canClaimDaily ? 
                     `<div class="px-6 py-2 bg-yellow-400 text-slate-900 rounded-full font-black text-sm uppercase">FREE</div>` : 
                     `<div class="px-6 py-2 bg-slate-700 text-white/40 rounded-full font-black text-xs uppercase italic">${timerText}</div>`}
                </div>
-               <div id="pp-offer-btn" class="bg-slate-800 rounded-3xl border-4 border-slate-700 p-8 flex flex-col items-center group hover:border-purple-400 transition-all cursor-pointer opacity-80">
-                  <div class="text-7xl mb-6 group-hover:scale-110 transition-transform">⚡</div>
-                  <div class="text-2xl font-black text-white italic mb-2">500 Power Points</div>
+               <div id="pp-offer-btn" class="bg-slate-800 rounded-3xl border-4 border-slate-700 p-6 flex flex-col items-center group hover:border-purple-400 transition-all cursor-pointer">
+                  <div class="text-6xl mb-4 group-hover:scale-110 transition-transform">⚡</div>
+                  <div class="text-xl font-black text-white italic mb-2">500 PP</div>
                   <div class="flex items-center gap-2 px-6 py-2 bg-slate-900 text-white rounded-full font-black text-sm uppercase border border-white/10 ${this.trophies.gems < 50 ? "text-red-500" : ""}">
                     <span>💎</span> 50
                   </div>
                </div>
-               <div id="drop-offer-btn" class="bg-slate-800 rounded-3xl border-4 border-slate-700 p-8 flex flex-col items-center group hover:border-green-400 transition-all cursor-pointer opacity-80">
-                  <div class="text-7xl mb-6 group-hover:scale-110 transition-transform">💀</div>
-                  <div class="text-2xl font-black text-white italic mb-2">Starr Drop</div>
+               <div id="drop-offer-btn" class="bg-slate-800 rounded-3xl border-4 border-slate-700 p-6 flex flex-col items-center group hover:border-green-400 transition-all cursor-pointer">
+                  <div class="text-6xl mb-4 group-hover:scale-110 transition-transform">💀</div>
+                  <div class="text-xl font-black text-white italic mb-2">Starr Drop</div>
                   <div class="flex items-center gap-2 px-6 py-2 bg-slate-900 text-white rounded-full font-black text-sm uppercase border border-white/10 ${this.trophies.coins < 1200 ? "text-red-500" : ""}">
                     <span>🪙</span> 1,200
                   </div>
                </div>
+               <div id="credits-offer-btn" class="bg-slate-800 rounded-3xl border-4 border-slate-700 p-6 flex flex-col items-center group hover:border-blue-400 transition-all cursor-pointer">
+                  <div class="text-6xl mb-4 group-hover:scale-110 transition-transform">💳</div>
+                  <div class="text-xl font-black text-white italic mb-2">500 Credits</div>
+                  <div class="flex items-center gap-2 px-6 py-2 bg-slate-900 text-white rounded-full font-black text-sm uppercase border border-white/10 ${this.trophies.gems < 100 ? "text-red-500" : ""}">
+                    <span>💎</span> 100
+                  </div>
+               </div>
             </div>
+
 
             <div class="mt-12 flex gap-4">
               <div class="bg-black/40 px-6 py-3 rounded-2xl border border-white/10 flex items-center gap-3">
@@ -563,6 +571,18 @@ class Game {
                     this.trophies.coins -= 1200;
                     j(this.trophies);
                     this.openStarrDrop(999);
+                }
+            };
+        }
+
+        const creditsOffer = document.getElementById("credits-offer-btn");
+        if (creditsOffer) {
+            creditsOffer.onclick = () => {
+                if (this.trophies.gems >= 100) {
+                    this.trophies.gems -= 100;
+                    this.trophies.credits += 500;
+                    j(this.trophies);
+                    this.renderShop();
                 }
             };
         }
@@ -1249,8 +1269,9 @@ class Game {
           this.uiContainer.classList.add("pointer-events-auto", "w-full", "h-full");
 
           const currentIndex = UNLOCK_ORDER.indexOf(this.trophies.unlockingBrawler);
-          // Show all unlocked + current + next 10
-          const visibleOrder = UNLOCK_ORDER.slice(0, currentIndex + 10);
+          // Show everything
+          const visibleOrder = UNLOCK_ORDER;
+
 
           this.uiContainer.innerHTML = `
             <div class="fixed inset-0 starr-road-bg z-0 overflow-hidden">
