@@ -502,12 +502,17 @@ class Game {
             <!-- Center Character -->
             <div class="relative z-10 flex flex-col items-center justify-center h-full pt-10">
               <div class="flex items-center gap-1 bg-slate-900 border-2 border-slate-700 rounded-lg px-4 py-1.5 mb-2 shadow-xl">
-                <div class="w-7 h-7 bg-purple-600 rounded flex items-center justify-center text-sm font-black italic shadow-inner">5</div>
+                <div class="w-7 h-7 bg-purple-600 rounded flex items-center justify-center text-sm font-black italic shadow-inner">
+                  ${Math.floor(this.trophies.brawlers[this.selectedBrawler.type] / 20) + 1}
+                </div>
                 <div class="flex items-center gap-1 mx-2">
                   <span class="text-yellow-400 text-lg">🏆</span>
                   <span class="text-white text-xl brawl-font italic">${this.trophies.brawlers[this.selectedBrawler.type]}</span>
                 </div>
-                <div class="w-7 h-7 bg-black rounded-full flex items-center justify-center text-[10px] font-black border-2 border-orange-500 text-orange-500 italic">2</div>
+                <!-- Power Level Badge -->
+                <div class="flex items-center justify-center bg-black rounded-full px-2 py-0.5 border-2 border-orange-500 text-orange-500 italic text-[10px] font-black">
+                  Lvl ${this.trophies.brawlerLevels[this.selectedBrawler.type] || 1}
+                </div>
               </div>
               
               <div class="text-[12rem] md:text-[16rem] drop-shadow-[0_25px_60px_rgba(0,0,0,0.6)] animate-brawler">
