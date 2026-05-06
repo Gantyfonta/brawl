@@ -310,6 +310,14 @@ class Game {
           const currentTier = Math.floor(this.trophies.passXp / 100) + 1;
           const claimableCount = PASSTIERS.filter(t => currentTier >= t.tier && !this.trophies.claimedTiers.includes(t.tier)).length;
           
+          const upgradeAvailable = Object.keys(this.trophies.brawlers).some(bType => {
+              const level = this.trophies.brawlerLevels[bType] || 1;
+              const nextCost = UPGRADE_COSTS[level];
+              return nextCost && this.trophies.coins >= nextCost.coins && this.trophies.powerPoints >= nextCost.pp;
+          });
+          const unlockAvailable = this.trophies.unlockingBrawler && this.trophies.credits >= (CREDITS_COSTS[this.trophies.unlockingBrawler] || 0);
+          const brawlerBadge = upgradeAvailable || unlockAvailable;
+
           this.uiContainer.innerHTML = `
             <div class="fixed inset-0 bg-[#0ea5e9] z-0 overflow-hidden">
               <div class="absolute inset-0 bg-gradient-to-b from-black/0 via-black/0 to-black/40"></div>
@@ -364,12 +372,11 @@ class Game {
               <button id="brawlers-btn" class="w-16 h-16 md:w-20 md:h-20 bg-slate-800 border-4 border-slate-700 rounded-2xl flex flex-col items-center justify-center shadow-2xl hover:scale-105 transition-transform relative">
                 <span class="text-2xl md:text-3xl">🃏</span>
                 <span class="text-[8px] md:text-[10px] font-black uppercase text-white/50">Brawlers</span>
-                <div class="absolute -top-2 -right-2 bg-red-500 rounded-full w-6 h-6 border-2 border-white flex items-center justify-center text-[10px] font-black text-white">3</div>
+                ${brawlerBadge ? `<div class="absolute -top-2 -right-2 bg-yellow-400 rounded-full w-6 h-6 border-2 border-white flex items-center justify-center text-[10px] font-black text-slate-900 shadow-lg animate-bounce">!</div>` : ""}
               </button>
               <button id="news-btn" class="w-16 h-16 md:w-20 md:h-20 bg-slate-800 border-4 border-slate-700 rounded-2xl flex flex-col items-center justify-center shadow-2xl hover:scale-105 transition-transform relative">
                 <span class="text-2xl md:text-3xl">📰</span>
                 <span class="text-[8px] md:text-[10px] font-black uppercase text-white/50">News</span>
-                <div class="absolute -top-2 -right-2 bg-green-500 rounded-full w-6 h-6 border-2 border-white flex items-center justify-center text-[10px] font-black text-white">2</div>
               </button>
             </div>
 
@@ -582,7 +589,9 @@ class Game {
                     this.trophies.gems -= 100;
                     this.trophies.credits += 500;
                     j(this.trophies);
-                    this.renderShop();
+                    if (!this.checkBrawlerUnlock()) {
+                        this.renderShop();
+                    }
                 }
             };
         }
@@ -965,8 +974,9 @@ class Game {
               }
               this.trophies.claimedTiers.push(tierData.tier);
               j(this.trophies);
-              this.checkBrawlerUnlock(); // Move this after credits added and saved
-              this.renderBrawlPass();
+              if (!this.checkBrawlerUnlock()) {
+                  this.renderBrawlPass();
+              }
           }
       }
 
@@ -1097,7 +1107,6 @@ class Game {
               else if (rewardType === "powerPoints") this.trophies.powerPoints += rewardValue;
               else if (rewardType === "credits") {
                   this.trophies.credits += rewardValue;
-                  this.checkBrawlerUnlock();
               }
               
               if (tierToClaim !== 999) this.trophies.claimedTiers.push(tierToClaim);
@@ -1118,8 +1127,10 @@ class Game {
               `;
               
               document.getElementById("reward-claim-btn").onclick = () => {
-                   if (tierToClaim === 999) this.renderMenu();
-                   else this.renderBrawlPass();
+                   if (!this.checkBrawlerUnlock()) {
+                       if (tierToClaim === 999) this.renderMenu();
+                       else this.renderBrawlPass();
+                   }
               };
           };
 
@@ -1159,9 +1170,10 @@ class Game {
                 <h2 class="text-4xl brawl-font italic text-white uppercase drop-shadow-lg tracking-tighter">Brawlers</h2>
               </div>
               <div class="flex items-center gap-4">
-                <button id="starr-road-btn" class="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-2xl border-b-4 border-blue-800 font-black uppercase text-lg flex items-center gap-3 transition-all active:scale-95 active:border-b-0 translate-y-[-2px] active:translate-y-0">
+                <button id="starr-road-btn" class="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-2xl border-b-4 border-blue-800 font-black uppercase text-lg flex items-center gap-3 transition-all active:scale-95 active:border-b-0 translate-y-[-2px] active:translate-y-0 relative">
                   <span class="text-2xl">💳</span>
                   <span>Starr Road</span>
+                  ${this.trophies.unlockingBrawler && this.trophies.credits >= (CREDITS_COSTS[this.trophies.unlockingBrawler] || 0) ? `<div class="absolute -top-2 -right-2 bg-yellow-400 rounded-full w-6 h-6 border-2 border-white flex items-center justify-center text-[10px] font-black text-slate-900 shadow-lg animate-bounce">!</div>` : ""}
                 </button>
                 <div class="flex items-center gap-2 bg-black/40 px-4 py-2 rounded-xl border border-white/10 shadow-xl">
                   <span class="text-blue-400 text-xl font-black">💳</span>
@@ -1269,8 +1281,8 @@ class Game {
           this.uiContainer.classList.add("pointer-events-auto", "w-full", "h-full");
 
           const currentIndex = UNLOCK_ORDER.indexOf(this.trophies.unlockingBrawler);
-          // Show everything
-          const visibleOrder = UNLOCK_ORDER;
+          // Show only unowned brawlers in order
+          const visibleOrder = UNLOCK_ORDER.filter(bKey => this.trophies.brawlers[bKey] === undefined);
 
 
           this.uiContainer.innerHTML = `
@@ -1366,26 +1378,43 @@ class Game {
       }
 
       checkBrawlerUnlock() {
-          const bKey = this.trophies.unlockingBrawler;
-          if (!bKey) return;
-          const cost = CREDITS_COSTS[bKey] || 0;
+          let bKey = this.trophies.unlockingBrawler;
+          if (!bKey) return false;
           
+          // Skip already owned brawlers (e.g. if got from drop)
+          if (this.trophies.brawlers[bKey] !== undefined) {
+              const orderIdx = UNLOCK_ORDER.indexOf(bKey);
+              if (orderIdx !== -1 && orderIdx < UNLOCK_ORDER.length - 1) {
+                  this.trophies.unlockingBrawler = UNLOCK_ORDER[orderIdx + 1];
+                  return this.checkBrawlerUnlock(); // Recurse to skip
+              } else {
+                  this.trophies.unlockingBrawler = null;
+                  return false;
+              }
+          }
+
+          const cost = CREDITS_COSTS[bKey] || 0;
           if (this.trophies.credits >= cost) {
               this.trophies.credits -= cost;
               this.trophies.brawlers[bKey] = 0;
               this.trophies.brawlerLevels[bKey] = 1;
               
-              // Find next in order
+              // Find next in order that isn't owned
+              let nextBrawler = null;
               const orderIdx = UNLOCK_ORDER.indexOf(bKey);
-              if (orderIdx !== -1 && orderIdx < UNLOCK_ORDER.length - 1) {
-                  this.trophies.unlockingBrawler = UNLOCK_ORDER[orderIdx + 1];
-              } else {
-                  this.trophies.unlockingBrawler = null;
+              for (let i = orderIdx + 1; i < UNLOCK_ORDER.length; i++) {
+                  if (this.trophies.brawlers[UNLOCK_ORDER[i]] === undefined) {
+                      nextBrawler = UNLOCK_ORDER[i];
+                      break;
+                  }
               }
+              this.trophies.unlockingBrawler = nextBrawler;
               
               j(this.trophies);
               this.showUnlockAnimation(w[bKey]);
+              return true;
           }
+          return false;
       }
 
       showUnlockAnimation(brawler) {
