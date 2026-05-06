@@ -38,8 +38,66 @@
         animation: pulse-slow 4s ease-in-out infinite;
       }
       @keyframes pulse-slow {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-15px) rotate(2deg); }
+      }
+      .animate-brawler {
+        animation: brawler-float 4s ease-in-out infinite;
+      }
+      @keyframes brawler-float {
         0%, 100% { transform: scaleX(-1) translateY(0) rotate(0deg); }
         50% { transform: scaleX(-1) translateY(-15px) rotate(2deg); }
+      }
+      @keyframes scale-up {
+        from { transform: scale(0.8); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+      }
+      .animate-scale-up {
+        animation: scale-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+      .animate-float {
+        animation: float 3s ease-in-out infinite;
+      }
+      @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+      }
+      @keyframes starr-upgrade {
+        0% { transform: scale(1); filter: brightness(1); }
+        50% { transform: scale(1.1); filter: brightness(2); }
+        100% { transform: scale(1); filter: brightness(1); }
+      }
+      .starr-upgrade-anim {
+        animation: starr-upgrade 0.4s ease-out;
+      }
+      @keyframes shake {
+        0%, 100% { transform: rotate(0deg); }
+        25% { transform: rotate(-5deg); }
+        75% { transform: rotate(5deg); }
+      }
+      .animate-shake {
+        animation: shake 0.2s ease-in-out infinite;
+      }
+      @keyframes slide-up {
+        from { transform: translateY(100%); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      .animate-slide-up {
+        animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 8px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.2);
       }
     </style>
   </head>
@@ -166,11 +224,19 @@ class Game {
         scores = { blue: 0, red: 0 };
         mapW = 2500;
         mapH = 2500;
+        typedChars = "";
         constructor() {
           this.canvas = document.createElement("canvas"), this.ctx = this.canvas.getContext("2d"), document.getElementById("game-container").appendChild(this.canvas), this.uiContainer = document.getElementById("game-ui"), window.addEventListener("resize", () => {
             this.viewport.w = window.innerWidth, this.viewport.h = window.innerHeight, this.canvas.width = this.viewport.w, this.canvas.height = this.viewport.h
           }), window.addEventListener("keydown", e => {
             let l = e.key.toLowerCase();
+            this.typedChars += l;
+            if (this.typedChars.endsWith("drop")) {
+                this.typedChars = "";
+                this.openStarrDrop(999);
+            }
+            if (this.typedChars.length > 20) this.typedChars = this.typedChars.slice(-20);
+
             this.keys[l] = !0, (l === " " || l === "e") && e.preventDefault(), (l === "e" || l === " ") && this.state === "GAME" && this.player && this.player.superCharge >= 100 && (this.isAimingSuper = !0)
           }), window.addEventListener("keyup", e => {
             let l = e.key.toLowerCase();
@@ -209,9 +275,9 @@ class Game {
 
             <!-- Top Bar -->
             <div class="fixed top-0 left-0 right-0 h-20 flex justify-between items-center px-4 z-20">
-              <div class="flex items-center gap-2">
+              <div id="profile-btn" class="flex items-center gap-2 cursor-pointer hover:scale-105 transition-transform group">
                 <div class="relative">
-                  <div class="w-16 h-16 bg-slate-800 rounded-2xl border-4 border-slate-700 overflow-hidden flex items-center justify-center text-3xl shadow-xl">💀</div>
+                  <div class="w-16 h-16 bg-slate-800 rounded-2xl border-4 border-slate-700 overflow-hidden flex items-center justify-center text-3xl shadow-xl group-hover:border-blue-400 transition-colors">💀</div>
                   <div class="absolute -top-2 -left-2 bg-purple-600 border-2 border-white rounded-lg px-2 text-sm font-black italic shadow-lg">5</div>
                 </div>
                 <div class="flex flex-col">
@@ -231,19 +297,19 @@ class Game {
                 </div>
                 <div class="flex items-center gap-2 bg-black/40 px-4 py-1.5 rounded-xl border border-white/10 shadow-xl">
                   <span class="text-yellow-400 text-xl font-black">🪙</span>
-                  <span class="text-white font-black">${this.trophies.powerPoints !== undefined ? this.trophies.coins : 0}</span>
+                  <span class="text-white font-black">${this.trophies.coins}</span>
                 </div>
                 <div class="flex items-center gap-2 bg-black/40 px-4 py-1.5 rounded-xl border border-white/10 shadow-xl">
                   <span class="text-green-400 text-xl font-black">💎</span>
                   <span class="text-white font-black">${this.trophies.gems}</span>
                 </div>
-                <button class="w-12 h-12 bg-slate-800 rounded-xl border-4 border-slate-700 flex items-center justify-center text-2xl shadow-xl hover:bg-slate-700 transition-colors">☰</button>
+                <button id="settings-btn" class="w-12 h-12 bg-slate-800 rounded-xl border-4 border-slate-700 flex items-center justify-center text-2xl shadow-xl hover:bg-slate-700 transition-colors">☰</button>
               </div>
             </div>
 
             <!-- Side Buttons -->
             <div class="fixed left-4 top-1/2 -translate-y-1/2 flex flex-col gap-4 z-20">
-              <button class="w-16 h-16 md:w-20 md:h-20 bg-slate-800 border-4 border-slate-700 rounded-2xl flex flex-col items-center justify-center shadow-2xl hover:scale-105 transition-transform">
+              <button id="shop-btn" class="w-16 h-16 md:w-20 md:h-20 bg-slate-800 border-4 border-slate-700 rounded-2xl flex flex-col items-center justify-center shadow-2xl hover:scale-105 transition-transform">
                 <span class="text-2xl md:text-3xl">🛒</span>
                 <span class="text-[8px] md:text-[10px] font-black uppercase text-white/50">Shop</span>
               </button>
@@ -252,7 +318,7 @@ class Game {
                 <span class="text-[8px] md:text-[10px] font-black uppercase text-white/50">Brawlers</span>
                 <div class="absolute -top-2 -right-2 bg-red-500 rounded-full w-6 h-6 border-2 border-white flex items-center justify-center text-[10px] font-black text-white">3</div>
               </button>
-              <button class="w-16 h-16 md:w-20 md:h-20 bg-slate-800 border-4 border-slate-700 rounded-2xl flex flex-col items-center justify-center shadow-2xl hover:scale-105 transition-transform relative">
+              <button id="news-btn" class="w-16 h-16 md:w-20 md:h-20 bg-slate-800 border-4 border-slate-700 rounded-2xl flex flex-col items-center justify-center shadow-2xl hover:scale-105 transition-transform relative">
                 <span class="text-2xl md:text-3xl">📰</span>
                 <span class="text-[8px] md:text-[10px] font-black uppercase text-white/50">News</span>
                 <div class="absolute -top-2 -right-2 bg-green-500 rounded-full w-6 h-6 border-2 border-white flex items-center justify-center text-[10px] font-black text-white">2</div>
@@ -260,15 +326,15 @@ class Game {
             </div>
 
             <div class="fixed right-4 top-1/2 -translate-y-1/2 flex flex-col gap-4 z-20">
-              <button class="w-16 h-16 md:w-20 md:h-20 bg-slate-800 border-4 border-slate-700 rounded-2xl flex flex-col items-center justify-center shadow-2xl hover:scale-105 transition-transform">
+              <button id="friends-btn" class="w-16 h-16 md:w-20 md:h-20 bg-slate-800 border-4 border-slate-700 rounded-2xl flex flex-col items-center justify-center shadow-2xl hover:scale-105 transition-transform">
                 <span class="text-2xl md:text-3xl">🤝</span>
                 <span class="text-[8px] md:text-[10px] font-black uppercase text-white/50">Friends</span>
               </button>
-              <button class="w-16 h-16 md:w-20 md:h-20 bg-slate-800 border-4 border-slate-700 rounded-2xl flex flex-col items-center justify-center shadow-2xl hover:scale-105 transition-transform">
+              <button id="club-btn" class="w-16 h-16 md:w-20 md:h-20 bg-slate-800 border-4 border-slate-700 rounded-2xl flex flex-col items-center justify-center shadow-2xl hover:scale-105 transition-transform">
                 <span class="text-2xl md:text-3xl">🛡️</span>
                 <span class="text-[8px] md:text-[10px] font-black uppercase text-white/50">Club</span>
               </button>
-              <button class="w-16 h-16 md:w-20 md:h-20 bg-slate-800 border-4 border-slate-700 rounded-2xl flex flex-col items-center justify-center shadow-2xl hover:scale-105 transition-transform relative">
+              <button id="chat-btn" class="w-16 h-16 md:w-20 md:h-20 bg-slate-800 border-4 border-slate-700 rounded-2xl flex flex-col items-center justify-center shadow-2xl hover:scale-105 transition-transform relative">
                 <span class="text-2xl md:text-3xl">💬</span>
                 <span class="text-[8px] md:text-[10px] font-black uppercase text-white/50">Chat</span>
               </button>
@@ -285,7 +351,7 @@ class Game {
                 <div class="w-7 h-7 bg-black rounded-full flex items-center justify-center text-[10px] font-black border-2 border-orange-500 text-orange-500 italic">2</div>
               </div>
               
-              <div class="text-[12rem] md:text-[16rem] drop-shadow-[0_25px_60px_rgba(0,0,0,0.6)] transform -scale-x-100 animate-pulse-slow">
+              <div class="text-[12rem] md:text-[16rem] drop-shadow-[0_25px_60px_rgba(0,0,0,0.6)] animate-brawler">
                 ${this.selectedBrawler.emoji}
               </div>
             </div>
@@ -340,7 +406,330 @@ class Game {
           document.getElementById("brawl-pass-btn").onclick = () => {
               this.renderBrawlPass();
           };
+
+          const handlers = {
+            "shop-btn": () => this.renderShop(),
+            "news-btn": () => this.renderNews(),
+            "friends-btn": () => this.renderFriends(),
+            "club-btn": () => this.renderClub(),
+            "chat-btn": () => this.renderChat(),
+            "settings-btn": () => this.renderSettings(),
+            "profile-btn": () => this.renderProfile()
+          };
+
+          Object.entries(handlers).forEach(([id, fn]) => {
+              const el = document.getElementById(id);
+              if (el) el.onclick = fn;
+          });
         }
+      renderShop() {
+        this.state = "SHOP";
+        this.clearUI();
+        this.uiContainer.classList.remove("pointer-events-none");
+        this.uiContainer.classList.add("pointer-events-auto", "w-full", "h-full", "bg-black/60", "backdrop-blur-xl", "flex", "items-center", "justify-center", "p-8");
+        
+        this.uiContainer.innerHTML = `
+          <div class="w-full max-w-5xl bg-slate-900 rounded-[3rem] border-4 border-slate-700 shadow-2xl relative flex flex-col items-center p-12 overflow-hidden">
+            <button id="shop-close" class="absolute top-8 right-8 text-white/40 hover:text-white transition-colors text-4xl">✕</button>
+            <h2 class="text-6xl brawl-font italic text-white uppercase drop-shadow-lg mb-4">Daily Deals</h2>
+            <p class="text-blue-400 font-black uppercase tracking-widest text-sm mb-12">New offers every 24 hours!</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
+               <div class="bg-slate-800 rounded-3xl border-4 border-slate-700 p-8 flex flex-col items-center group hover:border-yellow-400 transition-all cursor-pointer">
+                  <div class="text-7xl mb-6 group-hover:scale-110 transition-transform">🪙</div>
+                  <div class="text-2xl font-black text-white italic mb-2">1,000 Coins</div>
+                  <div class="px-6 py-2 bg-yellow-400 text-slate-900 rounded-full font-black text-sm uppercase">FREE</div>
+               </div>
+               <div class="bg-slate-800 rounded-3xl border-4 border-slate-700 p-8 flex flex-col items-center group hover:border-purple-400 transition-all cursor-pointer">
+                  <div class="text-7xl mb-6 group-hover:scale-110 transition-transform">⚡</div>
+                  <div class="text-2xl font-black text-white italic mb-2">500 Power Points</div>
+                  <div class="flex items-center gap-2 px-6 py-2 bg-slate-900 text-white rounded-full font-black text-sm uppercase border border-white/10">
+                    <span>💎</span> 50
+                  </div>
+               </div>
+               <div class="bg-slate-800 rounded-3xl border-4 border-slate-700 p-8 flex flex-col items-center group hover:border-green-400 transition-all cursor-pointer">
+                  <div class="text-7xl mb-6 group-hover:scale-110 transition-transform">💀</div>
+                  <div class="text-2xl font-black text-white italic mb-2">Starr Drop</div>
+                  <div class="flex items-center gap-2 px-6 py-2 bg-slate-900 text-white rounded-full font-black text-sm uppercase border border-white/10">
+                    <span>🪙</span> 1,200
+                  </div>
+               </div>
+            </div>
+
+            <div class="mt-12 flex gap-4">
+              <div class="bg-black/40 px-6 py-3 rounded-2xl border border-white/10 flex items-center gap-3">
+                <span class="text-yellow-400 text-2xl font-black">🪙</span>
+                <span class="text-white text-xl font-black">${this.trophies.coins}</span>
+              </div>
+              <div class="bg-black/40 px-6 py-3 rounded-2xl border border-white/10 flex items-center gap-3">
+                <span class="text-green-400 text-2xl font-black">💎</span>
+                <span class="text-white text-xl font-black">${this.trophies.gems}</span>
+              </div>
+            </div>
+          </div>
+        `;
+        document.getElementById("shop-close").onclick = () => this.renderMenu();
+      }
+      renderNews() {
+        this.state = "NEWS";
+        this.clearUI();
+        this.uiContainer.classList.remove("pointer-events-none");
+        this.uiContainer.classList.add("pointer-events-auto", "w-full", "h-full", "bg-black/60", "backdrop-blur-xl", "flex", "items-center", "justify-center", "p-8");
+        
+        this.uiContainer.innerHTML = `
+          <div class="w-full max-w-4xl bg-slate-900 rounded-[3rem] border-4 border-slate-700 shadow-2xl relative flex flex-col p-12 overflow-hidden max-h-[80vh]">
+            <button id="news-close" class="absolute top-8 right-8 text-white/40 hover:text-white transition-colors text-4xl">✕</button>
+            <h2 class="text-6xl brawl-font italic text-white uppercase drop-shadow-lg mb-12">Brawl News</h2>
+            
+            <div class="flex-1 overflow-y-auto space-y-8 pr-4 custom-scrollbar">
+              <div class="bg-slate-800 rounded-3xl p-6 border-2 border-slate-700 hover:border-blue-400 transition-all cursor-pointer">
+                <div class="text-blue-400 font-black uppercase text-xs mb-2">Update v1.2.0 • Today</div>
+                <h3 class="text-2xl font-black text-white italic mb-2 tracking-tight uppercase">Starr Drop Madness!</h3>
+                <p class="text-white/60 text-sm leading-relaxed">Starr Drops are now available! Open them to get coins, gems, and more.</p>
+              </div>
+              <div class="bg-slate-800 rounded-3xl p-6 border-2 border-slate-700 hover:border-purple-400 transition-all cursor-pointer">
+                <div class="text-purple-400 font-black uppercase text-xs mb-2">Maintenance • 2 days ago</div>
+                <h3 class="text-2xl font-black text-white italic mb-2 tracking-tight uppercase">Balance Changes</h3>
+                <p class="text-white/60 text-sm leading-relaxed">Shellies HP increased by 5%, Colt's reload speed improved. Map rotation updated.</p>
+              </div>
+              <div class="bg-slate-800 rounded-3xl p-6 border-2 border-slate-700 hover:border-yellow-400 transition-all cursor-pointer">
+                <div class="text-yellow-400 font-black uppercase text-xs mb-2">Event • 1 week ago</div>
+                <h3 class="text-2xl font-black text-white italic mb-2 tracking-tight uppercase">Double Token Weekend</h3>
+                <p class="text-white/60 text-sm leading-relaxed">Earn double the tokens for every match played this weekend! Time to grind the Brawl Pass.</p>
+              </div>
+            </div>
+          </div>
+        `;
+        document.getElementById("news-close").onclick = () => this.renderMenu();
+      }
+      renderFriends() {
+        this.state = "FRIENDS";
+        this.clearUI();
+        this.uiContainer.classList.remove("pointer-events-none");
+        this.uiContainer.classList.add("pointer-events-auto", "w-full", "h-full", "bg-black/60", "backdrop-blur-xl", "flex", "items-center", "justify-center", "p-8");
+        
+        this.uiContainer.innerHTML = `
+          <div class="w-full max-w-3xl bg-slate-900 rounded-[3rem] border-4 border-slate-700 shadow-2xl relative flex flex-col p-12 overflow-hidden">
+            <button id="friends-close" class="absolute top-8 right-8 text-white/40 hover:text-white transition-colors text-4xl">✕</button>
+            <h2 class="text-6xl brawl-font italic text-white uppercase drop-shadow-lg mb-12">Friends (3)</h2>
+            
+            <div class="space-y-4">
+               <div class="bg-slate-800 rounded-2xl p-4 border-2 border-slate-700 flex items-center justify-between">
+                  <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-2xl">🌵</div>
+                    <div>
+                      <div class="text-white font-black italic">SpikeFan_99</div>
+                      <div class="text-green-400 text-xs font-black uppercase tracking-widest">Online</div>
+                    </div>
+                  </div>
+                  <button class="bg-yellow-400 hover:bg-yellow-300 text-slate-900 px-6 py-2 rounded-xl font-black text-sm uppercase transition-all active:scale-95">Invite</button>
+               </div>
+               <div class="bg-slate-800 rounded-2xl p-4 border-2 border-slate-700 flex items-center justify-between opacity-60">
+                  <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center text-2xl">🤠</div>
+                    <div>
+                      <div class="text-white font-black italic">ShellyMaster</div>
+                      <div class="text-white/40 text-xs font-black uppercase tracking-widest">Last online: 2h ago</div>
+                    </div>
+                  </div>
+                  <div class="text-white/20 font-black text-xs uppercase">Offline</div>
+               </div>
+               <div class="bg-slate-800 rounded-2xl p-4 border-2 border-slate-700 flex items-center justify-between">
+                  <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center text-2xl">🃏</div>
+                    <div>
+                      <div class="text-white font-black italic">BrawlPro</div>
+                      <div class="text-blue-400 text-xs font-black uppercase tracking-widest">In Battle</div>
+                    </div>
+                  </div>
+                  <button class="bg-slate-700 text-white/50 px-6 py-2 rounded-xl font-black text-sm uppercase cursor-not-allowed">Watch</button>
+               </div>
+            </div>
+            
+            <button class="mt-8 w-full py-4 bg-slate-800 hover:bg-slate-700 rounded-2xl border-2 border-slate-700 text-white/60 font-black uppercase tracking-widest transition-all">Add Friend</button>
+          </div>
+        `;
+        document.getElementById("friends-close").onclick = () => this.renderMenu();
+      }
+      renderClub() {
+        this.state = "CLUB";
+        this.clearUI();
+        this.uiContainer.classList.remove("pointer-events-none");
+        this.uiContainer.classList.add("pointer-events-auto", "w-full", "h-full", "bg-black/60", "backdrop-blur-xl", "flex", "items-center", "justify-center", "p-8");
+        
+        this.uiContainer.innerHTML = `
+          <div class="w-full max-w-4xl bg-slate-900 rounded-[3rem] border-4 border-slate-700 shadow-2xl relative flex flex-col p-12 overflow-hidden">
+            <button id="club-close" class="absolute top-8 right-8 text-white/40 hover:text-white transition-colors text-4xl">✕</button>
+            
+            <div class="flex items-center gap-8 mb-12">
+               <div class="w-32 h-32 bg-amber-600 rounded-3xl border-4 border-amber-400 shadow-2xl flex items-center justify-center text-6xl">🛡️</div>
+               <div>
+                  <h2 class="text-6xl brawl-font italic text-white uppercase drop-shadow-lg leading-tight">Club Alpha</h2>
+                  <div class="flex items-center gap-4 mt-2">
+                    <span class="text-blue-400 font-black uppercase tracking-widest">28/30 Members</span>
+                    <span class="text-yellow-400 font-black italic">🏆 12,450 Required</span>
+                  </div>
+               </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+               <div class="space-y-4">
+                  <h3 class="text-white/40 font-black uppercase tracking-widest text-sm">Top Members</h3>
+                  <div class="space-y-2">
+                     <div class="flex items-center justify-between bg-black/20 p-3 rounded-xl border border-white/5">
+                        <span class="text-white font-black italic">1. SuperBrawler</span>
+                        <span class="text-yellow-400 font-black">🏆 850</span>
+                     </div>
+                     <div class="flex items-center justify-between bg-black/20 p-3 rounded-xl border border-white/5">
+                        <span class="text-white font-black italic">2. KingPoco</span>
+                        <span class="text-yellow-400 font-black">🏆 740</span>
+                     </div>
+                     <div class="flex items-center justify-between bg-black/20 p-3 rounded-xl border border-white/5">
+                        <span class="text-white font-black italic">3. You</span>
+                        <span class="text-yellow-400 font-black">🏆 ${Object.values(this.trophies.brawlers).reduce((a,b)=>a+b,0)}</span>
+                     </div>
+                  </div>
+               </div>
+               <div class="bg-black/20 rounded-3xl p-6 border border-white/5">
+                  <h3 class="text-white font-black italic text-xl mb-4">Club Description</h3>
+                  <p class="text-white/60 text-sm leading-relaxed">We are a competitive club focused on climbing the ladder! Daily active players only. Help us in Club Games! No toxicity allowed, be chill.</p>
+                  <button class="mt-8 w-full py-4 bg-red-600 hover:bg-red-500 rounded-2xl border-b-4 border-red-800 text-white font-black uppercase tracking-widest transition-all">Leave Club</button>
+               </div>
+            </div>
+          </div>
+        `;
+        document.getElementById("club-close").onclick = () => this.renderMenu();
+      }
+      renderChat() {
+        this.state = "CHAT";
+        this.clearUI();
+        this.uiContainer.classList.remove("pointer-events-none");
+        this.uiContainer.classList.add("pointer-events-auto", "w-full", "h-full", "bg-black/60", "backdrop-blur-xl", "flex", "items-end", "justify-start", "p-8");
+        
+        this.uiContainer.innerHTML = `
+          <div class="w-full max-w-lg bg-slate-900 rounded-[2.5rem] border-4 border-slate-700 shadow-2xl relative flex flex-col p-8 overflow-hidden h-2/3 animate-slide-up">
+            <div class="flex items-center justify-between mb-8 border-b border-white/10 pb-4">
+               <h2 class="text-3xl brawl-font italic text-white uppercase tracking-tighter">Team Chat</h2>
+               <button id="chat-close" class="text-white/40 hover:text-white transition-colors text-2xl">✕</button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto space-y-4 pr-2 mb-6 custom-scrollbar">
+               <div class="flex flex-col gap-1">
+                  <span class="text-blue-400 text-[10px] font-black uppercase ml-1">SpikeFan_99</span>
+                  <div class="bg-slate-800 p-3 rounded-2xl rounded-tl-none border border-slate-700 max-w-[85%] text-sm">Hey! Ready to play some Brawl Ball? ⚽</div>
+               </div>
+               <div class="flex flex-col gap-1 items-end">
+                  <span class="text-white/30 text-[10px] font-black uppercase mr-1">You</span>
+                  <div class="bg-blue-600 p-3 rounded-2xl rounded-tr-none border border-blue-500 max-w-[85%] text-sm">Sure! Let's go. I'll pick Colt.</div>
+               </div>
+               <div class="flex flex-col gap-1">
+                  <span class="text-blue-400 text-[10px] font-black uppercase ml-1">SpikeFan_99</span>
+                  <div class="bg-slate-800 p-3 rounded-2xl rounded-tl-none border border-slate-700 max-w-[85%] text-sm">Nice. We need a tank though. 🛡️</div>
+               </div>
+            </div>
+            
+            <div class="flex gap-2">
+               <input type="text" placeholder="Type a message..." class="flex-1 bg-black/40 border-2 border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-yellow-400 transition-colors">
+               <button class="bg-yellow-400 w-12 h-12 flex items-center justify-center rounded-xl text-slate-900 font-black">➔</button>
+            </div>
+          </div>
+        `;
+        document.getElementById("chat-close").onclick = () => this.renderMenu();
+      }
+      renderSettings() {
+        this.state = "SETTINGS";
+        this.clearUI();
+        this.uiContainer.classList.remove("pointer-events-none");
+        this.uiContainer.classList.add("pointer-events-auto", "w-full", "h-full", "bg-black/60", "backdrop-blur-xl", "flex", "items-center", "justify-center", "p-8");
+        
+        this.uiContainer.innerHTML = `
+          <div class="w-full max-w-3xl bg-slate-900 rounded-[3rem] border-4 border-slate-700 shadow-2xl relative flex flex-col p-12 overflow-hidden">
+            <button id="settings-close" class="absolute top-8 right-8 text-white/40 hover:text-white transition-colors text-4xl">✕</button>
+            <h2 class="text-6xl brawl-font italic text-white uppercase drop-shadow-lg mb-12">Settings</h2>
+            
+            <div class="grid grid-cols-2 gap-8">
+               <div class="flex items-center justify-between bg-slate-800 p-6 rounded-3xl border-2 border-slate-700">
+                  <span class="text-white font-black italic uppercase">Music</span>
+                  <button class="w-16 h-8 bg-green-500 rounded-full relative"><div class="absolute right-1 top-1 w-6 h-6 bg-white rounded-full"></div></button>
+               </div>
+               <div class="flex items-center justify-between bg-slate-800 p-6 rounded-3xl border-2 border-slate-700">
+                  <span class="text-white font-black italic uppercase">Sound FX</span>
+                  <button class="w-16 h-8 bg-green-500 rounded-full relative"><div class="absolute right-1 top-1 w-6 h-6 bg-white rounded-full"></div></button>
+               </div>
+               <div class="flex items-center justify-between bg-slate-800 p-6 rounded-3xl border-2 border-slate-700">
+                  <span class="text-white font-black italic uppercase">Vibration</span>
+                  <button class="w-16 h-8 bg-slate-600 rounded-full relative"><div class="absolute left-1 top-1 w-6 h-6 bg-white/40 rounded-full"></div></button>
+               </div>
+               <div class="flex items-center justify-between bg-slate-800 p-6 rounded-3xl border-2 border-slate-700">
+                  <span class="text-white font-black italic uppercase">Language</span>
+                  <span class="text-blue-400 font-black uppercase text-sm">English 🌐</span>
+               </div>
+            </div>
+            
+            <div class="mt-12 flex gap-4">
+              <button class="flex-1 py-4 bg-blue-600 hover:bg-blue-500 rounded-2xl border-b-4 border-blue-800 text-white font-black uppercase tracking-widest transition-all">Support</button>
+              <button class="flex-1 py-4 bg-slate-700 hover:bg-slate-600 rounded-2xl border-b-4 border-slate-900 text-white/60 font-black uppercase tracking-widest transition-all">Credits</button>
+              <button class="flex-1 py-4 bg-red-600 hover:bg-red-500 rounded-2xl border-b-4 border-red-800 text-white font-black uppercase tracking-widest transition-all">Log Out</button>
+            </div>
+          </div>
+        `;
+        document.getElementById("settings-close").onclick = () => this.renderMenu();
+      }
+      renderProfile() {
+        this.state = "PROFILE";
+        this.clearUI();
+        this.uiContainer.classList.remove("pointer-events-none");
+        this.uiContainer.classList.add("pointer-events-auto", "w-full", "h-full", "bg-black/60", "backdrop-blur-xl", "flex", "items-center", "justify-center", "p-8");
+        
+        let totalTrophies = Object.values(this.trophies.brawlers).reduce((a,b)=>a+b,0);
+        let maxTrophies = totalTrophies + 540; // Mock historical max
+        let brawlersUnlocked = Object.values(this.trophies.brawlers).length;
+
+        this.uiContainer.innerHTML = `
+          <div class="w-full max-w-4xl bg-slate-900 rounded-[3rem] border-4 border-slate-700 shadow-2xl relative flex flex-col p-12 overflow-hidden">
+            <button id="profile-close" class="absolute top-8 right-8 text-white/40 hover:text-white transition-colors text-4xl">✕</button>
+            
+            <div class="flex flex-col md:flex-row items-center gap-12 mb-12">
+               <div class="relative">
+                  <div class="w-48 h-48 bg-slate-800 rounded-[2.5rem] border-8 border-slate-700 shadow-2xl flex items-center justify-center text-7xl">💀</div>
+                  <div class="absolute -top-4 -left-4 bg-purple-600 border-4 border-white rounded-2xl px-4 py-1 text-2xl font-black italic shadow-xl">5</div>
+               </div>
+               <div class="flex-1 text-center md:text-left">
+                  <h2 class="text-7xl brawl-font italic text-white uppercase drop-shadow-lg leading-none mb-4">Player One</h2>
+                  <div class="flex flex-wrap justify-center md:justify-start gap-4">
+                    <div class="bg-black/40 px-6 py-2 rounded-2xl border border-white/10 flex items-center gap-3">
+                      <span class="text-yellow-400 text-2xl font-black">🏆</span>
+                      <span class="text-white text-2xl font-black">${totalTrophies}</span>
+                    </div>
+                    <div class="bg-black/40 px-6 py-2 rounded-2xl border border-white/10 flex items-center gap-3 text-white/50">
+                      <span class="text-lg font-black uppercase tracking-widest">Rank #1,240</span>
+                    </div>
+                  </div>
+               </div>
+            </div>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+               <div class="bg-slate-800 p-6 rounded-3xl border-2 border-slate-700 text-center">
+                  <div class="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Highest Trophies</div>
+                  <div class="text-3xl font-black text-white italic">${maxTrophies}</div>
+               </div>
+               <div class="bg-slate-800 p-6 rounded-3xl border-2 border-slate-700 text-center">
+                  <div class="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Brawlers Unlocked</div>
+                  <div class="text-3xl font-black text-white italic">${brawlersUnlocked} / 29</div>
+               </div>
+               <div class="bg-slate-800 p-6 rounded-3xl border-2 border-slate-700 text-center">
+                  <div class="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Solo Victories</div>
+                  <div class="text-3xl font-black text-white italic">142</div>
+               </div>
+               <div class="bg-slate-800 p-6 rounded-3xl border-2 border-slate-700 text-center">
+                  <div class="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Team Victories</div>
+                  <div class="text-3xl font-black text-white italic">285</div>
+               </div>
+            </div>
+          </div>
+        `;
+        document.getElementById("profile-close").onclick = () => this.renderMenu();
+      }
       renderBrawlPass() {
         this.state = "BRAWL_PASS";
         this.clearUI();
@@ -396,7 +785,7 @@ class Game {
                         <div 
                             data-tier="${t.tier}"
                             class="tier-reward relative w-48 h-56 rounded-[2rem] border-4 transition-all duration-300 flex flex-col items-center justify-center shadow-2xl overflow-hidden
-                            ${isClaimed ? "bg-slate-900/50 border-slate-700 opacity-50" : (canClaim ? "bg-white border-yellow-400 cursor-pointer animate-pulse-slow hover:scale-105" : "bg-slate-800 border-slate-700 opacity-80")}
+                            ${isClaimed ? "bg-slate-900/50 border-slate-700 opacity-50" : (canClaim ? "bg-white border-yellow-400 cursor-pointer animate-float hover:scale-105" : "bg-slate-800 border-slate-700 opacity-80")}
                         ">
                             ${isReached && !isClaimed ? `<div class="absolute inset-0 bg-yellow-400/10 pointer-events-none"></div>` : ""}
                             ${isClaimed ? `<div class="absolute top-2 right-2 text-2xl">✅</div>` : ""}
@@ -460,32 +849,47 @@ class Game {
               "Mythic": "#ef4444",
               "Legendary": "#fbbf24"
           };
+          const rarityShadows = {
+              "Rare": "rgba(34, 197, 94, 0.6)",
+              "Super Rare": "rgba(59, 130, 246, 0.6)",
+              "Epic": "rgba(168, 85, 247, 0.6)",
+              "Mythic": "rgba(239, 68, 68, 0.6)",
+              "Legendary": "rgba(251, 191, 36, 0.6)"
+          };
 
-          const updateUI = () => {
+          const updateUI = (isUpgrading = false) => {
               this.uiContainer.innerHTML = `
                 <div class="fixed inset-0 bg-black/90 backdrop-blur-3xl z-0 flex items-center justify-center overflow-hidden">
-                    <div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(circle, ${rarityColors[rarity]} 0%, transparent 70%);"></div>
+                    <div class="absolute inset-0 opacity-20 pointer-events-none transition-all duration-500" style="background-image: radial-gradient(circle at center, ${rarityColors[rarity]} 0%, transparent 70%);"></div>
                     
-                    <div id="drop-container" class="relative z-10 flex flex-col items-center gap-12 cursor-pointer group active:scale-95 transition-transform duration-75">
-                        <div 
-                            class="w-64 h-64 md:w-80 md:h-80 rounded-full border-8 shadow-[0_0_50px_rgba(0,0,0,0.5)] flex items-center justify-center text-[10rem] md:text-[14rem] transform transition-all duration-200"
-                            style="background-color: ${rarityColors[rarity]}; border-color: white;"
-                        >
-                            <span class="drop-shadow-2xl">💀</span>
-                        </div>
+                    <div id="drop-container" class="relative z-10 flex flex-col items-center gap-12 cursor-pointer group active:scale-95 transition-transform duration-75 animate-scale-up">
+                         <div class="relative">
+                            <!-- Glow effects -->
+                            <div class="absolute inset-0 rounded-full blur-3xl opacity-50 transition-all duration-500" style="background-color: ${rarityColors[rarity]}; transform: scale(1.5);"></div>
+                            
+                            <div 
+                                id="starr-sphere"
+                                class="w-64 h-64 md:w-80 md:h-80 rounded-full border-8 shadow-[0_0_80px_${rarityShadows[rarity]}] flex items-center justify-center text-[10rem] md:text-[14rem] transform transition-all duration-200 ${isUpgrading ? 'starr-upgrade-anim' : (taps < 4 ? 'hover:scale-105' : 'animate-shake')}"
+                                style="background-color: ${rarityColors[rarity]}; border-color: white;"
+                            >
+                                <span class="drop-shadow-2xl">💀</span>
+                            </div>
+                         </div>
                         
                         <div class="flex flex-col items-center">
-                            <h2 class="text-6xl md:text-8xl brawl-font italic uppercase tracking-tighter transition-colors duration-300" style="color: ${rarityColors[rarity]}; text-shadow: 0 4px 0 #000; -webkit-text-stroke: 2px #fff;">
+                            <h2 class="text-6xl md:text-8xl brawl-font italic uppercase tracking-tighter transition-all duration-300 transform ${isUpgrading ? 'scale-110' : ''}" style="color: ${rarityColors[rarity]}; text-shadow: 0 4px 0 #000, 0 8px 30px ${rarityShadows[rarity]}; -webkit-text-stroke: 2px #fff;">
                                 ${rarity}
                             </h2>
-                            <div class="mt-8 flex gap-2">
+                            <div class="mt-8 flex gap-3">
                                 ${Array.from({length: 4}).map((_, i) => `
-                                    <div class="w-12 h-3 rounded-full overflow-hidden bg-white/20">
-                                        <div class="h-full bg-white transition-all duration-300" style="width: ${i < taps ? '100%' : '0%'}"></div>
+                                    <div class="w-14 h-4 rounded-full overflow-hidden bg-white/10 border border-white/5">
+                                        <div class="h-full bg-white shadow-[0_0_10px_white] transition-all duration-500" style="width: ${i < taps ? '100%' : '0%'}"></div>
                                     </div>
                                 `).join("")}
                             </div>
-                            <div class="mt-8 text-white/50 font-black uppercase tracking-widest animate-pulse">${taps < 4 ? "Tap to Upgrade!" : "Click to Claim!"}</div>
+                            <div class="mt-8 text-white font-black uppercase tracking-[0.2em] text-sm animate-pulse drop-shadow-md">
+                                ${taps < 4 ? `<span class="bg-white/10 px-4 py-2 rounded-lg">Tap to Upgrade!</span>` : `<span class="bg-yellow-400 text-slate-900 px-6 py-2 rounded-lg shadow-xl">Click to Claim!</span>`}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -500,14 +904,16 @@ class Game {
                   
                   // Upgrade chance
                   const chances = { "Rare": 0.4, "Super Rare": 0.3, "Epic": 0.2, "Mythic": 0.1 };
+                  let upgraded = false;
                   if (Math.random() < (chances[rarity] || 0)) {
                       const idx = rarities.indexOf(rarity);
                       if (idx < rarities.length - 1) {
                           rarity = rarities[idx + 1];
+                          upgraded = true;
                       }
                   }
                   
-                  updateUI();
+                  updateUI(upgraded);
               } else {
                   this.revealReward();
               }
@@ -531,19 +937,27 @@ class Game {
               else if (rewardType === "gems") this.trophies.gems += rewardValue;
               else if (rewardType === "powerPoints") this.trophies.powerPoints += rewardValue;
               
-              this.trophies.claimedTiers.push(tierToClaim);
+              if (tierToClaim !== 999) this.trophies.claimedTiers.push(tierToClaim);
               j(this.trophies);
 
               this.uiContainer.innerHTML = `
-                <div class="fixed inset-0 bg-black/95 z-50 flex flex-col items-center justify-center">
-                    <div class="text-white/40 uppercase font-black tracking-widest mb-4">You Got</div>
-                    <div class="text-[12rem] md:text-[16rem] mb-8 animate-bounce">${rewardEmoji}</div>
-                    <div class="text-7xl md:text-9xl brawl-font italic text-white uppercase drop-shadow-xl mb-12">${rewardValue} ${rewardType === "powerPoints" ? "Power Points" : rewardType}</div>
-                    <button id="reward-claim-btn" class="bg-yellow-400 hover:bg-yellow-300 text-slate-900 px-24 py-8 rounded-[2.5rem] text-5xl brawl-font italic font-black transition-transform hover:scale-110 shadow-2xl active:scale-95">COOL!</button>
+                <div class="fixed inset-0 bg-black/95 z-50 flex flex-col items-center justify-center overflow-hidden">
+                    <!-- Explosion effect -->
+                    <div class="absolute inset-0 bg-white opacity-0 animate-ping pointer-events-none"></div>
+
+                    <div class="text-white/40 uppercase font-black tracking-[0.3em] mb-4 animate-scale-up">You Got</div>
+                    <div class="text-[12rem] md:text-[16rem] mb-8 animate-bounce drop-shadow-[0_0_100px_${rarityShadows[rarity]}] animate-scale-up">${rewardEmoji}</div>
+                    <div class="text-7xl md:text-9xl brawl-font italic text-white uppercase drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] mb-12 transform hover:scale-105 transition-transform animate-scale-up" style="animation-delay: 0.1s">
+                        ${rewardValue} ${rewardType === "powerPoints" ? "Power Points" : rewardType}
+                    </div>
+                    <button id="reward-claim-btn" class="bg-yellow-400 hover:bg-yellow-300 text-slate-900 px-24 py-8 rounded-[2.5rem] text-5xl brawl-font italic font-black transition-all hover:scale-110 shadow-[0_20px_50px_rgba(234,179,8,0.3)] active:scale-95 animate-scale-up" style="animation-delay: 0.2s">COOL!</button>
                 </div>
               `;
               
-              document.getElementById("reward-claim-btn").onclick = () => this.renderBrawlPass();
+              document.getElementById("reward-claim-btn").onclick = () => {
+                   if (tierToClaim === 999) this.renderMenu();
+                   else this.renderBrawlPass();
+              };
           };
 
           updateUI();
