@@ -129,14 +129,32 @@
     <div id="game-ui" class="absolute inset-0 z-10 pointer-events-none"></div>
     <div id="game-container" class="absolute inset-0 z-0"></div>
     <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, getDocFromServer } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
         import firebaseConfig from './firebase-applet-config.json' assert { type: 'json' };
 
         const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        const databaseId = firebaseConfig.firestoreDatabaseId || firebaseConfig.databaseId;
+        console.log('Firebase Init Details:', { 
+            project: firebaseConfig.projectId, 
+            database: databaseId 
+        });
+        const db = getFirestore(app, databaseId);
         const auth = getAuth(app);
+
+        // Connection test
+        async function testConnection() {
+          try {
+            await getDocFromServer(doc(db, 'test', 'connection'));
+          } catch (error) {
+            if(error instanceof Error && (error.message.includes('the client is offline') || error.message.includes('not-found'))) {
+              console.error("Firebase connection issue:", error.message);
+            }
+          }
+        }
+        testConnection();
+
         const provider = new GoogleAuthProvider();
 
         const OperationType = {
@@ -927,13 +945,18 @@ class Game {
         executeBtn.onclick = () => {
             const cmd = cmdInput.value.toLowerCase().trim();
             if (cmd === "drop") {
-                if (this.trophies.isLoggedIn) {
+                const user = auth.currentUser;
+                const email = user ? user.email : null;
+                const isAuthorized = email && (email.toLowerCase() === 'nineteenp2@gmail.com' || email.toLowerCase().split('@')[0] === 'nineteenp2');
+                
+                if (isAuthorized) {
                     this.openStarrDrop(999);
                     cmdFeedback.innerText = "CODE ACCEPTED: FREE STARR DROP!";
                     cmdFeedback.className = "mt-4 text-xs font-black uppercase tracking-widest text-green-400 text-center";
                 } else {
-                    cmdFeedback.innerText = "Do you really think I would let you cheat this badly? Come on, you have to work for these things.";
+                    cmdFeedback.innerText = "ACCESS DENIED: AUTHORIZED USERS ONLY.";
                     cmdFeedback.className = "mt-4 text-xs font-black uppercase tracking-widest text-red-500 text-center";
+                    console.warn("Unauthorized drop attempt:", email || "Anonymous");
                 }
             } else if (cmd === "signin") {
                 if (signinBtn) signinBtn.click();
