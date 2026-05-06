@@ -158,7 +158,9 @@
           mortis:{name:"Mortis",type:"mortis",emoji:"\u{1F9DB}",hp:3800,speed:5.5,reloadTime:2400,fireRate:1000,damage:900,range:200,bulletSpeed:0,bulletSize:0,color:"#4f46e5",trio:"Mortuary",rarity:"Mythic"},
           frank:{name:"Frank",type:"frank",emoji:"\u{1F528}",hp:7000,speed:4.5,reloadTime:1500,fireRate:1000,damage:1200,range:250,bulletSpeed:0,bulletSize:25,color:"#1e293b",trio:"Starr Park",rarity:"Epic"},
           emz:{name:"Emz",type:"emz",emoji:"\u{1F648}",hp:3600,speed:4,reloadTime:2000,fireRate:600,damage:500,range:500,bulletSpeed:8,bulletSize:10,color:"#c026d3",trio:"Starr Park",rarity:"Epic"},
-          squeak:{name:"Squeak",type:"squeak",emoji:"\u{1F436}",hp:2800,speed:4.5,reloadTime:1800,fireRate:500,damage:1000,range:500,bulletSpeed:12,bulletSize:10,color:"#10b981",trio:"Starr Park",rarity:"Mythic"}
+          squeak:{name:"Squeak",type:"squeak",emoji:"\u{1F436}",hp:2800,speed:4.5,reloadTime:1800,fireRate:500,damage:1000,range:500,bulletSpeed:12,bulletSize:10,color:"#10b981",trio:"Starr Park",rarity:"Mythic"},
+          hank:{name:"Hank",type:"hank",emoji:"\u{1F990}",hp:5800,speed:4,reloadTime:1500,fireRate:800,damage:1000,range:300,bulletSpeed:10,bulletSize:30,color:"#166534",trio:"Candi",rarity:"Epic"},
+          angelo:{name:"Angelo",type:"angelo",emoji:"\u{1FAB3}",hp:3000,speed:4.5,reloadTime:1200,fireRate:1000,damage:2200,range:700,bulletSpeed:15,bulletSize:8,color:"#a3e635",trio:"Swamp of Love",rarity:"Epic"}
         },
         d=2500,B=9,P=25,E=30,A=60,L={1:10,2:8,3:6,4:4,5:2,6:1,7:-1,8:-2,9:-3,10:-4};function R(){
     let v = localStorage.getItem("mini_brawl_trophies_v2"),
@@ -197,7 +199,7 @@ const CREDITS_COSTS = {
     amber: 3800, ash: 1900, grom: 925, dynamike: 430, carl: 430, 
     jacky: 430, gus: 430, chuck: 1900, barley: 160, sprout: 1900, 
     crow: 3800, eightbit: 430, rico: 430, brock: 430, mortis: 1900, 
-    frank: 925, emz: 925, squeak: 1900
+    frank: 925, emz: 925, squeak: 1900, hank: 925, angelo: 925
 };
 const RARITY_DATA = {
     Starter: { color: "bg-slate-500", shadow: "rgba(100,116,139,0.5)", cost: 0 },
@@ -207,7 +209,7 @@ const RARITY_DATA = {
     Mythic: { color: "bg-rarity-mythic", shadow: "rgba(239,68,68,0.5)", cost: 1900 },
     Legendary: { color: "bg-rarity-legendary", shadow: "rgba(245,158,11,0.5)", cost: 3800 }
 };
-const UNLOCK_ORDER = ["colt", "poco", "el_primo", "barley", "jacky", "penny", "darryl", "carl", "rico", "brock", "tick", "eightbit", "dynamike", "griff", "edgar", "frank", "emz", "colette", "grom", "ash", "chuck", "spike", "amber", "squeak", "mortis"];
+const UNLOCK_ORDER = ["colt", "poco", "el_primo", "barley", "jacky", "penny", "darryl", "carl", "rico", "brock", "tick", "eightbit", "dynamike", "gus", "griff", "edgar", "frank", "emz", "hank", "angelo", "colette", "grom", "ash", "chuck", "spike", "amber", "squeak", "mortis"];
 const PASSTIERS = Array.from({length: 50}, (_, i) => {
     const tier = i + 1;
     let type = 'starr_drop';
@@ -501,17 +503,17 @@ class Game {
                     `<div class="px-6 py-2 bg-yellow-400 text-slate-900 rounded-full font-black text-sm uppercase">FREE</div>` : 
                     `<div class="px-6 py-2 bg-slate-700 text-white/40 rounded-full font-black text-xs uppercase italic">${timerText}</div>`}
                </div>
-               <div class="bg-slate-800 rounded-3xl border-4 border-slate-700 p-8 flex flex-col items-center group hover:border-purple-400 transition-all cursor-pointer opacity-80">
+               <div id="pp-offer-btn" class="bg-slate-800 rounded-3xl border-4 border-slate-700 p-8 flex flex-col items-center group hover:border-purple-400 transition-all cursor-pointer opacity-80">
                   <div class="text-7xl mb-6 group-hover:scale-110 transition-transform">⚡</div>
                   <div class="text-2xl font-black text-white italic mb-2">500 Power Points</div>
-                  <div class="flex items-center gap-2 px-6 py-2 bg-slate-900 text-white rounded-full font-black text-sm uppercase border border-white/10">
+                  <div class="flex items-center gap-2 px-6 py-2 bg-slate-900 text-white rounded-full font-black text-sm uppercase border border-white/10 ${this.trophies.gems < 50 ? "text-red-500" : ""}">
                     <span>💎</span> 50
                   </div>
                </div>
-               <div class="bg-slate-800 rounded-3xl border-4 border-slate-700 p-8 flex flex-col items-center group hover:border-green-400 transition-all cursor-pointer opacity-80">
+               <div id="drop-offer-btn" class="bg-slate-800 rounded-3xl border-4 border-slate-700 p-8 flex flex-col items-center group hover:border-green-400 transition-all cursor-pointer opacity-80">
                   <div class="text-7xl mb-6 group-hover:scale-110 transition-transform">💀</div>
                   <div class="text-2xl font-black text-white italic mb-2">Starr Drop</div>
-                  <div class="flex items-center gap-2 px-6 py-2 bg-slate-900 text-white rounded-full font-black text-sm uppercase border border-white/10">
+                  <div class="flex items-center gap-2 px-6 py-2 bg-slate-900 text-white rounded-full font-black text-sm uppercase border border-white/10 ${this.trophies.coins < 1200 ? "text-red-500" : ""}">
                     <span>🪙</span> 1,200
                   </div>
                </div>
@@ -539,7 +541,29 @@ class Game {
                 this.trophies.lastDailyClaim = Date.now();
                 j(this.trophies);
                 this.renderShop();
-                // Optional: show a small animation or message
+            };
+        }
+
+        const ppOffer = document.getElementById("pp-offer-btn");
+        if (ppOffer) {
+            ppOffer.onclick = () => {
+                if (this.trophies.gems >= 50) {
+                    this.trophies.gems -= 50;
+                    this.trophies.powerPoints += 500;
+                    j(this.trophies);
+                    this.renderShop();
+                }
+            };
+        }
+
+        const dropOffer = document.getElementById("drop-offer-btn");
+        if (dropOffer) {
+            dropOffer.onclick = () => {
+                if (this.trophies.coins >= 1200) {
+                    this.trophies.coins -= 1200;
+                    j(this.trophies);
+                    this.openStarrDrop(999);
+                }
             };
         }
       }
@@ -1210,6 +1234,7 @@ class Game {
                     this.trophies.coins -= nextCost.coins;
                     this.trophies.powerPoints -= nextCost.pp;
                     this.trophies.brawlerLevels[bType] = level + 1;
+                    this.selectedBrawler = w[bType]; // Auto select to show new stats
                     j(this.trophies);
                     this.renderSelect();
                 }
@@ -1224,8 +1249,8 @@ class Game {
           this.uiContainer.classList.add("pointer-events-auto", "w-full", "h-full");
 
           const currentIndex = UNLOCK_ORDER.indexOf(this.trophies.unlockingBrawler);
-          // Show current + next 4
-          const visibleOrder = UNLOCK_ORDER.slice(Math.max(0, currentIndex - 1), currentIndex + 5);
+          // Show all unlocked + current + next 10
+          const visibleOrder = UNLOCK_ORDER.slice(0, currentIndex + 10);
 
           this.uiContainer.innerHTML = `
             <div class="fixed inset-0 starr-road-bg z-0 overflow-hidden">
