@@ -129,6 +129,47 @@
     <div id="game-ui" class="absolute inset-0 z-10 pointer-events-none"></div>
     <div id="game-container" class="absolute inset-0 z-0"></div>
     <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+        import firebaseConfig from './firebase-applet-config.json' assert { type: 'json' };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
+        const OperationType = {
+          CREATE: 'create',
+          UPDATE: 'update',
+          DELETE: 'delete',
+          LIST: 'list',
+          GET: 'get',
+          WRITE: 'write',
+        };
+
+
+        function handleFirestoreError(error, operationType, path) {
+          const errInfo = {
+            error: error instanceof Error ? error.message : String(error),
+            authInfo: {
+              userId: auth.currentUser?.uid,
+              email: auth.currentUser?.email,
+              emailVerified: auth.currentUser?.emailVerified,
+              isAnonymous: auth.currentUser?.isAnonymous,
+              tenantId: auth.currentUser?.tenantId,
+              providerInfo: auth.currentUser?.providerData?.map(provider => ({
+                providerId: provider.providerId,
+                email: provider.email,
+              })) || []
+            },
+            operationType,
+            path
+          };
+          console.error('Firestore Error: ', JSON.stringify(errInfo));
+          throw new Error(JSON.stringify(errInfo));
+        }
+
         var w={
           shelly:{name:"Shelly",type:"shelly",emoji:"\u{1F920}",hp:3600,speed:4,reloadTime:1500,fireRate:500,damage:300,range:400,bulletSpeed:10,bulletSize:10,color:"#8b5cf6",trio:"Western",rarity:"Starter"},
           colt:{name:"Colt",type:"colt",emoji:"\u{1F52B}",hp:2800,speed:4,reloadTime:1600,fireRate:500,damage:450,range:600,bulletSpeed:12,bulletSize:8,color:"#ec4899",trio:"Western",rarity:"Rare"},
@@ -175,7 +216,8 @@
             brawlerLevels: { shelly: 1, sprout: 1, crow: 1 },
             brawlers: { shelly: 0, sprout: 0, crow: 0 },
             unlockingBrawler: "colt",
-            lastDailyClaim: 0
+            lastDailyClaim: 0,
+            isLoggedIn: false
         };
     if (v) {
         let l = JSON.parse(v);
@@ -236,7 +278,13 @@ const getLeveledStat = (l11Stat, level) => {
     const base = l11Stat / 2;
     return Math.floor(base * (1 + 0.1 * (level - 1)));
 };
-function j(v){localStorage.setItem("mini_brawl_trophies_v2",JSON.stringify(v))}
+function j(v){
+  localStorage.setItem("mini_brawl_trophies_v2",JSON.stringify(v));
+  if (auth.currentUser) {
+    const userRef = doc(db, 'users', auth.currentUser.uid);
+    setDoc(userRef, v).catch(error => handleFirestoreError(error, OperationType.WRITE, `users/${auth.currentUser.uid}`));
+  }
+}
 class Game {
         canvas;
         ctx;
@@ -293,11 +341,44 @@ class Game {
             this.mouse.down = !0
           }), window.addEventListener("mouseup", () => {
             this.mouse.down = !1
-          }), this.canvas.width = this.viewport.w, this.canvas.height = this.viewport.h, this.renderMenu(), this.loop()
+          }), this.canvas.width = this.viewport.w, this.canvas.height = this.viewport.h;
+
+          onAuthStateChanged(auth, async (user) => {
+            if (user) {
+              this.trophies.isLoggedIn = true;
+              const userRef = doc(db, 'users', user.uid);
+              try {
+                const snap = await getDoc(userRef);
+                if (snap.exists()) {
+                  this.trophies = snap.data();
+                  this.trophies.isLoggedIn = true; // Ensure it stays true
+                  localStorage.setItem("mini_brawl_trophies_v2", JSON.stringify(this.trophies));
+                } else {
+                  j(this.trophies);
+                }
+              } catch (e) {
+                handleFirestoreError(e, OperationType.GET, `users/${user.uid}`);
+              }
+              if (this.state === "MENU" || this.state === "SETTINGS") this.renderMenu();
+            } else {
+              this.trophies.isLoggedIn = false;
+              if (this.state === "MENU" || this.state === "SETTINGS") this.renderMenu();
+            }
+          });
+
+          this.renderMenu(), this.loop()
         }
         clearUI() {
           this.uiContainer.innerHTML = "";
           this.uiContainer.className = "absolute inset-0 z-10 pointer-events-none";
+        }
+        async loginWithGoogle() {
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error("Login failed", error);
+                throw error;
+            }
         }
         renderMenu() {
           this.state = "MENU";
@@ -333,9 +414,14 @@ class Game {
                 </div>
                 <div class="flex flex-col">
                   <div class="text-white text-lg brawl-font italic drop-shadow-md">Player One</div>
-                  <div class="flex items-center gap-1 bg-black/40 rounded-full pr-3 pl-1 py-0.5 border border-white/10">
-                    <div class="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center text-xs">🏆</div>
-                    <span class="text-white text-sm font-black">${totalTrophies}</span>
+                  <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1 bg-black/40 rounded-full pr-3 pl-1 py-0.5 border border-white/10">
+                      <div class="w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center text-xs">🏆</div>
+                      <span class="text-white text-sm font-black">${totalTrophies}</span>
+                    </div>
+                    <div class="flex items-center gap-1 bg-black/40 px-2 py-0.5 rounded-full border border-white/10 text-[8px] font-black uppercase">
+                      ${this.trophies.isLoggedIn ? '<span class="text-green-400">●</span> Cloud' : '<span class="text-yellow-400">●</span> Local'}
+                    </div>
                   </div>
                 </div>
                 <div class="w-12 h-12 bg-blue-500 rounded-xl border-4 border-white shadow-lg flex items-center justify-center text-2xl ml-2">🌵</div>
@@ -427,7 +513,7 @@ class Game {
               
               <div id="mode-selector" class="flex-1 max-w-lg mx-6 h-24 bg-slate-800 rounded-2xl border-4 border-slate-700 flex items-center px-6 gap-4 cursor-pointer hover:border-yellow-400 transition-all shadow-2xl group active:scale-95">
                 <div class="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center text-4xl transform group-hover:rotate-6 transition-transform shadow-inner">
-                  ${this.gameMode === "SHOWDOWN" ? "☠️" : this.gameMode === "BRAWL_BALL" ? "⚽" : "🚩"}
+                  ${this.gameMode === "SHOWDOWN" ? "☠️" : this.gameMode === "BRAWL_BALL" ? "⚽" : this.gameMode === "HOTZONE" ? "🚩" : this.gameMode === "GEM_GRAB" ? "💎" : "⭐"}
                 </div>
                 <div class="flex-1 text-left">
                   <div class="text-white text-2xl brawl-font italic leading-tight uppercase tracking-tight">${this.gameMode.replace("_", " ")}</div>
@@ -454,7 +540,9 @@ class Game {
           document.getElementById("brawlers-btn").onclick = () => this.renderSelect();
           document.getElementById("play-button").onclick = () => this.startGame();
           document.getElementById("mode-selector").onclick = () => {
-            this.gameMode = this.gameMode === "SHOWDOWN" ? "BRAWL_BALL" : this.gameMode === "BRAWL_BALL" ? "HOTZONE" : "SHOWDOWN";
+            const modes = ["SHOWDOWN", "BRAWL_BALL", "HOTZONE", "GEM_GRAB", "BOUNTY"];
+            const nextIdx = (modes.indexOf(this.gameMode) + 1) % modes.length;
+            this.gameMode = modes[nextIdx];
             this.renderMenu();
           };
           // Brawl Pass button
@@ -792,14 +880,68 @@ class Game {
                </div>
             </div>
             
+            <div class="mt-8 bg-black/40 p-6 rounded-3xl border-2 border-white/10">
+               <h3 class="text-white font-black italic uppercase text-sm mb-4">Command Console</h3>
+               <div class="flex gap-2">
+                  <input id="command-input" type="text" placeholder="Enter command..." class="flex-1 bg-slate-800 border-2 border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-yellow-400 transition-colors uppercase font-black">
+                  <button id="command-execute" class="bg-yellow-400 px-6 rounded-xl text-slate-900 font-black uppercase text-sm hover:scale-105 active:scale-95 transition-all">Execute</button>
+               </div>
+               <div id="command-feedback" class="mt-4 text-xs font-black uppercase tracking-widest text-white/30 text-center min-h-[1.5rem]"></div>
+            </div>
+
             <div class="mt-12 flex gap-4">
+              <button id="signin-btn" class="flex-1 py-4 bg-white hover:bg-slate-100 rounded-2xl border-b-4 border-slate-300 text-slate-900 font-black uppercase tracking-widest transition-all ${this.trophies.isLoggedIn ? "hidden" : ""}">Sign in with Google</button>
               <button class="flex-1 py-4 bg-blue-600 hover:bg-blue-500 rounded-2xl border-b-4 border-blue-800 text-white font-black uppercase tracking-widest transition-all">Support</button>
-              <button class="flex-1 py-4 bg-slate-700 hover:bg-slate-600 rounded-2xl border-b-4 border-slate-900 text-white/60 font-black uppercase tracking-widest transition-all">Credits</button>
-              <button class="flex-1 py-4 bg-red-600 hover:bg-red-500 rounded-2xl border-b-4 border-red-800 text-white font-black uppercase tracking-widest transition-all">Log Out</button>
+              <button id="logout-btn" class="flex-1 py-4 bg-red-600 hover:bg-red-500 rounded-2xl border-b-4 border-red-800 text-white font-black uppercase tracking-widest transition-all">Log Out</button>
             </div>
           </div>
         `;
         document.getElementById("settings-close").onclick = () => this.renderMenu();
+        
+        const cmdInput = document.getElementById("command-input");
+        const cmdFeedback = document.getElementById("command-feedback");
+        const executeBtn = document.getElementById("command-execute");
+        const signinBtn = document.getElementById("signin-btn");
+        const logoutBtn = document.getElementById("logout-btn");
+
+        if (signinBtn) {
+            signinBtn.onclick = () => {
+                cmdFeedback.innerText = "Connecting to Google...";
+                // This would trigger the real login flow
+                this.loginWithGoogle().then(() => {
+                    this.renderSettings();
+                }).catch(err => {
+                    cmdFeedback.innerText = "Sign in failed: " + err.message;
+                    cmdFeedback.classList.add("text-red-500");
+                });
+            };
+        }
+
+        if (logoutBtn) {
+            logoutBtn.onclick = async () => {
+                await auth.signOut();
+                this.renderMenu();
+            };
+        }
+
+        executeBtn.onclick = () => {
+            const cmd = cmdInput.value.toLowerCase().trim();
+            if (cmd === "drop") {
+                if (this.trophies.isLoggedIn) {
+                    this.openStarrDrop(999);
+                    cmdFeedback.innerText = "CODE ACCEPTED: FREE STARR DROP!";
+                    cmdFeedback.className = "mt-4 text-xs font-black uppercase tracking-widest text-green-400 text-center";
+                } else {
+                    cmdFeedback.innerText = "Do you really think I would let you cheat this badly? Come on, you have to work for these things.";
+                    cmdFeedback.className = "mt-4 text-xs font-black uppercase tracking-widest text-red-500 text-center";
+                }
+            } else if (cmd === "signin") {
+                if (signinBtn) signinBtn.click();
+            } else {
+                cmdFeedback.innerText = "Unknown Command";
+                cmdFeedback.className = "mt-4 text-xs font-black uppercase tracking-widest text-white/30 text-center";
+            }
+        };
       }
       renderProfile() {
         this.state = "PROFILE";
@@ -1605,6 +1747,41 @@ class Game {
             this.zones.push({ id: "hotzone", x: arenaW / 2, y: arenaH / 2, radius: 250, duration: 999999, createdAt: Date.now(), isZone: true });
             this.camera.x = this.player.x - this.viewport.w / 2;
             this.camera.y = this.player.y - this.viewport.h / 2;
+          } else if (this.gameMode === "GEM_GRAB" || this.gameMode === "BOUNTY") {
+            const arenaW = 1000, arenaH = 2000;
+            this.mapW = arenaW;
+            this.mapH = arenaH;
+            
+            const emoji = this.gameMode === "GEM_GRAB" ? "💎" : "⭐";
+            this.uiContainer.innerHTML = `
+              <div class="absolute top-4 left-1/2 -translate-x-1/2 flex gap-8 pointer-events-none">
+                <div class="bg-blue-600/50 backdrop-blur-md px-12 py-3 rounded-2xl border-2 border-blue-400 text-3xl font-black italic shadow-xl relative min-w-[120px] text-center" id="score-blue">0 ${emoji}</div>
+                <div class="bg-red-600/50 backdrop-blur-md px-12 py-3 rounded-2xl border-2 border-red-400 text-3xl font-black italic shadow-xl relative min-w-[120px] text-center" id="score-red">0 ${emoji}</div>
+              </div>`;
+
+            const level = this.trophies.brawlerLevels[this.selectedBrawler.type] || 1;
+            const hp = getLeveledStat(this.selectedBrawler.hp, level);
+            this.player = { id: "player", x: arenaW / 2, y: arenaH - 200, size: E, hp: hp, maxHp: hp, powerCubes: 0, config: this.selectedBrawler, lastShot: 0, angle: 0, superCharge: 0, ammo: 3, maxAmmo: 3, reloadTimer: 0, lastCombatTime: 0, team: "blue", respawnTimer: 0, gems: 0, stars: 2 };
+            
+            this.bots = [
+                { id: "bot-blue-1", x: arenaW / 2 - 200, y: arenaH - 200, size: E, hp: 4000, maxHp: 4000, powerCubes: 0, config: w.el_primo, lastShot: 0, angle: 0, superCharge: 0, ammo: 3, maxAmmo: 3, reloadTimer: 0, team: "blue", respawnTimer: 0, level: this.trophies.brawlerLevels.el_primo || 1, gems: 0, stars: 2 },
+                { id: "bot-blue-2", x: arenaW / 2 + 200, y: arenaH - 200, size: E, hp: 3000, maxHp: 3000, powerCubes: 0, config: w.colt, lastShot: 0, angle: 0, superCharge: 0, ammo: 3, maxAmmo: 3, reloadTimer: 0, team: "blue", respawnTimer: 0, level: this.trophies.brawlerLevels.colt || 1, gems: 0, stars: 2 },
+                { id: "bot-red-1", x: arenaW / 2, y: 200, size: E, hp: 3600, maxHp: 3600, powerCubes: 0, config: w.shelly, lastShot: 0, angle: 0, superCharge: 0, ammo: 3, maxAmmo: 3, reloadTimer: 0, team: "red", respawnTimer: 0, level: 8, gems: 0, stars: 2 },
+                { id: "bot-red-2", x: arenaW / 2 - 200, y: 200, size: E, hp: 4000, maxHp: 4000, powerCubes: 0, config: w.el_primo, lastShot: 0, angle: 0, superCharge: 0, ammo: 3, maxAmmo: 3, reloadTimer: 0, team: "red", respawnTimer: 0, level: 7, gems: 0, stars: 2 },
+                { id: "bot-red-3", x: arenaW / 2 + 200, y: 200, size: E, hp: 2800, maxHp: 2800, powerCubes: 0, config: w.colt, lastShot: 0, angle: 0, superCharge: 0, ammo: 3, maxAmmo: 3, reloadTimer: 0, team: "red", respawnTimer: 0, level: 6, gems: 0, stars: 2 },
+            ].map(b => ({ ...b, hp: getLeveledStat(b.hp, b.level || 1), maxHp: getLeveledStat(b.hp, b.level || 1) }));
+            
+            this.walls = [
+              {x: 200, y: arenaH/2 - 300, width: 600, height: 100},
+              {x: 200, y: arenaH/2 + 200, width: 600, height: 100},
+            ];
+
+            if (this.gameMode === "GEM_GRAB") {
+                this.creatures.push({ id: "gem-mine", x: arenaW / 2, y: arenaH / 2, type: "GEM_MINE", lastSpawn: Date.now() });
+            }
+            
+            this.camera.x = this.player.x - this.viewport.w / 2;
+            this.camera.y = this.player.y - this.viewport.h / 2;
           }
 
           this.uiContainer.innerHTML += `
@@ -1877,7 +2054,7 @@ class Game {
         let e = Date.now(), l = e - this.lastTick;
         this.lastTick = e;
 
-        if (this.gameMode === "BRAWL_BALL" || this.gameMode === "HOTZONE") {
+        if (this.gameMode === "BRAWL_BALL" || this.gameMode === "HOTZONE" || this.gameMode === "GEM_GRAB" || this.gameMode === "BOUNTY") {
             [this.player, ...this.bots].forEach(b => {
                  if (b.hp <= 0) {
                      b.respawnTimer = (b.respawnTimer || 0) + l;
@@ -1886,6 +2063,8 @@ class Game {
                           b.respawnTimer = 0;
                           b.ammo = b.maxAmmo || 3;
                           b.superCharge = 0;
+                          b.gems = 0; // Drop gems on death
+                          b.stars = 2; // Reset stars in Bounty
                           b.x = 500 + (Math.random() - 0.5) * 400; 
                           b.y = b.team === "blue" ? 1800 : 200;
                      }
@@ -1914,6 +2093,49 @@ class Game {
                 if (this.scores.blue >= 1) this.renderGameOver(1, 0, "Hotzone Victory!");
                 if (this.scores.red >= 1) this.renderGameOver(10, 0, "Hotzone Defeat!");
             }
+        }
+
+        if (this.gameMode === "GEM_GRAB") {
+            // Gem Spawner
+            const mine = this.creatures.find(c => c.type === "GEM_MINE");
+            if (mine && Date.now() - mine.lastSpawn > 7000) {
+                this.cubes.push({ x: mine.x + (Math.random()-0.5)*100, y: mine.y + (Math.random()-0.5)*100, size: 20, createdAt: Date.now(), type: "GEM" });
+                mine.lastSpawn = Date.now();
+            }
+
+            // Collection & Scoring
+            let blueGems = 0, redGems = 0;
+            [this.player, ...this.bots].forEach(b => {
+                if (b.hp > 0) {
+                    this.cubes = this.cubes.filter(c => {
+                        if (Math.hypot(b.x - c.x, b.y - c.y) < 50) {
+                            if (c.type === "GEM") {
+                                b.gems = (b.gems || 0) + 1;
+                                return false;
+                            }
+                        }
+                        return true;
+                    });
+                }
+                if (b.team === "blue") blueGems += (b.gems || 0); else redGems += (b.gems || 0);
+            });
+            this.scores.blue = blueGems;
+            this.scores.red = redGems;
+            const sb = document.getElementById("score-blue"), sr = document.getElementById("score-red");
+            if (sb) sb.innerText = blueGems + " 💎";
+            if (sr) sr.innerText = redGems + " 💎";
+
+            if (blueGems >= 10) this.renderGameOver(1, 0, "Gem Grab Victory!");
+            if (redGems >= 10) this.renderGameOver(10, 0, "Gem Grab Defeat!");
+        }
+
+        if (this.gameMode === "BOUNTY") {
+            const sb = document.getElementById("score-blue"), sr = document.getElementById("score-red");
+            if (sb) sb.innerText = this.scores.blue + " ⭐";
+            if (sr) sr.innerText = this.scores.red + " ⭐";
+
+            if (this.scores.blue >= 20) this.renderGameOver(1, 0, "Bounty Victory!");
+            if (this.scores.red >= 20) this.renderGameOver(10, 0, "Bounty Defeat!");
         }
 
         [this.player, ...this.bots].forEach(i => {
@@ -2608,6 +2830,7 @@ class Game {
 
                 target.hp -= (t.type === "colette" ? target.maxHp * 0.33 : t.damage) * (target.damageResist || 1); target.lastCombatTime = e;
                 if (t.hitIds) t.hitIds.push(target.id);
+                if (target.hp <= 0) target.killerId = owner.id; // Track killer for Bounty
                 if (owner && !target.id.startsWith("box")) {
                   // Reduced super charge from super damage to prevent infinite chains
                   let chargeRate = t.isSuper ? 60 : 30;
@@ -2625,16 +2848,31 @@ class Game {
           }
           if (hit) { this.bullets.splice(s, 1); continue; }
         }
-        this.bots.forEach((s, t) => { 
+        [this.player, ...this.bots].forEach((s, t) => { 
           if (s.hp <= 0) { 
             if (this.gameMode === "SHOWDOWN") {
-              this.cubes.push({ x: s.x, y: s.y, size: 20, createdAt: e }); 
-              this.bots.splice(t, 1); 
+              if (s.id !== "player") {
+                this.cubes.push({ x: s.x, y: s.y, size: 20, createdAt: e }); 
+                this.bots = this.bots.filter(b => b.id !== s.id);
+              }
             } else {
-              // In objective modes, don't remove bots, let them respawn
               if (!s.deathHandled) {
-                this.cubes.push({ x: s.x, y: s.y, size: 20, createdAt: e });
+                if (this.gameMode === "BOUNTY") {
+                  const killer = [this.player, ...this.bots].find(b => b.id === s.killerId);
+                  if (killer) {
+                    if (killer.team === "blue") this.scores.blue += s.stars || 2;
+                    else this.scores.red += s.stars || 2;
+                    killer.stars = Math.min(7, (killer.stars || 2) + 1);
+                  }
+                }
+                if (this.gameMode === "GEM_GRAB" && s.gems > 0) {
+                  for(let i=0; i<s.gems; i++) {
+                    this.cubes.push({ x: s.x + (Math.random()-0.5)*100, y: s.y + (Math.random()-0.5)*100, size: 20, createdAt: e, type: "GEM" });
+                  }
+                  s.gems = 0;
+                }
                 s.deathHandled = true;
+                s.killerId = null;
               }
             }
           } else {
@@ -3019,6 +3257,20 @@ class Game {
             this.ctx.fillText("⚡ " + b.powerCubes, b.x + 35, b.y - b.size - 15);
           }
 
+          if (this.gameMode === "GEM_GRAB" && b.gems > 0) {
+            this.ctx.font = "bold 14px Arial";
+            this.ctx.fillStyle = "#a855f7";
+            this.ctx.textAlign = "left";
+            this.ctx.fillText("💎 " + b.gems, b.x + 35, b.y - b.size);
+          }
+
+          if (this.gameMode === "BOUNTY" && b.stars > 0) {
+            this.ctx.font = "bold 14px Arial";
+            this.ctx.fillStyle = "#facc15";
+            this.ctx.textAlign = "left";
+            this.ctx.fillText("⭐ " + b.stars, b.x + 35, b.y - b.size);
+          }
+
           // Health Bar
           let barW = 60;
           this.ctx.fillStyle = "rgba(0,0,0,0.5)";
@@ -3031,6 +3283,20 @@ class Game {
         this.creatures.forEach(c => {
           this.ctx.save();
           this.ctx.translate(c.x, c.y);
+          if (c.type === "GEM_MINE") {
+            this.ctx.fillStyle = "#334155";
+            this.ctx.beginPath();
+            this.ctx.arc(0, 0, 80, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.strokeStyle = "#475569";
+            this.ctx.lineWidth = 10;
+            this.ctx.stroke();
+            this.ctx.font = "60px Arial";
+            this.ctx.textAlign = "center";
+            this.ctx.fillText("💎", 0, 20);
+            this.ctx.restore();
+            return;
+          }
           this.ctx.fillStyle = c.type === "tick_head" ? "#ef4444" : "#475569";
           this.ctx.beginPath();
           this.ctx.arc(0, 0, c.size, 0, Math.PI * 2);

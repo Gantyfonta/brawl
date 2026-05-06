@@ -1,0 +1,73 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User progress and currency data",
+      "type": "object",
+      "properties": {
+        "total": {
+          "type": "integer",
+          "description": "Total trophies"
+        },
+        "coins": {
+          "type": "integer",
+          "description": "Coin balance"
+        },
+        "gems": {
+          "type": "integer",
+          "description": "Gem balance"
+        },
+        "powerPoints": {
+          "type": "integer",
+          "description": "Power points balance"
+        },
+        "credits": {
+          "type": "integer",
+          "description": "Credits balance"
+        },
+        "passXp": {
+          "type": "integer",
+          "description": "Brawl pass XP"
+        },
+        "claimedTiers": {
+          "type": "array",
+          "description": "List of claimed brawl pass tiers"
+        },
+        "brawlerLevels": {
+          "type": "object",
+          "description": "Map of brawler key to level"
+        },
+        "brawlers": {
+          "type": "object",
+          "description": "Map of brawler key to trophies (or just existence)"
+        },
+        "unlockingBrawler": {
+          "type": "string",
+          "description": "Current brawler being unlocked on Starr Road"
+        },
+        "lastDailyClaim": {
+          "type": "integer",
+          "description": "Timestamp of last daily reward claim"
+        },
+        "isLoggedIn": {
+          "type": "boolean",
+          "description": "Local login status (persisted for consistency)"
+        }
+      },
+      "required": [
+        "total",
+        "coins",
+        "gems",
+        "powerPoints",
+        "credits",
+        "passXp"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Stores user progress indexed by their authentication UID"
+    }
+  }
+}

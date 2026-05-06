@@ -1,6 +1,6 @@
 {
   "name": "Mini Brawl Showdown",
-  "description": "A top-down battle royale and sports arena clone inspired by Brawl Stars, featuring Showdown with shrinking poison and Brawl Ball mode.",
+  "description": "A top-down battle arena clone inspired by Brawl Stars, featuring Showdown, Brawl Ball, Hotzone, Gem Grab, and Bounty modes. Includes progress tracking and secret command codes.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }

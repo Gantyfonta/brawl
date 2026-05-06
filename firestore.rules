@@ -1,0 +1,72 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helper Functions ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // 2. Validation Blueprints (User Entity)
+    function isValidUser(data) {
+      return data.keys().hasAll(['total', 'coins', 'gems', 'powerPoints', 'credits', 'passXp', 'claimedTiers', 'brawlerLevels', 'brawlers', 'unlockingBrawler', 'lastDailyClaim', 'isLoggedIn'])
+          // Strict Type & Range Checks (Pillar 2 & 7)
+          && data.total is int && data.total >= 0
+          && data.coins is int && data.coins >= 0
+          && data.gems is int && data.gems >= 0
+          && data.powerPoints is int && data.powerPoints >= 0
+          && data.credits is int && data.credits >= 0
+          && data.passXp is int && data.passXp >= 0
+          && data.claimedTiers is list && data.claimedTiers.size() <= 1000
+          && data.brawlerLevels is map
+          && data.brawlers is map
+          && (data.unlockingBrawler == null || (data.unlockingBrawler is string && data.unlockingBrawler.size() <= 64))
+          && data.lastDailyClaim is int
+          && data.isLoggedIn is bool
+          // Check key size to prevent shadow fields
+          && data.keys().size() == 12;
+    }
+
+    // --- Collections ---
+
+    match /users/{userId} {
+      // 3. Path Variable Hardening
+      allow get: if isOwner(userId) && isValidId(userId);
+      
+      // 8. Secure List Queries (Explicit Deny for listing all users)
+      allow list: if false;
+
+      allow create: if isOwner(userId) 
+                    && isValidId(userId)
+                    && isValidUser(incoming());
+
+      // 4. Action-Based Update Pattern (Simplified for progress syncing)
+      allow update: if isOwner(userId)
+                    && isValidId(userId)
+                    && isValidUser(incoming())
+                    // Example action check if we wanted to enforce specific transitions
+                    // Here we allow general progress sync but could harden if needed
+                    && (incoming().gems >= 0); // Redundant due to isValidUser but good for clarity
+    }
+  }
+}
