@@ -125,7 +125,7 @@
       }
     </style>
   </head>
-  <body class="bg-slate-950 text-white overflow-hidden m-0 p-0">
+  <body class="bg-slate-950 text-white overflow-hidden m-0 p-0 touch-none">
     <div id="game-ui" class="absolute inset-0 z-10 pointer-events-none"></div>
     <div id="game-container" class="absolute inset-0 z-0"></div>
     <script type="module">
@@ -235,7 +235,8 @@
             brawlers: { shelly: 0, sprout: 0, crow: 0 },
             unlockingBrawler: "colt",
             lastDailyClaim: 0,
-            isLoggedIn: false
+            isLoggedIn: false,
+            mobileControls: false
         };
     if (v) {
         let l = JSON.parse(v);
@@ -250,6 +251,7 @@
         e.unlockingBrawler = l.unlockingBrawler || "colt";
         e.brawlers = l.brawlers || { shelly: 0, sprout: 0, crow: 0 };
         e.lastDailyClaim = l.lastDailyClaim || 0;
+        e.mobileControls = l.mobileControls === true;
     }
     return e;
 }
@@ -334,7 +336,158 @@ class Game {
         mapW = 2500;
         mapH = 2500;
         typedChars = "";
-        constructor() {
+        initJoysticks() {
+          this.joysticks = {
+              move: { active: false, startX: 0, startY: 0, currentX: 0, currentY: 0, dx: 0, dy: 0, id: null },
+              attack: { active: false, startX: 0, startY: 0, currentX: 0, currentY: 0, dx: 0, dy: 0, id: null },
+              super: { active: false, startX: 0, startY: 0, currentX: 0, currentY: 0, dx: 0, dy: 0, id: null }
+          };
+
+          const handleStart = (e) => {
+              if (!this.trophies.mobileControls) return;
+              const touches = e.changedTouches;
+              for (let i = 0; i < touches.length; i++) {
+                  const t = touches[i];
+                  const x = t.clientX;
+                  const y = t.clientY;
+                  
+                  // Left half -> Move
+                  if (x < window.innerWidth / 2 && !this.joysticks.move.active) {
+                      this.joysticks.move.active = true;
+                      this.joysticks.move.startX = x;
+                      this.joysticks.move.startY = y;
+                      this.joysticks.move.currentX = x;
+                      this.joysticks.move.currentY = y;
+                      this.joysticks.move.id = t.identifier;
+                  } 
+                  // Right half -> Attack or Super
+                  else {
+                      const superBtn = document.getElementById('mobile-super-btn');
+                      const attackBtn = document.getElementById('mobile-attack-btn');
+                      
+                      let isSuper = false;
+                      if (superBtn) {
+                          const rect = superBtn.getBoundingClientRect();
+                          const dist = Math.hypot(x - (rect.left + rect.width/2), y - (rect.top + rect.height/2));
+                          if (dist < rect.width * 0.8 && this.player.superCharge >= 100) isSuper = true;
+                      }
+
+                      if (isSuper && !this.joysticks.super.active) {
+                          this.joysticks.super.active = true;
+                          this.joysticks.super.startX = x;
+                          this.joysticks.super.startY = y;
+                          this.joysticks.super.currentX = x;
+                          this.joysticks.super.currentY = y;
+                          this.joysticks.super.id = t.identifier;
+                          this.isAimingSuper = true;
+                      } else if (!this.joysticks.attack.active) {
+                          this.joysticks.attack.active = true;
+                          this.joysticks.attack.startX = x;
+                          this.joysticks.attack.startY = y;
+                          this.joysticks.attack.currentX = x;
+                          this.joysticks.attack.currentY = y;
+                          this.joysticks.attack.id = t.identifier;
+                          this.isAimingSuper = false;
+                      }
+                  }
+              }
+          };
+
+          const handleMove = (e) => {
+              if (!this.trophies.mobileControls) return;
+              const touches = e.changedTouches;
+              for (let i = 0; i < touches.length; i++) {
+                  const t = touches[i];
+                  for (let key in this.joysticks) {
+                      const j = this.joysticks[key];
+                      if (j.id === t.identifier) {
+                          j.currentX = t.clientX;
+                          j.currentY = t.clientY;
+                          const dx = j.currentX - j.startX;
+                          const dy = j.currentY - j.startY;
+                          const dist = Math.min(60, Math.hypot(dx, dy));
+                          const angle = Math.atan2(dy, dx);
+                          j.dx = Math.cos(angle) * (dist / 60);
+                          j.dy = Math.sin(angle) * (dist / 60);
+
+                          const knob = document.getElementById(key + '-joystick-knob');
+                          if (knob) {
+                              knob.style.transform = `translate(calc(-50% + ${j.dx * 40}px), calc(-50% + ${j.dy * 40}px))`;
+                              if (key !== 'move') knob.style.opacity = '1';
+                          }
+                          if (key === 'move') {
+                              const base = document.getElementById('move-joystick-base');
+                              if (base) {
+                                  base.classList.remove('hidden');
+                                  base.style.left = (j.startX - 64) + 'px';
+                                  base.style.top = (j.startY - 64) + 'px';
+                              }
+                          }
+                      }
+                  }
+              }
+          };
+
+          const handleEnd = (e) => {
+              if (!this.trophies.mobileControls) return;
+              const touches = e.changedTouches;
+              for (let i = 0; i < touches.length; i++) {
+                  const t = touches[i];
+                  for (let key in this.joysticks) {
+                      const j = this.joysticks[key];
+                      if (j.id === t.identifier) {
+                          // Shooting logic
+                          if (key === 'attack' || key === 'super') {
+                              let tx, ty;
+                              if (Math.hypot(j.currentX - j.startX, j.currentY - j.startY) < 10) {
+                                  // Auto fire
+                                  const nearest = this.bots.filter(b => b.team !== this.player.team && b.hp > 0).sort((a,b) => Math.hypot(a.x - this.player.x, a.y - this.player.y) - Math.hypot(b.x - this.player.x, b.y - this.player.y))[0];
+                                  if (nearest) {
+                                      tx = nearest.x; ty = nearest.y;
+                                  } else {
+                                      tx = this.player.x + Math.cos(this.player.angle) * 100;
+                                      ty = this.player.y + Math.sin(this.player.angle) * 100;
+                                  }
+                              } else {
+                                  // Aimed fire
+                                  const angle = Math.atan2(j.currentY - j.startY, j.currentX - j.startX);
+                                  tx = this.player.x + Math.cos(angle) * 500;
+                                  ty = this.player.y + Math.sin(angle) * 500;
+                              }
+                              
+                              if (key === 'super') this.isAimingSuper = true;
+                              else this.isAimingSuper = false;
+                              
+                              this.shoot(this.player, tx, ty, key === 'super');
+                              this.isAimingSuper = false;
+                          }
+
+                          const knob = document.getElementById(key + '-joystick-knob');
+                          if (knob) {
+                              knob.style.transform = `translate(-50%, -50%)`;
+                              if (key !== 'move') knob.style.opacity = '0';
+                          }
+                          if (key === 'move') {
+                              const base = document.getElementById('move-joystick-base');
+                              if (base) base.classList.add('hidden');
+                          }
+
+                          j.active = false;
+                          j.id = null;
+                          j.dx = 0;
+                          j.dy = 0;
+                      }
+                  }
+              }
+          };
+
+          window.addEventListener('touchstart', handleStart);
+          window.addEventListener('touchmove', handleMove);
+          window.addEventListener('touchend', handleEnd);
+          window.addEventListener('touchcancel', handleEnd);
+      }
+
+      constructor() {
           this.canvas = document.createElement("canvas"), this.ctx = this.canvas.getContext("2d"), document.getElementById("game-container").appendChild(this.canvas), this.uiContainer = document.getElementById("game-ui"), window.addEventListener("resize", () => {
             this.viewport.w = window.innerWidth, this.viewport.h = window.innerHeight, this.canvas.width = this.viewport.w, this.canvas.height = this.viewport.h
           }), window.addEventListener("keydown", e => {
@@ -384,11 +537,42 @@ class Game {
             }
           });
 
-          this.renderMenu(), this.loop()
+          this.renderMenu(), this.initJoysticks(), this.loop()
         }
+
+        renderJoysticks() {
+            if (!this.trophies.mobileControls) return;
+            const container = document.getElementById('game-ui');
+            if (!container) return;
+            
+            const sticks = `
+              <div id="mobile-controls" class="fixed inset-0 pointer-events-none select-none z-50">
+                  <!-- Move Joystick -->
+                  <div id="move-joystick-base" class="absolute bottom-20 left-20 w-32 h-32 bg-white/10 rounded-full border-2 border-white/20 hidden pointer-events-none">
+                      <div id="move-joystick-knob" class="absolute left-1/2 top-1/2 w-16 h-16 bg-white/30 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+                  </div>
+
+                  <!-- Attack Joystick -->
+                  <div id="mobile-attack-btn" class="absolute bottom-16 right-16 w-32 h-32 bg-red-600/30 rounded-full border-4 border-red-500/50 flex items-center justify-center shadow-lg pointer-events-auto">
+                      <span class="text-4xl">🎯</span>
+                      <div id="attack-joystick-knob" class="absolute left-1/2 top-1/2 w-16 h-16 bg-red-400 rounded-full -translate-x-1/2 -translate-y-1/2 opacity-0 pointer-events-none"></div>
+                  </div>
+
+                  <!-- Super Joystick -->
+                  <div id="mobile-super-btn" class="absolute bottom-48 right-32 w-24 h-24 bg-yellow-400/30 rounded-full border-4 border-yellow-300/50 flex items-center justify-center shadow-lg pointer-events-auto scale-0 transition-transform">
+                      <span class="text-3xl">⚡</span>
+                      <div id="super-joystick-knob" class="absolute left-1/2 top-1/2 w-12 h-12 bg-yellow-200 rounded-full -translate-x-1/2 -translate-y-1/2 opacity-0 pointer-events-none"></div>
+                  </div>
+              </div>
+            `;
+            container.insertAdjacentHTML('beforeend', sticks);
+        }
+
         clearUI() {
           this.uiContainer.innerHTML = "";
           this.uiContainer.className = "absolute inset-0 z-10 pointer-events-none";
+          const mc = document.getElementById('mobile-controls');
+          if (mc) mc.remove();
         }
         async loginWithGoogle() {
             try {
@@ -901,6 +1085,12 @@ class Game {
                   <span class="text-white font-black italic uppercase">Language</span>
                   <span class="text-blue-400 font-black uppercase text-sm">English 🌐</span>
                </div>
+               <div id="mobile-toggle-btn" class="flex items-center justify-between bg-slate-800 p-6 rounded-3xl border-2 border-slate-700 cursor-pointer hover:border-blue-400 transition-all">
+                  <span class="text-white font-black italic uppercase">Mobile Controls</span>
+                  <button class="w-16 h-8 ${this.trophies.mobileControls ? "bg-blue-500" : "bg-slate-600"} rounded-full relative transition-colors">
+                    <div class="absolute ${this.trophies.mobileControls ? "right-1" : "left-1"} top-1 w-6 h-6 bg-white rounded-full transition-all"></div>
+                  </button>
+               </div>
             </div>
             
             <div class="mt-8 bg-black/40 p-6 rounded-3xl border-2 border-white/10">
@@ -944,6 +1134,15 @@ class Game {
             logoutBtn.onclick = async () => {
                 await auth.signOut();
                 this.renderMenu();
+            };
+        }
+
+        const mobileToggle = document.getElementById("mobile-toggle-btn");
+        if (mobileToggle) {
+            mobileToggle.onclick = () => {
+                this.trophies.mobileControls = !this.trophies.mobileControls;
+                j(this.trophies);
+                this.renderSettings();
             };
         }
 
@@ -1827,6 +2026,7 @@ class Game {
                 <div id="hp-text" class="text-center text-xs font-bold uppercase mt-2 drop-shadow-md">HP 0 / 0</div>
                 <div id="ammo-indicator" class="mt-4 flex justify-between gap-1 h-3 pointer-events-none"></div>
             </div>`;
+            this.renderJoysticks();
         }
       shoot(e, l, s, t = !1) {
         let o = Date.now();
@@ -2472,23 +2672,49 @@ class Game {
         };
         if (!this.player.dashState) {
           let i = 0, f = 0;
-          if (this.keys.w && (f -= 1), this.keys.s && (f += 1), this.keys.a && (i -= 1), this.keys.d && (i += 1), 0 !== i || 0 !== f) {
-            let m = Math.sqrt(i * i + f * f);
-            this.player.x += i / m * this.player.config.speed * this.player.speedBuff, this.player.y += f / m * this.player.config.speed * this.player.speedBuff
+          if (this.trophies.mobileControls) {
+              i = this.joysticks.move.dx;
+              f = this.joysticks.move.dy;
+          } else {
+              if (this.keys.w) f -= 1;
+              if (this.keys.s) f += 1;
+              if (this.keys.a) i -= 1;
+              if (this.keys.d) i += 1;
           }
-          let u = this.mouse.x + this.camera.x, h = this.mouse.y + this.camera.y;
-          this.player.angle = Math.atan2(h - this.player.y, u - this.player.x);
+          
+          if (0 !== i || 0 !== f) {
+            let m = Math.sqrt(i * i + f * f);
+            this.player.x += i / m * this.player.config.speed * this.player.speedBuff, this.player.y += f / m * this.player.config.speed * this.player.speedBuff;
+            if (this.trophies.mobileControls && !this.joysticks.attack.active && !this.joysticks.super.active) {
+                this.player.angle = Math.atan2(f, i);
+            }
+          }
+
+          let u, h;
+          if (this.trophies.mobileControls) {
+              const j = this.joysticks.super.active ? this.joysticks.super : (this.joysticks.attack.active ? this.joysticks.attack : null);
+              if (j && Math.hypot(j.dx, j.dy) > 0.1) {
+                  this.player.angle = Math.atan2(j.dy, j.dx);
+              }
+              u = this.player.x + Math.cos(this.player.angle) * 100;
+              h = this.player.y + Math.sin(this.player.angle) * 100;
+          } else {
+              u = this.mouse.x + this.camera.x;
+              h = this.mouse.y + this.camera.y;
+              this.player.angle = Math.atan2(h - this.player.y, u - this.player.x);
+          }
           
           const isChargingBrawler = this.player.config.type === "hank" || this.player.config.type === "angelo";
           if (isChargingBrawler && !this.isAimingSuper) {
-              if (this.mouse.down) {
+              const isDown = this.trophies.mobileControls ? this.joysticks.attack.active : this.mouse.down;
+              if (isDown) {
                   if (!this.player.isCharging && this.player.ammo >= 1 && (Date.now() - this.player.lastShot > (this.player.config.fireRate || 250))) {
                       this.player.isCharging = true;
                       this.player.charge = 0;
                       this.player.chargeStartTime = Date.now();
                   }
                   if (this.player.isCharging) {
-                      this.player.charge = Math.min(100, (Date.now() - this.player.chargeStartTime) / 15); // Full charge in 1.5s
+                      this.player.charge = Math.min(100, (Date.now() - this.player.chargeStartTime) / 15);
                       if (this.player.config.type === "hank" && this.player.charge >= 100) {
                           if (!this.player.maxChargeReachedTime) this.player.maxChargeReachedTime = Date.now();
                           if (Date.now() - this.player.maxChargeReachedTime > 2000) {
@@ -2508,7 +2734,9 @@ class Game {
                   }
               }
           } else {
-              this.mouse.down && !this.isAimingSuper && this.shoot(this.player, u, h);
+              if (!this.trophies.mobileControls && this.mouse.down && !this.isAimingSuper) {
+                  this.shoot(this.player, u, h);
+              }
           }
         }
         s(this.player), this.player.x = Math.max(0, Math.min(this.mapW, this.player.x)), this.player.y = Math.max(0, Math.min(this.mapH, this.player.y));
@@ -2674,7 +2902,23 @@ class Game {
             i < this.player.ammo ? f = 100 : i === this.player.ammo && (f = this.player.reloadTimer / this.player.config.reloadTime * 100), C.innerHTML += `<div class="h-full flex-1 bg-slate-900 border border-black/50 rounded-sm overflow-hidden shadow-sm"><div class="h-full bg-orange-500 transition-all duration-75" style="width: ${f}%"></div></div>`
           }
         }
-        n && (n.style.width = `${this.player.hp / this.player.maxHp * 100}%`), r && (r.innerText = `HP ${Math.ceil(this.player.hp)} / ${this.player.maxHp}`), c && (c.innerText = this.player.powerCubes.toString()), x && (x.innerText = (this.bots.filter(b => b.hp > 0).length + 1).toString()), M && (M.style.height = `${this.player.superCharge}%`), T && (this.player.superCharge >= 100 ? (T.classList.add("border-yellow-400", "animate-pulse"), C = document.getElementById("super-text"), C && (C.className = "relative z-10 brawl-font italic font-black text-2xl text-slate-900")) : (T.classList.remove("border-yellow-400", "animate-pulse"), C = document.getElementById("super-text"), C && (C.className = "relative z-10 brawl-font italic font-black text-2xl text-slate-400"))), (this.gameMode === "SHOWDOWN" && (this.player.hp <= 0 || this.bots.filter(b => b.hp > 0).length === 0)) && this.renderGameOver(this.bots.filter(b => b.hp > 0).length + 1, this.player.powerCubes)
+        n && (n.style.width = `${this.player.hp / this.player.maxHp * 100}%`), r && (r.innerText = `HP ${Math.ceil(this.player.hp)} / ${this.player.maxHp}`), c && (c.innerText = this.player.powerCubes.toString()), x && (x.innerText = (this.bots.filter(b => b.hp > 0).length + 1).toString()), M && (M.style.height = `${this.player.superCharge}%`);
+        if (T) {
+            const superFull = this.player.superCharge >= 100;
+            const superTextElem = document.getElementById("super-text");
+            const mobileSuperBtn = document.getElementById('mobile-super-btn');
+            
+            if (superFull) {
+                T.classList.add("border-yellow-400", "animate-pulse");
+                if (superTextElem) superTextElem.className = "relative z-10 brawl-font italic font-black text-2xl text-slate-900";
+                if (mobileSuperBtn) mobileSuperBtn.classList.remove('scale-0'), mobileSuperBtn.classList.add('scale-100');
+            } else {
+                T.classList.remove("border-yellow-400", "animate-pulse");
+                if (superTextElem) superTextElem.className = "relative z-10 brawl-font italic font-black text-2xl text-slate-400";
+                if (mobileSuperBtn) mobileSuperBtn.classList.add('scale-0'), mobileSuperBtn.classList.remove('scale-100');
+            }
+        }
+        (this.gameMode === "SHOWDOWN" && (this.player.hp <= 0 || this.bots.filter(b => b.hp > 0).length === 0)) && this.renderGameOver(this.bots.filter(b => b.hp > 0).length + 1, this.player.powerCubes)
       }
 
       resetBall() {
