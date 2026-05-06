@@ -1852,19 +1852,22 @@ class Game {
         }
         let a = Math.atan2(s - e.y, l - e.x);
         e.angle = a;
-          let n = (r, c = 0, x = !1) => {
-            let dmgBuff = 1;
-            const level = e.id === "player" ? (this.trophies.brawlerLevels[e.config.type] || 1) : (e.level || 1);
-            const baseDamage = getLeveledStat(e.config.damage, level);
-            this.creatures.forEach(cr => {
-               if (cr.type === "8bit_turret" && Math.hypot(e.x - cr.x, e.y - cr.y) < 300) {
-                   let isOwnerFamily = e.id === cr.ownerId || (e.team && e.team === ([this.player, ...this.bots].find(b => b.id === cr.ownerId)?.team));
-                   if (isOwnerFamily) dmgBuff = 1.35;
-               }
-            });
-            let M = { id: Math.random().toString(36).substr(2, 9), ownerId: e.id, x: e.x, y: e.y, dx: Math.cos(r) * (x ? 1.2 * e.config.bulletSpeed : e.config.bulletSpeed), dy: Math.sin(r) * (x ? 1.2 * e.config.bulletSpeed : e.config.bulletSpeed), damage: (x ? 1.5 * baseDamage : baseDamage) * (1 + .1 * e.powerCubes) * dmgBuff, rangeRemaining: e.config.range + c, size: x ? 1.5 * e.config.bulletSize : e.config.bulletSize, color: x ? "#fbbf24" : e.config.color, type: e.config.type, isSuper: x, hitIds: [] };
-            this.bullets.push(M)
-          };
+        
+        let dmgBuff = 1;
+        const brawlerLevel = e.id === "player" ? (this.trophies.brawlerLevels[e.config.type] || 1) : (e.level || 1);
+        const baseDamage = getLeveledStat(e.config.damage, brawlerLevel);
+        
+        this.creatures.forEach(cr => {
+           if (cr.type === "8bit_turret" && Math.hypot(e.x - cr.x, e.y - cr.y) < 300) {
+               let isOwnerFamily = e.id === cr.ownerId || (e.team && e.team === ([this.player, ...this.bots].find(b => b.id === cr.ownerId)?.team));
+               if (isOwnerFamily) dmgBuff = 1.35;
+           }
+        });
+
+        let n = (r, c = 0, x = !1) => {
+             let M = { id: Math.random().toString(36).substr(2, 9), ownerId: e.id, x: e.x, y: e.y, dx: Math.cos(r) * (x ? 1.2 * e.config.bulletSpeed : e.config.bulletSpeed), dy: Math.sin(r) * (x ? 1.2 * e.config.bulletSpeed : e.config.bulletSpeed), damage: (x ? 1.5 * baseDamage : baseDamage) * (1 + .1 * e.powerCubes) * dmgBuff, rangeRemaining: e.config.range + c, size: x ? 1.5 * e.config.bulletSize : e.config.bulletSize, color: x ? "#fbbf24" : e.config.color, type: e.config.type, isSuper: x, hitIds: [] };
+             this.bullets.push(M)
+        };
         if ("shelly" === e.config.type) if (t) for (let r = -4; r <= 4; r++) n(a + .15 * r, 100, !0); else for (let r = -1; r <= 1; r++) n(a + .2 * r); else if ("colt" === e.config.type) {
           let r = t ? 12 : 4, c = t ? 60 : 100;
           for (let x = 0; x < r; x++) setTimeout(() => n(a, t ? 200 : 0, t), x * c)
@@ -2068,12 +2071,15 @@ class Game {
             let charge = e.charge || 0;
             let radius = 50 + charge * 2; 
             let damage = baseDamage * (0.2 + 0.8 * charge / 100);
-            this.zones.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, radius: radius, duration: 400, createdAt: Date.now(), damage: damage * (1 + .1 * e.powerCubes), isInstant: true });
+            let offset = radius * 0.4;
+            let tx = e.x + Math.cos(a) * offset;
+            let ty = e.y + Math.sin(a) * offset;
+            this.zones.push({ id: Math.random() + "", ownerId: e.id, x: tx, y: ty, radius: radius, duration: 400, createdAt: Date.now(), damage: damage * (1 + .1 * e.powerCubes) * dmgBuff, isInstant: true });
           }
         } else if ("angelo" === e.config.type) {
           if (t) {
              let r = Math.min(Math.hypot(l - e.x, s - e.y), 400);
-             this.zones.push({ id: "angelo-super-" + Math.random(), ownerId: e.id, x: e.x + Math.cos(a) * r, y: e.y + Math.sin(a) * r, radius: 200, duration: 6000, createdAt: Date.now(), damage: 400, isAngeloSuper: true });
+             this.zones.push({ id: "angelo-super-" + Math.random(), ownerId: e.id, x: e.x + Math.cos(a) * r, y: e.y + Math.sin(a) * r, radius: 200, duration: 6000, createdAt: Date.now(), damage: 400 * dmgBuff, isAngeloSuper: true });
           } else {
              let charge = e.charge || 0;
              let damageMult = 0.2 + 0.8 * charge / 100;
