@@ -12,7 +12,7 @@
       href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/style.css" />
+    <link rel="stylesheet" href="./style.css" />
     <style>
       .brawl-font {
         font-family: "Luckiest Guy", cursive;
@@ -129,9 +129,9 @@
     <div id="game-ui" class="absolute inset-0 z-10 pointer-events-none"></div>
     <div id="game-container" class="absolute inset-0 z-0"></div>
     <script type="module">
-        import { initializeApp } from 'firebase/app';
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from 'firebase/auth';
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, getDocFromServer } from 'firebase/firestore';
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, getDocFromServer } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
         const firebaseConfig = await fetch('./firebase-applet-config.json').then(res => res.json());
 
         const app = initializeApp(firebaseConfig);
