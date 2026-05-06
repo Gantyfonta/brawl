@@ -140,39 +140,46 @@
     let v = localStorage.getItem("mini_brawl_trophies_v2"),
         e = {
             total: 0,
-            coins: 168,
-            gems: 0,
-            powerPoints: 0,
-            passXp: 33,
+            coins: 500,
+            gems: 50,
+            powerPoints: 100,
+            credits: 0,
+            passXp: 0,
             claimedTiers: [],
-            brawlerLevels: {},
-            brawlers: {
-                shelly: 0, colt: 0, spike: 0, colette: 0, edgar: 0, griff: 0, penny: 0, darryl: 0, tick: 0, poco: 0, el_primo: 0, amber: 0, ash: 0, grom: 0, dynamike: 0, carl: 0, jacky: 0, gus: 0, chuck: 0, barley: 0, sprout: 0, crow: 0, eightbit: 0, rico: 0, brock: 0, mortis: 0, frank: 0, emz: 0, squeak: 0
-            }
+            brawlerLevels: { shelly: 1 },
+            brawlers: { shelly: 0 },
+            unlockingBrawler: "colt"
         };
     if (v) {
         let l = JSON.parse(v);
         e.total = l.total || 0;
-        e.coins = l.coins !== undefined ? l.coins : 168;
+        e.coins = l.coins !== undefined ? l.coins : 500;
         e.gems = l.gems || 0;
         e.powerPoints = l.powerPoints || 0;
-        e.passXp = l.passXp || 33;
+        e.credits = l.credits || 0;
+        e.passXp = l.passXp || 0;
         e.claimedTiers = l.claimedTiers || [];
-        e.brawlerLevels = l.brawlerLevels || {};
-        Object.keys(w).forEach(s => {
-            e.brawlers[s] = l.brawlers[s] || 0;
-            if (!e.brawlerLevels[s]) e.brawlerLevels[s] = 1;
-        });
-    } else {
-        Object.keys(w).forEach(s => { e.brawlerLevels[s] = 1; });
+        e.brawlerLevels = l.brawlerLevels || { shelly: 1 };
+        e.unlockingBrawler = l.unlockingBrawler || "colt";
+        e.brawlers = l.brawlers || { shelly: 0 };
     }
     return e;
 }
+const CREDITS_COSTS = {
+    colt: 160, spike: 3800, colette: 925, edgar: 925, griff: 925, 
+    penny: 430, darryl: 430, tick: 430, poco: 160, el_primo: 160,
+    amber: 3800, ash: 1900, grom: 925, dynamike: 430, carl: 430, 
+    jacky: 430, gus: 430, chuck: 1900, barley: 160, sprout: 1900, 
+    crow: 3800, eightbit: 430, rico: 430, brock: 430, mortis: 1900, 
+    frank: 925, emz: 925, squeak: 1900
+};
+const UNLOCK_ORDER = ["colt", "poco", "el_primo", "jacky", "penny", "darryl", "carl", "rico", "brock", "dynamike", "griff", "edgar", "frank", "emz", "colette", "grom", "ash", "chuck", "sprout", "squeak", "mortis", "spike", "crow", "amber"];
 const PASSTIERS = Array.from({length: 50}, (_, i) => {
     const tier = i + 1;
     let type = 'starr_drop';
     let value = 1; 
     if (tier % 10 === 0) { type = 'gems'; value = 10 + Math.floor(tier/10) * 5; }
+    else if (tier % 5 === 0) { type = 'credits'; value = 50 + tier * 2; }
     else if (tier % 4 === 0) { type = 'power_points'; value = 50 + tier * 5; }
     else if (tier % 2 === 0) { type = 'coins'; value = 50 + tier * 10; }
     return { tier, type, value };
@@ -291,6 +298,10 @@ class Game {
               </div>
 
               <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 bg-black/40 px-4 py-1.5 rounded-xl border border-white/10 shadow-xl">
+                  <span class="text-blue-400 text-xl font-black">💳</span>
+                  <span class="text-white font-black">${this.trophies.credits || 0}</span>
+                </div>
                 <div class="flex items-center gap-2 bg-black/40 px-4 py-1.5 rounded-xl border border-white/10 shadow-xl">
                   <span class="text-purple-400 text-xl font-black">⚡</span>
                   <span class="text-white font-black">${this.trophies.powerPoints}</span>
@@ -759,7 +770,12 @@ class Game {
                     <span class="text-white font-black text-sm">${progressInTier} / ${xpPerTier}</span>
                 </div>
               </div>
-              <div class="w-16"></div>
+              <div class="flex items-center gap-4">
+                  <button id="buy-tier-btn" class="bg-green-500 hover:bg-green-400 text-white px-6 py-2 rounded-xl border-b-4 border-green-700 font-black uppercase text-sm flex items-center gap-2 transition-all active:scale-95 active:border-b-0 translate-y-[-2px] active:translate-y-0">
+                    <span>💎 30</span>
+                    <span>Next Tier</span>
+                  </button>
+              </div>
             </div>
 
             <!-- Tiers Scroll -->
@@ -794,7 +810,7 @@ class Game {
                                 ${rewardIcon}
                             </div>
                             <div class="text-2xl font-black italic ${isClaimed ? "text-white/30" : (canClaim ? "text-slate-900" : rewardColor)}">
-                                ${t.type === "starr_drop" ? "Starr Drop" : t.value}
+                                ${t.type === "starr_drop" ? "Starr Drop" : (t.type === "credits" ? `💳 ${t.value}` : t.value)}
                             </div>
                             
                             ${canClaim ? `<div class="mt-4 px-4 py-1 bg-yellow-400 text-slate-900 rounded-full font-black text-xs uppercase animate-bounce">Tap to Claim</div>` : ""}
@@ -807,6 +823,17 @@ class Game {
         `;
 
         document.getElementById("pass-back-btn").onclick = () => this.renderMenu();
+        const buyTierBtn = document.getElementById("buy-tier-btn");
+        if (buyTierBtn) {
+            buyTierBtn.onclick = () => {
+                if (this.trophies.gems >= 30) {
+                    this.trophies.gems -= 30;
+                    this.trophies.passXp += 100;
+                    j(this.trophies);
+                    this.renderBrawlPass();
+                }
+            };
+        }
         document.querySelectorAll(".tier-reward").forEach(btn => {
             btn.onclick = (e) => {
                 const tierNum = parseInt(e.currentTarget.dataset.tier);
@@ -827,10 +854,85 @@ class Game {
               if (tierData.type === "coins") this.trophies.coins += tierData.value;
               if (tierData.type === "gems") this.trophies.gems += tierData.value;
               if (tierData.type === "power_points") this.trophies.powerPoints += tierData.value;
+              if (tierData.type === "credits") {
+                  this.trophies.credits += tierData.value;
+                  this.checkBrawlerUnlock();
+              }
               this.trophies.claimedTiers.push(tierData.tier);
               j(this.trophies);
               this.renderBrawlPass();
           }
+      }
+
+      checkBrawlerUnlock() {
+          const target = this.trophies.unlockingBrawler;
+          if (!target) return;
+          const cost = CREDITS_COSTS[target] || 9999;
+          if (this.trophies.credits >= cost) {
+              this.trophies.credits -= cost;
+              this.trophies.brawlers[target] = 0;
+              this.trophies.brawlerLevels[target] = 1;
+              
+              // Next brawler to unlock
+              const currentIndex = UNLOCK_ORDER.indexOf(target);
+              this.trophies.unlockingBrawler = UNLOCK_ORDER[currentIndex + 1] || null;
+              
+              this.renderBrawlerUnlock(w[target]);
+              j(this.trophies);
+          }
+      }
+
+      renderBrawlerUnlock(brawler) {
+          this.state = "UNLOCK";
+          this.clearUI();
+          this.uiContainer.classList.remove("pointer-events-none");
+          this.uiContainer.classList.add("pointer-events-auto", "fixed", "inset-0", "z-[100]", "bg-black/95", "flex", "items-center", "justify-center", "overflow-hidden");
+          
+          this.uiContainer.innerHTML = `
+            <div class="fixed inset-0 overflow-hidden pointer-events-none">
+                <div class="absolute inset-0 bg-gradient-radial from-blue-500/20 to-transparent animate-pulse opacity-50"></div>
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200vw] h-[200vw] bg-[radial-gradient(circle,white_0%,transparent_1%)] bg-[length:100px_100px] animate-[spin_60s_linear_infinite] opacity-10"></div>
+            </div>
+
+            <div class="relative z-10 flex flex-col items-center animate-scale-up">
+                <div class="text-blue-400 font-black uppercase tracking-[0.5em] text-2xl mb-8 animate-pulse">New Brawler Unlocked!</div>
+                
+                <div class="relative group">
+                    <!-- Glow -->
+                    <div class="absolute inset-0 bg-blue-400 blur-[100px] opacity-30 group-hover:opacity-50 transition-opacity"></div>
+                    
+                    <div class="text-[20rem] md:text-[25rem] drop-shadow-[0_0_100px_rgba(59,130,246,0.8)] animate-bounce relative z-10">
+                        ${brawler.emoji}
+                    </div>
+                </div>
+
+                <h2 class="text-8xl md:text-10xl brawl-font italic text-white uppercase drop-shadow-2xl mb-4 tracking-tighter">${brawler.name}</h2>
+                <div class="px-8 py-2 bg-slate-800 border-2 border-slate-700 rounded-2xl text-blue-400 font-black uppercase tracking-widest mb-16 shadow-xl italic">
+                    ${brawler.trio} Trio
+                </div>
+
+                <div class="grid grid-cols-3 gap-12 mb-16 w-full max-w-2xl">
+                    <div class="flex flex-col items-center">
+                        <div class="text-white/40 text-xs font-black uppercase mb-1">Health</div>
+                        <div class="text-green-400 font-black text-2xl">${brawler.hp}</div>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="text-white/40 text-xs font-black uppercase mb-1">Damage</div>
+                        <div class="text-red-400 font-black text-2xl">${brawler.damage}</div>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="text-white/40 text-xs font-black uppercase mb-1">Speed</div>
+                        <div class="text-blue-400 font-black text-2xl">${brawler.speed}</div>
+                    </div>
+                </div>
+
+                <button id="unlock-btn" class="bg-yellow-400 hover:bg-yellow-300 text-slate-900 px-32 py-10 rounded-[3rem] text-6xl brawl-font italic font-black transition-all hover:scale-110 shadow-[0_20px_60px_rgba(234,179,8,0.4)] active:scale-95 animate-bounce">OK!</button>
+            </div>
+          `;
+
+          document.getElementById("unlock-btn").onclick = () => {
+              this.renderMenu();
+          };
       }
 
       openStarrDrop(tierToClaim) {
@@ -924,18 +1026,42 @@ class Game {
               let rewardType = "coins";
               let rewardEmoji = "🪙";
               
-              if (rarity === "Rare") { rewardValue = 50; rewardType = "coins"; rewardEmoji = "🪙"; }
-              else if (rarity === "Super Rare") { rewardValue = 100; rewardType = "coins"; rewardEmoji = "🪙"; }
-              else if (rarity === "Epic") { 
-                  if (Math.random() > 0.5) { rewardType = "gems"; rewardValue = 20; rewardEmoji = "💎"; }
-                  else { rewardType = "powerPoints"; rewardValue = 100; rewardEmoji = "⚡"; }
+              if (rarity === "Rare") { 
+                  const r = Math.random();
+                  if (r < 0.7) { rewardValue = 50; rewardType = "coins"; rewardEmoji = "🪙"; }
+                  else { rewardValue = 15; rewardType = "credits"; rewardEmoji = "💳"; }
               }
-              else if (rarity === "Mythic") { rewardValue = 500; rewardType = "powerPoints"; rewardEmoji = "⚡"; }
-              else if (rarity === "Legendary") { rewardType = "gems"; rewardValue = 100; rewardEmoji = "💎"; }
+              else if (rarity === "Super Rare") { 
+                  const r = Math.random();
+                  if (r < 0.6) { rewardValue = 100; rewardType = "coins"; rewardEmoji = "🪙"; }
+                  else if (r < 0.9) { rewardValue = 30; rewardType = "credits"; rewardEmoji = "💳"; }
+                  else { rewardValue = 5; rewardType = "gems"; rewardEmoji = "💎"; }
+              }
+              else if (rarity === "Epic") { 
+                  const r = Math.random();
+                  if (r < 0.4) { rewardType = "gems"; rewardValue = 20; rewardEmoji = "💎"; }
+                  else if (r < 0.8) { rewardType = "powerPoints"; rewardValue = 100; rewardEmoji = "⚡"; }
+                  else { rewardType = "credits"; rewardValue = 100; rewardEmoji = "💳"; }
+              }
+              else if (rarity === "Mythic") { 
+                  const r = Math.random();
+                  if (r < 0.6) { rewardValue = 500; rewardType = "powerPoints"; rewardEmoji = "⚡"; }
+                  else { rewardValue = 200; rewardType = "credits"; rewardEmoji = "💳"; }
+              }
+              else if (rarity === "Legendary") { 
+                  const r = Math.random();
+                  if (r < 0.4) { rewardType = "gems"; rewardValue = 100; rewardEmoji = "💎"; }
+                  else if (r < 0.7) { rewardType = "credits"; rewardValue = 500; rewardEmoji = "💳"; }
+                  else { rewardType = "coins"; rewardValue = 2000; rewardEmoji = "🪙"; }
+              }
               
               if (rewardType === "coins") this.trophies.coins += rewardValue;
               else if (rewardType === "gems") this.trophies.gems += rewardValue;
               else if (rewardType === "powerPoints") this.trophies.powerPoints += rewardValue;
+              else if (rewardType === "credits") {
+                  this.trophies.credits += rewardValue;
+                  this.checkBrawlerUnlock();
+              }
               
               if (tierToClaim !== 999) this.trophies.claimedTiers.push(tierToClaim);
               j(this.trophies);
@@ -980,13 +1106,21 @@ class Game {
         this.uiContainer.classList.remove("pointer-events-none");
         this.uiContainer.classList.add("pointer-events-auto", "w-full", "h-full");
 
-        let e = Object.values(w);
+        let e = Object.values(w).filter(b => this.trophies.brawlers[b.type] !== undefined);
+        const unlockingBrawler = this.trophies.unlockingBrawler ? w[this.trophies.unlockingBrawler] : null;
+        const unlockCost = unlockingBrawler ? (CREDITS_COSTS[unlockingBrawler.type] || 0) : 0;
+        const unlockPercent = unlockingBrawler ? Math.min(100, (this.trophies.credits / unlockCost) * 100) : 0;
+
         this.uiContainer.innerHTML = `
           <div class="fixed inset-0 bg-slate-900 z-0"></div>
           
           <div class="fixed top-0 left-0 right-0 h-20 flex justify-between items-center px-4 z-20">
               <button id="select-back-btn" class="bg-white/10 hover:bg-white/20 p-4 rounded-2xl border-2 border-white/10 transition-all text-xl text-white font-black uppercase">← BACK</button>
               <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2 bg-black/40 px-4 py-1.5 rounded-xl border border-white/10 shadow-xl">
+                  <span class="text-blue-400 text-xl font-black">💳</span>
+                  <span class="text-white font-black">${this.trophies.credits || 0}</span>
+                </div>
                 <div class="flex items-center gap-2 bg-black/40 px-4 py-1.5 rounded-xl border border-white/10 shadow-xl">
                   <span class="text-purple-400 text-xl font-black">⚡</span>
                   <span class="text-white font-black">${this.trophies.powerPoints}</span>
@@ -1000,7 +1134,31 @@ class Game {
 
           <div class="fixed inset-0 min-h-screen overflow-y-auto pt-24 pb-12 z-10 px-4 md:px-12">
             <div class="w-full max-w-6xl mx-auto">
-              <h2 class="text-5xl brawl-font italic text-white uppercase drop-shadow-lg text-center mb-12">Brawlers</h2>
+              ${unlockingBrawler ? `
+              <div class="mb-16 bg-slate-800/80 backdrop-blur-md rounded-[3rem] p-8 border-4 border-slate-700 shadow-2xl relative overflow-hidden group">
+                <div class="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent"></div>
+                <div class="relative z-10 flex flex-col md:flex-row items-center gap-8">
+                  <div class="w-40 h-40 bg-slate-900 rounded-[2rem] border-4 border-slate-700 flex items-center justify-center text-7xl shadow-2xl group-hover:rotate-6 transition-transform">
+                    ${unlockingBrawler.emoji}
+                  </div>
+                  <div class="flex-1 text-center md:text-left">
+                    <div class="text-blue-400 font-black uppercase tracking-[0.3em] text-sm mb-2 italic">Starr Road • Next Brawler</div>
+                    <h3 class="text-5xl brawl-font italic text-white uppercase drop-shadow-lg mb-4 tracking-tighter">${unlockingBrawler.name}</h3>
+                    
+                    <div class="flex flex-col gap-2">
+                        <div class="flex justify-between text-white/40 font-black uppercase text-[10px] mb-1">
+                            <span>Unlock Progress</span>
+                            <span>${this.trophies.credits} / ${unlockCost} 💳</span>
+                        </div>
+                        <div class="w-full h-8 bg-black/40 rounded-2xl overflow-hidden border-2 border-white/10 p-1">
+                            <div class="h-full bg-blue-500 rounded-xl shadow-[0_0_15px_rgba(59,130,246,0.6)] transition-all duration-1000" style="width: ${unlockPercent}%"></div>
+                        </div>
+                    </div>
+                  </div>
+                </div>
+              </div>` : ""}
+
+              <h2 class="text-5xl brawl-font italic text-white uppercase drop-shadow-lg text-center mb-12">My Brawlers</h2>
               <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
                 ${e.map(l => {
                     const level = this.trophies.brawlerLevels[l.type] || 1;
