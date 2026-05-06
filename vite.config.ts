@@ -2,7 +2,9 @@ import { defineConfig } from 'vite';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  plugins: [],
+  plugins: [
+    tailwindcss(),
+  ],
   server: {
     port: 3000,
     host: '0.0.0.0',
@@ -10,5 +12,6 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
+    target: 'esnext',
   },
 });
