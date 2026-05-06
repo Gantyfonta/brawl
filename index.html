@@ -2058,6 +2058,28 @@ class Game {
               this.posts.push({ id: "post-" + Math.random(), ownerId: e.id, x: postX, y: postY, createdAt: Date.now() });
             }
           } else n(a);
+        } else if ("hank" === e.config.type) {
+          if (t) {
+            for (let i = 0; i < 6; i++) {
+              let ang = a + (i / 6) * Math.PI * 2;
+              n(ang, 0, !0);
+            }
+          } else {
+            let charge = e.charge || 0;
+            let radius = 50 + charge * 2; 
+            let damage = baseDamage * (0.2 + 0.8 * charge / 100);
+            this.zones.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, radius: radius, duration: 400, createdAt: Date.now(), damage: damage * (1 + .1 * e.powerCubes), isInstant: true });
+          }
+        } else if ("angelo" === e.config.type) {
+          if (t) {
+             let r = Math.min(Math.hypot(l - e.x, s - e.y), 400);
+             this.zones.push({ id: "angelo-super-" + Math.random(), ownerId: e.id, x: e.x + Math.cos(a) * r, y: e.y + Math.sin(a) * r, radius: 200, duration: 6000, createdAt: Date.now(), damage: 400, isAngeloSuper: true });
+          } else {
+             let charge = e.charge || 0;
+             let damageMult = 0.2 + 0.8 * charge / 100;
+             let M = { id: Math.random().toString(36).substr(2, 9), ownerId: e.id, x: e.x, y: e.y, dx: Math.cos(a) * e.config.bulletSpeed, dy: Math.sin(a) * e.config.bulletSpeed, damage: baseDamage * damageMult * (1 + .1 * e.powerCubes) * dmgBuff, rangeRemaining: e.config.range, size: e.config.bulletSize, color: e.config.color, type: e.config.type, isSuper: false, hitIds: [] };
+             this.bullets.push(M);
+          }
         } else if ("mortis" === e.config.type) if (t) { // Super
              this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: 12 * Math.cos(a), dy: 12 * Math.sin(a), damage: 900, rangeRemaining: 600, size: 20, color: "#1e3a8a", type: "mortis_bats", isSuper: !0, hitIds: [], healPercent: 1.0 });
         } else { // Dash
@@ -2449,7 +2471,39 @@ class Game {
             this.player.x += i / m * this.player.config.speed * this.player.speedBuff, this.player.y += f / m * this.player.config.speed * this.player.speedBuff
           }
           let u = this.mouse.x + this.camera.x, h = this.mouse.y + this.camera.y;
-          this.player.angle = Math.atan2(h - this.player.y, u - this.player.x), this.mouse.down && !this.isAimingSuper && this.shoot(this.player, u, h)
+          this.player.angle = Math.atan2(h - this.player.y, u - this.player.x);
+          
+          const isChargingBrawler = this.player.config.type === "hank" || this.player.config.type === "angelo";
+          if (isChargingBrawler && !this.isAimingSuper) {
+              if (this.mouse.down) {
+                  if (!this.player.isCharging && this.player.ammo >= 1 && (Date.now() - this.player.lastShot > (this.player.config.fireRate || 250))) {
+                      this.player.isCharging = true;
+                      this.player.charge = 0;
+                      this.player.chargeStartTime = Date.now();
+                  }
+                  if (this.player.isCharging) {
+                      this.player.charge = Math.min(100, (Date.now() - this.player.chargeStartTime) / 15); // Full charge in 1.5s
+                      if (this.player.config.type === "hank" && this.player.charge >= 100) {
+                          if (!this.player.maxChargeReachedTime) this.player.maxChargeReachedTime = Date.now();
+                          if (Date.now() - this.player.maxChargeReachedTime > 2000) {
+                              this.shoot(this.player, u, h);
+                              this.player.isCharging = false;
+                              this.player.charge = 0;
+                              this.player.maxChargeReachedTime = null;
+                          }
+                      }
+                  }
+              } else {
+                  if (this.player.isCharging) {
+                      this.shoot(this.player, u, h);
+                      this.player.isCharging = false;
+                      this.player.charge = 0;
+                      this.player.maxChargeReachedTime = null;
+                  }
+              }
+          } else {
+              this.mouse.down && !this.isAimingSuper && this.shoot(this.player, u, h);
+          }
         }
         s(this.player), this.player.x = Math.max(0, Math.min(this.mapW, this.player.x)), this.player.y = Math.max(0, Math.min(this.mapH, this.player.y));
         let t = 100, o = this.player.x + Math.cos(this.player.angle) * t - this.viewport.w / 2, a = this.player.y + Math.sin(this.player.angle) * t - this.viewport.h / 2;
@@ -2576,8 +2630,25 @@ class Game {
           }
 
           // Combat
-          if (target && minDist < i.config.range) {
-             this.shoot(i, target.x, target.y);
+          const isChargingBot = i.config.type === "hank" || i.config.type === "angelo";
+          if (target && (minDist < i.config.range || (isChargingBot && i.isCharging))) {
+             if (isChargingBot) {
+                if (!i.isCharging && i.ammo >= 1 && (Date.now() - i.lastShot > (i.config.fireRate || 250))) {
+                   i.isCharging = true;
+                   i.charge = 0;
+                   i.chargeStartTime = Date.now();
+                }
+                if (i.isCharging) {
+                   i.charge = Math.min(100, (Date.now() - i.chargeStartTime) / 15);
+                   if (i.charge >= 100 || (i.charge > 50 && minDist > i.config.range * 0.8)) {
+                      this.shoot(i, target.x, target.y);
+                      i.isCharging = false;
+                      i.charge = 0;
+                   }
+                }
+             } else {
+                this.shoot(i, target.x, target.y);
+             }
              if (i.superCharge >= 100) this.shoot(i, target.x, target.y, true);
           } else if (shouldShoot && target) {
              this.shoot(i, target.x, target.y);
@@ -2711,20 +2782,22 @@ class Game {
             });
           }
 
-          if (Math.floor((e - t.createdAt) / 500) !== Math.floor((e - t.createdAt - l) / 500)) {
-            [this.player, ...this.bots].forEach(o => {
-              if (Math.hypot(o.x - t.x, o.y - t.y) < t.radius + o.size) {
+          if ((t.isInstant && !t.hasTriggered) || Math.floor((e - t.createdAt) / 500) !== Math.floor((e - t.createdAt - l) / 500)) {
+            t.hasTriggered = true;
+            [this.player, ...this.bots, ...this.boxes.filter(b => !b.isDestroyed)].forEach(o => {
+              if (Math.hypot(o.x - t.x, o.y - t.y) < t.radius + (o.size || 30)) {
                 let isOwnerFamily = o.id === t.ownerId || (o.team && o.team === ([this.player, ...this.bots].find(n => n.id === t.ownerId)?.team));
                 if (t.damage < 0) { // Healing zone
-                   if (isOwnerFamily) {
+                   if (isOwnerFamily && o.hp !== undefined) {
                      o.hp = Math.min(o.maxHp, o.hp - t.damage);
                    }
                 } else if (!isOwnerFamily && t.damage > 0) {
                   let actualDamage = t.isPercentDamage ? (o.maxHp * 0.05) : t.damage;
                   o.hp -= actualDamage * (o.damageResist || 1);
+                  if (o.hp < 0) o.hp = 0;
                   o.lastCombatTime = e;
                   let a = [this.player, ...this.bots].find(n => n.id === t.ownerId);
-                  if (a) a.superCharge = Math.min(100, a.superCharge + 3);
+                  if (a && !o.id.startsWith("box")) a.superCharge = Math.min(100, a.superCharge + 3);
                 }
               }
             });
@@ -3159,6 +3232,19 @@ class Game {
               this.ctx.fillText("🎾", z.x, z.y + 10);
               return;
           }
+          if (z.isAngeloSuper) {
+              this.ctx.fillStyle = "rgba(163, 230, 53, 0.3)";
+              this.ctx.beginPath();
+              this.ctx.arc(z.x, z.y, z.radius, 0, Math.PI * 2);
+              this.ctx.fill();
+              this.ctx.strokeStyle = "rgba(163, 230, 53, 0.6)";
+              this.ctx.lineWidth = 4;
+              this.ctx.stroke();
+              this.ctx.font = "40px Arial";
+              this.ctx.textAlign = "center";
+              this.ctx.fillText("🐍", z.x, z.y + 15);
+              return;
+          }
           this.ctx.fillStyle = z.isShield ? "rgba(147, 197, 253, 0.3)" : (z.isStun ? "rgba(234, 179, 8, 0.3)" : "rgba(34, 197, 94, 0.2)");
           if (z.isShield) {
               this.ctx.shadowColor = "#93c5fd";
@@ -3253,6 +3339,20 @@ class Game {
           this.ctx.arc(0, 0, b.size, 0, Math.PI * 2);
           this.ctx.fill();
           this.ctx.globalAlpha = 1.0;
+
+          // Hank Bubble
+          if (b.config.type === "hank" && b.isCharging) {
+             this.ctx.save();
+             this.ctx.globalAlpha = 0.4;
+             this.ctx.fillStyle = b.config.color;
+             this.ctx.beginPath();
+             this.ctx.arc(0, 0, 50 + (b.charge || 0) * 2, 0, Math.PI * 2);
+             this.ctx.fill();
+             this.ctx.strokeStyle = "rgba(255,255,255,0.6)";
+             this.ctx.lineWidth = 3;
+             this.ctx.stroke();
+             this.ctx.restore();
+          }
 
           // Barrel / Direction indicator
           this.ctx.fillStyle = "white";
