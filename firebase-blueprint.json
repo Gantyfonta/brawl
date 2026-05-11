@@ -65,7 +65,7 @@
     },
     "Lobby": {
       "title": "Lobby",
-      "description": "A waiting room for an online match",
+      "description": "A waiting room for an online match. Players are objects with id, name, brawler, level, and isReady (boolean).",
       "type": "object",
       "properties": {
         "hostId": { "type": "string" },

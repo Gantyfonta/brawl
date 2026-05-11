@@ -344,6 +344,10 @@ class Game {
         matchmakingUnsubscribe = null;
         matchUpdatesUnsubscribe = null;
         onlineBulletsUnsubscribe = null;
+        get allUnits() {
+            return [this.player, ...this.bots].filter(b => !!b);
+        }
+
         initJoysticks() {
           this.joysticks = {
               move: { active: false, startX: 0, startY: 0, currentX: 0, currentY: 0, dx: 0, dy: 0, id: null },
@@ -1911,7 +1915,8 @@ class Game {
                 getDoc(lobbyRef).then(snap => {
                     if (snap.exists()) {
                         const data = snap.data();
-                        const players = data.players.filter(p => p.id !== auth.currentUser.uid);
+                        if (!auth.currentUser) return;
+                        const players = data.players.filter(p => p && p.id !== auth.currentUser.uid);
                         if (players.length === 0) deleteDoc(lobbyRef);
                         else updateDoc(lobbyRef, { players });
                     }
@@ -1928,9 +1933,10 @@ class Game {
             const snap = await getDoc(lobbyRef);
             let lobbyData;
             if (!snap.exists()) {
+                if (!auth.currentUser) return;
                 lobbyData = {
                     hostId: auth.currentUser.uid,
-                    players: [{ id: auth.currentUser.uid, name: auth.currentUser.displayName || "Player", brawler: this.selectedBrawler.type, level: this.trophies.brawlerLevels[this.selectedBrawler.type] || 1 }],
+                    players: [{ id: auth.currentUser.uid, name: auth.currentUser.displayName || "Player", brawler: this.selectedBrawler.type, level: this.trophies.brawlerLevels[this.selectedBrawler.type] || 1, isReady: false }],
                     status: "waiting",
                     mode: "FRIENDLY_ONLINE",
                     createdAt: Date.now()
@@ -1938,17 +1944,18 @@ class Game {
                 await setDoc(lobbyRef, lobbyData);
             } else {
                 lobbyData = snap.data();
+                if (!auth.currentUser) return;
                 if (lobbyData.status === "started" && Date.now() - lobbyData.createdAt > 600000) { // Old lobby
                     await setDoc(lobbyRef, {
                         hostId: auth.currentUser.uid,
-                        players: [{ id: auth.currentUser.uid, name: auth.currentUser.displayName || "Player", brawler: this.selectedBrawler.type, level: this.trophies.brawlerLevels[this.selectedBrawler.type] || 1 }],
+                        players: [{ id: auth.currentUser.uid, name: auth.currentUser.displayName || "Player", brawler: this.selectedBrawler.type, level: this.trophies.brawlerLevels[this.selectedBrawler.type] || 1, isReady: false }],
                         status: "waiting",
                         mode: "FRIENDLY_ONLINE",
                         createdAt: Date.now()
                     });
                 } else if (lobbyData.status !== "started") {
-                    if (!lobbyData.players.find(p => p.id === auth.currentUser.uid)) {
-                        lobbyData.players.push({ id: auth.currentUser.uid, name: auth.currentUser.displayName || "Player", brawler: this.selectedBrawler.type, level: this.trophies.brawlerLevels[this.selectedBrawler.type] || 1 });
+                    if (!lobbyData.players.find(p => p && p.id === auth.currentUser.uid)) {
+                        lobbyData.players.push({ id: auth.currentUser.uid, name: auth.currentUser.displayName || "Player", brawler: this.selectedBrawler.type, level: this.trophies.brawlerLevels[this.selectedBrawler.type] || 1, isReady: false });
                         await updateDoc(lobbyRef, { players: lobbyData.players });
                     }
                 } else {
@@ -1964,18 +1971,49 @@ class Game {
                 const display = document.getElementById("matchmaking-players");
                 if (display) {
                     display.innerHTML = data.players.map(p => `
-                        <div class="w-16 h-16 bg-blue-600 rounded-2xl border-4 border-white flex items-center justify-center text-3xl shadow-xl relative group">
+                        <div class="w-16 h-16 ${p.isReady ? 'bg-green-600 border-green-400' : 'bg-blue-600 border-white'} rounded-2xl border-4 flex items-center justify-center text-3xl shadow-xl relative group transition-all">
                             ${w[p.brawler]?.emoji || "👤"}
                             <div class="absolute -top-10 left-1/2 -translate-x-1/2 text-[10px] bg-black/80 px-2 rounded whitespace-nowrap opacity-100 transition-opacity">${p.name.split(" ")[0]}</div>
+                            ${p.isReady ? '<div class="absolute -bottom-2 -right-2 bg-green-500 rounded-full w-6 h-6 flex items-center justify-center text-[10px] border-2 border-white">✅</div>' : ''}
                         </div>
                     `).join("");
                 }
 
+                // Add or Update Ready Button
+                let readyBtn = document.getElementById("ready-matchmaking");
+                if (!readyBtn && this.uiContainer.querySelector(".flex-col")) {
+                    const btnContainer = this.uiContainer.querySelector(".flex-col");
+                    readyBtn = document.createElement("button");
+                    readyBtn.id = "ready-matchmaking";
+                    readyBtn.className = "mt-4 px-12 py-4 rounded-2xl brawl-font italic text-2xl transition-all shadow-lg active:scale-95";
+                    btnContainer.insertBefore(readyBtn, document.getElementById("cancel-matchmaking"));
+                }
+                
+                if (readyBtn) {
+                   const me = data.players.find(p => p.id === auth.currentUser?.uid);
+                   if (me) {
+                       readyBtn.innerText = me.isReady ? "READY!" : "GO READY";
+                       readyBtn.className = `mt-4 px-12 py-4 rounded-2xl brawl-font italic text-2xl transition-all shadow-lg active:scale-95 ${me.isReady ? 'bg-green-600 hover:bg-green-700' : 'bg-yellow-500 hover:bg-yellow-600'}`;
+                       readyBtn.onclick = async () => {
+                           const updatedPlayers = data.players.map(p => p.id === auth.currentUser.uid ? { ...p, isReady: !p.isReady } : p);
+                           await updateDoc(lobbyRef, { players: updatedPlayers });
+                       };
+                   }
+                }
+
                 if (data.players.length >= 2 || data.status === "started") {
-                    if (data.hostId === auth.currentUser.uid && data.status !== "started") {
-                        setTimeout(async () => {
-                            await updateDoc(lobbyRef, { status: "started" });
-                        }, 3000);
+                    // Check if EVERYONE is ready to skip wait
+                    const allReady = data.players.length >= 2 && data.players.every(p => p.isReady);
+                    
+                    if (data.status !== "started" && (allReady || (data.hostId === auth.currentUser.uid && !this.onlineStartTimer))) {
+                        if (allReady) {
+                             updateDoc(lobbyRef, { status: "started" });
+                        } else if (data.hostId === auth.currentUser.uid) {
+                            this.onlineStartTimer = setTimeout(async () => {
+                                await updateDoc(lobbyRef, { status: "started" });
+                                this.onlineStartTimer = null;
+                            }, 10000); // 10s wait if not all ready
+                        }
                     }
                     
                     if (data.status === "started") {
@@ -2003,7 +2041,7 @@ class Game {
           // Re-create boxes if host? No, let's keep it simple: no boxes for Friendly Online yet or fixed ones.
           // Add other players as bots (dummies that we sync)
           players.forEach(p => {
-              if (p.id === auth.currentUser.uid) return;
+              if (!p || !auth.currentUser || p.id === auth.currentUser.uid) return;
               const config = w[p.brawler] || w.shelly;
               const hp = getLeveledStat(config.hp, p.level || 1);
               this.bots.push({
@@ -2023,9 +2061,9 @@ class Game {
           this.matchUpdatesUnsubscribe = onSnapshot(playersRef, (querySnap) => {
               querySnap.docChanges().forEach(change => {
                   const data = change.doc.data();
-                  if (data.id === auth.currentUser.uid) return;
+                  if (!data || !auth.currentUser || data.id === auth.currentUser.uid) return;
                   
-                  let bot = this.bots.find(b => b.id === data.id);
+                  let bot = this.bots.find(b => b && b.id === data.id);
                   if (bot) {
                       bot.targetX = data.x;
                       bot.targetY = data.y;
@@ -2042,9 +2080,9 @@ class Game {
               querySnap.docChanges().forEach(change => {
                   if (change.type === "added") {
                       const data = change.doc.data();
-                      if (data.ownerId === auth.currentUser.uid) return;
+                      if (!data || !auth.currentUser || data.ownerId === auth.currentUser.uid) return;
                       // Only add if not already in bullets
-                      if (!this.bullets.find(b => b.onlineId === change.doc.id)) {
+                      if (!this.bullets.find(b => b && b.onlineId === change.doc.id)) {
                           this.bullets.push({
                               ...data,
                               onlineId: change.doc.id
@@ -2056,7 +2094,7 @@ class Game {
       }
 
       syncOnlineState(now) {
-        if (now - this.lastOnlineSync > 100) { // 10 FPS sync to be safe with quotas
+        if (now - this.lastOnlineSync > 100 && auth.currentUser) { // 10 FPS sync to be safe with quotas
             this.lastOnlineSync = now;
             const playerRef = doc(db, `matches/${this.matchId}/players`, auth.currentUser.uid);
             setDoc(playerRef, {
@@ -2071,7 +2109,7 @@ class Game {
 
             // Smooth interpolation for other players
             this.bots.forEach(b => {
-                if (b.isOnlinePlayer && b.targetX !== undefined) {
+                if (b && b.isOnlinePlayer && b.targetX !== undefined) {
                     b.x += (b.targetX - b.x) * 0.2;
                     b.y += (b.targetY - b.y) * 0.2;
                 }
@@ -2290,7 +2328,7 @@ class Game {
         
         this.creatures.forEach(cr => {
            if (cr.type === "8bit_turret" && Math.hypot(e.x - cr.x, e.y - cr.y) < 300) {
-               let isOwnerFamily = e.id === cr.ownerId || (e.team && e.team === ([this.player, ...this.bots].find(b => b.id === cr.ownerId)?.team));
+               let isOwnerFamily = e.id === cr.ownerId || (e.team && e.team === ([this.player, ...this.bots].filter(b => b).find(b => b.id === cr.ownerId)?.team));
                if (isOwnerFamily) dmgBuff = 1.35;
            }
         });
@@ -2298,7 +2336,7 @@ class Game {
         let n = (r, c = 0, x = !1) => {
              let M = { id: Math.random().toString(36).substr(2, 9), ownerId: e.id, x: e.x, y: e.y, dx: Math.cos(r) * (x ? 1.2 * e.config.bulletSpeed : e.config.bulletSpeed), dy: Math.sin(r) * (x ? 1.2 * e.config.bulletSpeed : e.config.bulletSpeed), damage: (x ? 1.5 * baseDamage : baseDamage) * (1 + .1 * e.powerCubes) * dmgBuff, rangeRemaining: e.config.range + c, size: x ? 1.5 * e.config.bulletSize : e.config.bulletSize, color: x ? "#fbbf24" : e.config.color, type: e.config.type, isSuper: x, hitIds: [] };
              this.bullets.push(M);
-             if (this.isOnlineMatch && e.id === auth.currentUser.uid) {
+             if (this.isOnlineMatch && auth.currentUser && e.id === auth.currentUser.uid) {
                  addDoc(collection(db, `matches/${this.matchId}/bullets`), M).then(docRef => {
                      M.onlineId = docRef.id;
                  }).catch(e => console.error("Bullet sync error", e));
@@ -2571,7 +2609,7 @@ class Game {
         }
 
         if (this.gameMode === "BRAWL_BALL" || this.gameMode === "HOTZONE" || this.gameMode === "GEM_GRAB" || this.gameMode === "BOUNTY") {
-            [this.player, ...this.bots].forEach(b => {
+            this.allUnits.forEach(b => {
                  if (b.hp <= 0) {
                      b.respawnTimer = (b.respawnTimer || 0) + l;
                      if (b.respawnTimer > 5000) {
@@ -2594,7 +2632,7 @@ class Game {
             const hzone = this.zones.find(z => z.id === "hotzone");
             if (hzone) {
                 let blueIn = 0, redIn = 0;
-                [this.player, ...this.bots].forEach(b => {
+                this.allUnits.forEach(b => {
                    if (b.hp > 0 && Math.hypot(b.x - hzone.x, b.y - hzone.y) < hzone.radius) {
                        if (b.team === "blue") blueIn++; else redIn++;
                    }
@@ -2621,7 +2659,7 @@ class Game {
 
             // Collection & Scoring
             let blueGems = 0, redGems = 0;
-            [this.player, ...this.bots].forEach(b => {
+            this.allUnits.forEach(b => {
                 if (b.hp > 0) {
                     this.cubes = this.cubes.filter(c => {
                         if (Math.hypot(b.x - c.x, b.y - c.y) < 50) {
@@ -2654,7 +2692,7 @@ class Game {
             if (this.scores.red >= 20) this.renderGameOver(10, 0, "Bounty Defeat!");
         }
 
-        [this.player, ...this.bots].forEach(i => {
+        this.allUnits.forEach(i => {
           i.speedBuff = 1;
           i.reloadSpeedBuff = 1;
           i.damageResist = 1;
@@ -2687,7 +2725,7 @@ class Game {
           // Shield Zones effect
           this.zones.forEach(z => {
             if (z.isShield && Math.hypot(i.x - z.x, i.y - z.y) < z.radius) {
-              let isOwnerFamily = i.id === z.ownerId || (i.team && i.team === ([this.player, ...this.bots].find(n => n.id === z.ownerId)?.team));
+              let isOwnerFamily = i.id === z.ownerId || (i.team && i.team === (this.allUnits.find(n => n.id === z.ownerId)?.team));
               if (isOwnerFamily) {
                   i.damageResist *= 0.5; // 50% shield
                   if (z.hasStarPower) i.damageBoost *= 1.25; // Gus Spirit Animal
@@ -2715,11 +2753,11 @@ class Game {
               i.spinState = null;
             } else {
               i.speedBuff = 1.3;
-              [this.player, ...this.bots, ...this.boxes.filter(h => !h.isDestroyed)].forEach(h => {
+              [...this.allUnits, ...this.boxes.filter(h => !h.isDestroyed)].forEach(h => {
                 if (h.id !== i.id && Math.hypot(i.x - h.x, i.y - h.y) < 150) {
                   // Brawl Ball Team Check
                   if (this.gameMode === "BRAWL_BALL") {
-                    let hUnit = [this.player, ...this.bots].find(u => u.id === h.id);
+                    let hUnit = this.allUnits.find(u => u.id === h.id);
                     if (hUnit && hUnit.team === i.team) return;
                   }
                   if (!i.lastSpinDamage || Date.now() - i.lastSpinDamage > 500) {
@@ -2742,7 +2780,7 @@ class Game {
         });
 
         // Trio Synergy: Bandstand Trio (Poco, El Primo, Amber)
-        let bandstandUnits = [this.player, ...this.bots].filter(i => i.config.trio === "Bandstand");
+        let bandstandUnits = this.allUnits.filter(i => i.config.trio === "Bandstand");
         for (let i = 0; i < bandstandUnits.length; i++) {
           for (let j = i + 1; j < bandstandUnits.length; j++) {
             let u1 = bandstandUnits[i], u2 = bandstandUnits[j];
@@ -2754,7 +2792,7 @@ class Game {
         }
 
         // Castle Courtyard Synergy (Ash, Grom): Damage Resistance
-        let castleUnits = [this.player, ...this.bots].filter(i => i.config.trio === "Castle Courtyard");
+        let castleUnits = this.allUnits.filter(i => i.config.trio === "Castle Courtyard");
         for (let i = 0; i < castleUnits.length; i++) {
           for (let j = i + 1; j < castleUnits.length; j++) {
             let u1 = castleUnits[i], u2 = castleUnits[j];
@@ -2766,7 +2804,7 @@ class Game {
         }
 
         // Gem Miners Synergy (Dynamike, Carl, Jacky): Faster Reload
-        let minerUnits = [this.player, ...this.bots].filter(i => i.config.trio === "Gem Miners");
+        let minerUnits = this.allUnits.filter(i => i.config.trio === "Gem Miners");
         for (let i = 0; i < minerUnits.length; i++) {
           for (let j = i + 1; j < minerUnits.length; j++) {
             let u1 = minerUnits[i], u2 = minerUnits[j];
@@ -2778,7 +2816,7 @@ class Game {
         }
 
         // Ghost Station Synergy (Gus, Chuck): Speed Boost
-        let ghostUnits = [this.player, ...this.bots].filter(i => i.config.trio === "Ghost Station");
+        let ghostUnits = this.allUnits.filter(i => i.config.trio === "Ghost Station");
         for (let i = 0; i < ghostUnits.length; i++) {
           for (let j = i + 1; j < ghostUnits.length; j++) {
             let u1 = ghostUnits[i], u2 = ghostUnits[j];
@@ -2793,7 +2831,7 @@ class Game {
           this.poisonProgress += l / 1000;
           const poisonRadius = Math.max(100, 1500 - this.poisonProgress * 20);
           this.currentPoisonRadius = poisonRadius;
-          [this.player, ...this.bots].forEach(b => {
+          this.allUnits.forEach(b => {
              const dist = Math.hypot(b.x - d/2, b.y - d/2);
              if (dist > poisonRadius) {
                  if (e - (b.lastPoisonTick || 0) > 1000) {
@@ -2806,7 +2844,7 @@ class Game {
 
         if (this.gameMode === "BRAWL_BALL" && this.ball) {
             if (this.ball.carrierId) {
-                const carrier = [this.player, ...this.bots].find(b => b.id === this.ball.carrierId);
+                const carrier = this.allUnits.find(b => b.id === this.ball.carrierId);
                 if (carrier && carrier.hp > 0) {
                     this.ball.x = carrier.x;
                     this.ball.y = carrier.y;
@@ -2849,7 +2887,7 @@ class Game {
                 }
 
                 // Pickup ball
-                [this.player, ...this.bots].forEach(b => {
+                this.allUnits.forEach(b => {
                     if (b.hp > 0 && Math.hypot(b.x - this.ball.x, b.y - this.ball.y) < b.size + this.ball.radius) {
                         this.ball.carrierId = b.id;
                     }
@@ -2861,7 +2899,7 @@ class Game {
             if (sr) sr.innerText = this.scores.red;
         }
 
-        [this.player, ...this.bots].forEach(i => {
+        this.allUnits.forEach(i => {
           if (i.hp <= 0) return; // Prevent dead bots/player from healing, reloading or dashing
 
           if (i.ammo < i.maxAmmo ? (i.reloadTimer += l * (i.reloadSpeedBuff || 1), i.reloadTimer >= i.config.reloadTime && (i.ammo++, i.reloadTimer -= i.config.reloadTime)) : i.reloadTimer = 0, e - i.lastCombatTime > (i.hasStarPower && i.config.type === "tick" ? 1e3 : 3e3) && i.hp < i.maxHp && (i.hp = Math.min(i.maxHp, i.hp + i.maxHp * .13 * (l / 1e3))), i.dashState) {
@@ -3053,12 +3091,12 @@ class Game {
           let shouldShoot = false;
 
           // Search for enemies first (Fight priority)
-          const brawlers = [this.player, ...this.bots.filter(b => b.id !== i.id && b.hp > 0), ...this.creatures.filter(c => c.hp > 0)];
+          const brawlers = [this.player, ...this.bots.filter(b => b && b.id !== i.id && b.hp > 0), ...this.creatures.filter(c => c && c.hp > 0)];
           let nearestEnemy = null, enemyDist = 3000;
           brawlers.forEach(b => {
              let bTeam = b.team;
              if (!bTeam && b.ownerId) {
-                 let owner = [this.player, ...this.bots].find(o => o.id === b.ownerId);
+                 let owner = this.allUnits.find(o => o.id === b.ownerId);
                  if (owner) bTeam = owner.team;
              }
              if (bTeam !== i.team && b.id !== i.ownerId) {
@@ -3084,7 +3122,7 @@ class Game {
             } else if (!this.ball.carrierId) {
               moveAngle = Math.atan2(this.ball.y - i.y, this.ball.x - i.x);
             } else {
-              let carrier = [this.player, ...this.bots].find(b => b.id === this.ball.carrierId);
+              let carrier = this.allUnits.find(b => b.id === this.ball.carrierId);
               if (carrier && carrier.team !== i.team) {
                 moveAngle = Math.atan2(carrier.y - i.y, carrier.x - i.x);
                 target = carrier;
@@ -3221,7 +3259,7 @@ class Game {
       resetBall() {
         const arenaW = 1000, arenaH = 2000;
         this.ball = { x: arenaW / 2, y: arenaH / 2, dx: 0, dy: 0, carrierId: null, radius: 25 };
-        [this.player, ...this.bots].forEach((b, idx) => {
+        [this.player, ...this.bots].filter(b => b).forEach((b, idx) => {
           b.x = arenaW / 2 + (idx % 3 - 1) * 200;
           b.y = b.team === "blue" ? arenaH - 200 : 200;
           b.hp = b.maxHp;
@@ -3320,7 +3358,7 @@ class Game {
           }
           
           if (t.pull) {
-            [this.player, ...this.bots].forEach(o => {
+            [this.player, ...this.bots].filter(b => b).forEach(o => {
               if (o.id !== t.ownerId && Math.hypot(o.x - t.x, o.y - t.y) < t.radius) {
                 let ang = Math.atan2(t.y - o.y, t.x - o.x);
                 o.x += Math.cos(ang) * 10;
@@ -3498,7 +3536,9 @@ class Game {
               }
 
                 if (t.type === "squeak_main") {
-                  this.zones.push({ id: Math.random() + "", ownerId: t.ownerId, x: target.x, y: target.y, radius: 120, duration: 1000, createdAt: e, damage: t.damage, isSqueakBomb: true, attachedToId: target.id });
+                  if (target) {
+                    this.zones.push({ id: Math.random() + "", ownerId: t.ownerId, x: target.x, y: target.y, radius: 120, duration: 1000, createdAt: e, damage: t.damage, isSqueakBomb: true, attachedToId: target.id });
+                  }
                   hit = true; break;
                 }
                 if (t.type === "squeak_super") {
@@ -3527,7 +3567,7 @@ class Game {
                     // Rico Super Bouncy extra damage is handled by modifying bullet damage on bounce in next step or here
                 }
                 if (t.hitIds) t.hitIds.push(target.id);
-                if (target.hp <= 0) target.killerId = owner.id; // Track killer for Bounty
+                if (target.hp <= 0 && owner) target.killerId = owner.id; // Track killer for Bounty
                 if (owner && !target.id.startsWith("box")) {
                   // Reduced super charge from super damage to prevent infinite chains
                   let chargeRate = t.isSuper ? 60 : 30;
@@ -3545,22 +3585,22 @@ class Game {
           }
           if (hit) { this.bullets.splice(s, 1); continue; }
         }
-        [this.player, ...this.bots].forEach((s, t) => { 
-          if (s.hp <= 0) { 
+        [this.player, ...this.bots].filter(b => b).forEach((s, t) => { 
+          if (s.hp <= 0) {
             if (this.gameMode === "SHOWDOWN" || this.gameMode === "FRIENDLY_ONLINE") {
               if (s.id !== "player") {
                 this.cubes.push({ x: s.x, y: s.y, size: 20, createdAt: e }); 
-                this.bots = this.bots.filter(b => b.id !== s.id);
+                this.bots = this.bots.filter(b => b && b.id !== s.id);
               }
             } else {
               if (!s.deathHandled) {
-                const killer = [this.player, ...this.bots].find(b => b.id === s.killerId);
+                const killer = [this.player, ...this.bots].filter(b => b).find(b => b.id === s.killerId);
                 if (killer && killer.hasStarPower) {
                     if (killer.config.type === "mortis") killer.hp = Math.min(killer.maxHp, killer.hp + 1000);
                     if (killer.config.type === "frank") killer.powerGrabTimer = Date.now() + 10000;
                 }
                 if (this.gameMode === "BOUNTY") {
-                  const killer = [this.player, ...this.bots].find(b => b.id === s.killerId);
+                  const killer = [this.player, ...this.bots].filter(b => b).find(b => b.id === s.killerId);
                   if (killer) {
                     if (killer.team === "blue") this.scores.blue += s.stars || 2;
                     else this.scores.red += s.stars || 2;
