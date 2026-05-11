@@ -131,7 +131,7 @@
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, getDocFromServer } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, getDocFromServer, collection, query, where, deleteDoc, addDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
         const firebaseConfig = await fetch('./firebase-applet-config.json').then(res => res.json());
 
         const app = initializeApp(firebaseConfig);
@@ -189,37 +189,37 @@
         }
 
         var w={
-          shelly:{name:"Shelly",type:"shelly",emoji:"\u{1F920}",hp:3600,speed:4,reloadTime:1500,fireRate:500,damage:300,range:400,bulletSpeed:10,bulletSize:10,color:"#8b5cf6",trio:"Western",rarity:"Starter"},
-          colt:{name:"Colt",type:"colt",emoji:"\u{1F52B}",hp:2800,speed:4,reloadTime:1600,fireRate:500,damage:450,range:600,bulletSpeed:12,bulletSize:8,color:"#ec4899",trio:"Western",rarity:"Rare"},
-          spike:{name:"Spike",type:"spike",emoji:"\u{1F335}",hp:2400,speed:4,reloadTime:2e3,fireRate:600,damage:560,range:500,bulletSpeed:9,bulletSize:12,color:"#22c55e",trio:"Western",rarity:"Legendary"},
-          colette:{name:"Colette",type:"colette",emoji:"\u{1F4D6}",hp:3400,speed:4,reloadTime:1600,fireRate:500,damage:500,range:550,bulletSpeed:11,bulletSize:9,color:"#f43f5e",trio:"Gift Shop",rarity:"Epic"},
-          edgar:{name:"Edgar",type:"edgar",emoji:"\u{1F9E3}",hp:3e3,speed:5.5,reloadTime:1e3,fireRate:400,damage:540,range:150,bulletSpeed:15,bulletSize:20,color:"#1e1b4b",trio:"Gift Shop",rarity:"Epic"},
-          griff:{name:"Griff",type:"griff",emoji:"\u{1F4B0}",hp:3400,speed:4,reloadTime:1700,fireRate:600,damage:260,range:450,bulletSpeed:11,bulletSize:10,color:"#eab308",trio:"Gift Shop",rarity:"Epic"},
-          penny:{name:"Penny",type:"penny",emoji:"\u{1F3F4}\u200D\u2620\uFE0F",hp:3200,speed:4,reloadTime:1800,fireRate:700,damage:900,range:550,bulletSpeed:10,bulletSize:10,color:"#fb7185",trio:"Pirate",rarity:"Super Rare"},
-          darryl:{name:"Darryl",type:"darryl",emoji:"\u{1F6E2}\uFE0F",hp:5e3,speed:4,reloadTime:1800,fireRate:600,damage:240,range:350,bulletSpeed:10,bulletSize:12,color:"#0ea5e9",trio:"Pirate",rarity:"Super Rare"},
-          tick:{name:"Tick",type:"tick",emoji:"\u{1F4A3}",hp:2200,speed:4,reloadTime:2200,fireRate:800,damage:640,range:600,bulletSpeed:8,bulletSize:10,color:"#9ca3af",trio:"Pirate",rarity:"Super Rare"},
-          poco:{name:"Poco",type:"poco",emoji:"\u{1F3B8}",hp:4000,speed:4,reloadTime:1600,fireRate:500,damage:700,range:450,bulletSpeed:10,bulletSize:15,color:"#fbbf24",trio:"Bandstand",rarity:"Rare"},
-          el_primo:{name:"El Primo",type:"el_primo",emoji:"\u{1F93C}",hp:6000,speed:4.5,reloadTime:800,fireRate:600,damage:360,range:180,bulletSpeed:14,bulletSize:20,color:"#1e40af",trio:"Bandstand",rarity:"Rare"},
-          amber:{name:"Amber",type:"amber",emoji:"\u{1F525}",hp:3200,speed:4,reloadTime:150,fireRate:100,damage:200,range:500,bulletSpeed:13,bulletSize:8,color:"#f97316",trio:"Bandstand",rarity:"Legendary"},
-          ash:{name:"Ash",type:"ash",emoji:"\u{1F5D1}\uFE0F",hp:5200,speed:4.2,reloadTime:1400,fireRate:500,damage:800,range:250,bulletSpeed:12,bulletSize:20,color:"#475569",trio:"Castle Courtyard",rarity:"Mythic"},
-          grom:{name:"Grom",type:"grom",emoji:"\u{1F3F0}",hp:3000,speed:4,reloadTime:1800,fireRate:800,damage:1100,range:650,bulletSpeed:10,bulletSize:15,color:"#ef4444",trio:"Castle Courtyard",rarity:"Epic"},
-          dynamike:{name:"Dynamike",type:"dynamike",emoji:"\u{1F9E8}",hp:2800,speed:4,reloadTime:1700,fireRate:600,damage:800,range:600,bulletSpeed:9,bulletSize:12,color:"#dc2626",trio:"Gem Miners",rarity:"Super Rare"},
-          carl:{name:"Carl",type:"carl",emoji:"\u26CF\uFE0F",hp:4400,speed:4,reloadTime:200,fireRate:1000,damage:660,range:500,bulletSpeed:11,bulletSize:14,color:"#4b5563",trio:"Gem Miners",rarity:"Super Rare"},
-          jacky:{name:"Jacky",type:"jacky",emoji:"\u{1F6A7}",hp:5000,speed:4.2,reloadTime:1800,fireRate:500,damage:1200,range:200,bulletSpeed:15,bulletSize:25,color:"#ca8a04",trio:"Gem Miners",rarity:"Super Rare"},
-          gus:{name:"Gus",type:"gus",emoji:"\u{1F388}",hp:3200,speed:4,reloadTime:1500,fireRate:500,damage:940,range:600,bulletSpeed:12,bulletSize:10,color:"#93c5fd",trio:"Ghost Station",rarity:"Super Rare"},
-          chuck:{name:"Chuck",type:"chuck",emoji:"\u{1F682}",hp:4500,speed:4,reloadTime:1200,fireRate:800,damage:540,range:500,bulletSpeed:13,bulletSize:12,color:"#b91c1c",trio:"Ghost Station",rarity:"Mythic"},
-          barley:{name:"Barley",type:"barley",emoji:"\u{1F37E}",hp:2400,speed:4,reloadTime:2e3,fireRate:600,damage:650,range:600,bulletSpeed:9,bulletSize:12,color:"#9333ea",trio:"Western",rarity:"Rare"},
-          sprout:{name:"Sprout",type:"sprout",emoji:"\u{1F6AB}",hp:3000,speed:4,reloadTime:1700,fireRate:600,damage:980,range:400,bulletSpeed:9,bulletSize:12,color:"#4ade80",trio:"Botany",rarity:"Mythic"},
-          crow:{name:"Crow",type:"crow",emoji:"\u{1F985}",hp:2400,speed:5,reloadTime:1400,fireRate:400,damage:320,range:500,bulletSpeed:14,bulletSize:6,color:"#1e293b",trio:"Crow",rarity:"Legendary"},
-          eightbit:{name:"8-Bit",type:"eightbit",emoji:"\u{1F579}\uFE0F",hp:4800,speed:3.4,reloadTime:1500,fireRate:500,damage:320,range:650,bulletSpeed:12,bulletSize:8,color:"#10b981",trio:"Arcade",rarity:"Super Rare"},
-          rico:{name:"Rico",type:"rico",emoji:"\u{1F916}",hp:2800,speed:4,reloadTime:1200,fireRate:200,damage:320,range:600,bulletSpeed:13,bulletSize:8,color:"#6366f1",trio:"Arcade",rarity:"Super Rare"},
-          brock:{name:"Brock",type:"brock",emoji:"\u{1F57A}",hp:2400,speed:4,reloadTime:2100,fireRate:500,damage:1160,range:700,bulletSpeed:11,bulletSize:12,color:"#3b82f6",trio:"Arcade",rarity:"Super Rare"},
-          mortis:{name:"Mortis",type:"mortis",emoji:"\u{1F9DB}",hp:3800,speed:5.5,reloadTime:2400,fireRate:1000,damage:900,range:200,bulletSpeed:0,bulletSize:0,color:"#4f46e5",trio:"Mortuary",rarity:"Mythic"},
-          frank:{name:"Frank",type:"frank",emoji:"\u{1F528}",hp:7000,speed:4.5,reloadTime:1500,fireRate:1000,damage:1200,range:250,bulletSpeed:0,bulletSize:25,color:"#1e293b",trio:"Starr Park",rarity:"Epic"},
-          emz:{name:"Emz",type:"emz",emoji:"\u{1F648}",hp:3600,speed:4,reloadTime:2000,fireRate:600,damage:500,range:500,bulletSpeed:8,bulletSize:10,color:"#c026d3",trio:"Starr Park",rarity:"Epic"},
-          squeak:{name:"Squeak",type:"squeak",emoji:"\u{1F436}",hp:2800,speed:4.5,reloadTime:1800,fireRate:500,damage:1000,range:500,bulletSpeed:12,bulletSize:10,color:"#10b981",trio:"Starr Park",rarity:"Mythic"},
-          hank:{name:"Hank",type:"hank",emoji:"\u{1F990}",hp:5800,speed:4,reloadTime:1500,fireRate:800,damage:1000,range:300,bulletSpeed:10,bulletSize:30,color:"#166534",trio:"Candi",rarity:"Epic"},
-          angelo:{name:"Angelo",type:"angelo",emoji:"\u{1FAB3}",hp:3000,speed:4.5,reloadTime:1200,fireRate:1000,damage:2200,range:700,bulletSpeed:15,bulletSize:8,color:"#a3e635",trio:"Swamp of Love",rarity:"Epic"}
+          shelly:{name:"Shelly",type:"shelly",emoji:"\u{1F920}",hp:3600,speed:4,reloadTime:1500,fireRate:500,damage:300,range:400,bulletSpeed:10,bulletSize:10,color:"#8b5cf6",trio:"Western",rarity:"Starter",starPower:{name:"Shell Shock",description:"Enemies hit by Super are slowed for 2.5s"}},
+          colt:{name:"Colt",type:"colt",emoji:"\u{1F52B}",hp:2800,speed:4,reloadTime:1600,fireRate:500,damage:450,range:600,bulletSpeed:12,bulletSize:8,color:"#ec4899",trio:"Western",rarity:"Rare",starPower:{name:"Slick Boots",description:"Colt's movement speed is increased by 10%"}},
+          spike:{name:"Spike",type:"spike",emoji:"\u{1F335}",hp:2400,speed:4,reloadTime:2e3,fireRate:600,damage:560,range:500,bulletSpeed:9,bulletSize:12,color:"#22c55e",trio:"Western",rarity:"Legendary",starPower:{name:"Fertilize",description:"Spike regenerates 800 health per second inside his Super"}},
+          colette:{name:"Colette",type:"colette",emoji:"\u{1F4D6}",hp:3400,speed:4,reloadTime:1600,fireRate:500,damage:500,range:550,bulletSpeed:11,bulletSize:9,color:"#f43f5e",trio:"Gift Shop",rarity:"Epic",starPower:{name:"Mass Tax",description:"Super gives a 20% shield for 5 seconds"}},
+          edgar:{name:"Edgar",type:"edgar",emoji:"\u{1F9E3}",hp:3e3,speed:5.5,reloadTime:1e3,fireRate:400,damage:540,range:150,bulletSpeed:15,bulletSize:20,color:"#1e1b4b",trio:"Gift Shop",rarity:"Epic",starPower:{name:"Hard Landing",description:"Super deals 1000 damage on impact"}},
+          griff:{name:"Griff",type:"griff",emoji:"\u{1F4B0}",hp:3400,speed:4,reloadTime:1700,fireRate:600,damage:260,range:450,bulletSpeed:11,bulletSize:10,color:"#eab308",trio:"Gift Shop",rarity:"Epic",starPower:{name:"Keep the Change",description:"Unload coins 25% faster"}},
+          penny:{name:"Penny",type:"penny",emoji:"\u{1F3F4}\u200D\u2620\uFE0F",hp:3200,speed:4,reloadTime:1800,fireRate:700,damage:900,range:550,bulletSpeed:10,bulletSize:10,color:"#fb7185",trio:"Pirate",rarity:"Super Rare",starPower:{name:"Master Blaster",description:"Turret deals fire damage on impact"}},
+          darryl:{name:"Darryl",type:"darryl",emoji:"\u{1F6E2}\uFE0F",hp:5e3,speed:4,reloadTime:1800,fireRate:600,damage:240,range:350,bulletSpeed:10,bulletSize:12,color:"#0ea5e9",trio:"Pirate",rarity:"Super Rare",starPower:{name:"Steel Hoops",description:"Takes 90% less damage during Super"}},
+          tick:{name:"Tick",type:"tick",emoji:"\u{1F4A3}",hp:2200,speed:4,reloadTime:2200,fireRate:800,damage:640,range:600,bulletSpeed:8,bulletSize:10,color:"#9ca3af",trio:"Pirate",rarity:"Super Rare",starPower:{name:"Well Oiled",description:"Starts recovering health 2s faster than normal"}},
+          poco:{name:"Poco",type:"poco",emoji:"\u{1F3B8}",hp:4000,speed:4,reloadTime:1600,fireRate:500,damage:700,range:450,bulletSpeed:10,bulletSize:15,color:"#fbbf24",trio:"Bandstand",rarity:"Rare",starPower:{name:"Da Capo!",description:"Main attack heals allies for 700 health"}},
+          el_primo:{name:"El Primo",type:"el_primo",emoji:"\u{1F93C}",hp:6000,speed:4.5,reloadTime:800,fireRate:600,damage:360,range:180,bulletSpeed:14,bulletSize:20,color:"#1e40af",trio:"Bandstand",rarity:"Rare",starPower:{name:"El Fuego",description:"Enemies hit by Super burn for 1200 damage"}},
+          amber:{name:"Amber",type:"amber",emoji:"\u{1F525}",hp:3200,speed:4,reloadTime:150,fireRate:100,damage:200,range:500,bulletSpeed:13,bulletSize:8,color:"#f97316",trio:"Bandstand",rarity:"Legendary",starPower:{name:"Wild Flames",description:"Can have two fire puddles at once (extra damage)"}},
+          ash:{name:"Ash",type:"ash",emoji:"\u{1F5D1}\uFE0F",hp:5200,speed:4.2,reloadTime:1400,fireRate:500,damage:800,range:250,bulletSpeed:12,bulletSize:20,color:"#475569",trio:"Castle Courtyard",rarity:"Mythic",starPower:{name:"First Bash",description:"Attacks charge rage 100% faster"}},
+          grom:{name:"Grom",type:"grom",emoji:"\u{1F3F0}",hp:3000,speed:4,reloadTime:1800,fireRate:800,damage:1100,range:650,bulletSpeed:10,bulletSize:15,color:"#ef4444",trio:"Castle Courtyard",rarity:"Epic",starPower:{name:"Foot Patrol",description:"Gains 15% speed when Super is charged"}},
+          dynamike:{name:"Dynamike",type:"dynamike",emoji:"\u{1F9E8}",hp:2800,speed:4,reloadTime:1700,fireRate:600,damage:800,range:600,bulletSpeed:9,bulletSize:12,color:"#dc2626",trio:"Gem Miners",rarity:"Super Rare",starPower:{name:"Demolition",description:"Super deals +1000 extra damage"}},
+          carl:{name:"Carl",type:"carl",emoji:"\u26CF\uFE0F",hp:4400,speed:4,reloadTime:200,fireRate:1000,damage:660,range:500,bulletSpeed:11,bulletSize:14,color:"#4b5563",trio:"Gem Miners",rarity:"Super Rare",starPower:{name:"Power Throw",description:"Pickaxe speed increased by 10%"}},
+          jacky:{name:"Jacky",type:"jacky",emoji:"\u{1F6A7}",hp:5000,speed:4.2,reloadTime:1800,fireRate:500,damage:1200,range:200,bulletSpeed:15,bulletSize:25,color:"#ca8a04",trio:"Gem Miners",rarity:"Super Rare",starPower:{name:"Hardy Hard Hat",description:"Takes 15% less damage from all sources"}},
+          gus:{name:"Gus",type:"gus",emoji:"\u{1F388}",hp:3200,speed:4,reloadTime:1500,fireRate:500,damage:940,range:600,bulletSpeed:12,bulletSize:10,color:"#93c5fd",trio:"Ghost Station",rarity:"Super Rare",starPower:{name:"Spirit Animal",description:"Shielded allies deal 25% more damage"}},
+          chuck:{name:"Chuck",type:"chuck",emoji:"\u{1F682}",hp:4500,speed:4,reloadTime:1200,fireRate:800,damage:540,range:500,bulletSpeed:13,bulletSize:12,color:"#b91c1c",trio:"Ghost Station",rarity:"Mythic",starPower:{name:"Steam Engine",description:"Posts deal 1000 damage when Chuck dashes through them"}},
+          barley:{name:"Barley",type:"barley",emoji:"\u{1F37E}",hp:2400,speed:4,reloadTime:2e3,fireRate:600,damage:650,range:600,bulletSpeed:9,bulletSize:12,color:"#9333ea",trio:"Western",rarity:"Rare",starPower:{name:"Medical Use",description:"Heals 400 health for every attack thrown"}},
+          sprout:{name:"Sprout",type:"sprout",emoji:"\u{1F6AB}",hp:3000,speed:4,reloadTime:1700,fireRate:600,damage:980,range:400,bulletSpeed:9,bulletSize:12,color:"#4ade80",trio:"Botany",rarity:"Mythic",starPower:{name:"Overgrowth",description:"Attacks that miss have a larger explosion"}},
+          crow:{name:"Crow",type:"crow",emoji:"\u{1F985}",hp:2400,speed:5,reloadTime:1400,fireRate:400,damage:320,range:500,bulletSpeed:14,bulletSize:6,color:"#1e293b",trio:"Crow",rarity:"Legendary",starPower:{name:"Extra Toxic",description:"Poisoned enemies deal 20% less damage"}},
+          eightbit:{name:"8-Bit",type:"eightbit",emoji:"\u{1F579}\uFE0F",hp:4800,speed:3.4,reloadTime:1500,fireRate:500,damage:320,range:650,bulletSpeed:12,bulletSize:8,color:"#10b981",trio:"Arcade",rarity:"Super Rare",starPower:{name:"Plugged In",description:"Increased movement speed near his Turret"}},
+          rico:{name:"Rico",type:"rico",emoji:"\u{1F916}",hp:2800,speed:4,reloadTime:1200,fireRate:200,damage:320,range:600,bulletSpeed:13,bulletSize:8,color:"#6366f1",trio:"Arcade",rarity:"Super Rare",starPower:{name:"Super Bouncy",description:"Bullets deal +100 extra damage after bouncing"}},
+          brock:{name:"Brock",type:"brock",emoji:"\u{1F57A}",hp:2400,speed:4,reloadTime:2100,fireRate:500,damage:1160,range:700,bulletSpeed:11,bulletSize:12,color:"#3b82f6",trio:"Arcade",rarity:"Super Rare",starPower:{name:"Incendiary",description:"Rockets light the ground on fire for 2 seconds"}},
+          mortis:{name:"Mortis",type:"mortis",emoji:"\u{1F9DB}",hp:3800,speed:5.5,reloadTime:2400,fireRate:1000,damage:900,range:200,bulletSpeed:0,bulletSize:0,color:"#4f46e5",trio:"Mortuary",rarity:"Mythic",starPower:{name:"Creepy Harvest",description:"Heals 1000 health when defeating an enemy"}},
+          frank:{name:"Frank",type:"frank",emoji:"\u{1F528}",hp:7000,speed:4.5,reloadTime:1500,fireRate:1000,damage:1200,range:250,bulletSpeed:0,bulletSize:25,color:"#1e293b",trio:"Starr Park",rarity:"Epic",starPower:{name:"Power Grab",description:"Frank gains 50% extra damage after a kill for 10s"}},
+          emz:{name:"Emz",type:"emz",emoji:"\u{1F648}",hp:3600,speed:4,reloadTime:2000,fireRate:600,damage:500,range:500,bulletSpeed:8,bulletSize:10,color:"#c026d3",trio:"Starr Park",rarity:"Epic",starPower:{name:"Bad Karma",description:"Enemies inside Emz's Super take +20% more damage"}},
+          squeak:{name:"Squeak",type:"squeak",emoji:"\u{1F436}",hp:2800,speed:4.5,reloadTime:1800,fireRate:500,damage:1000,range:500,bulletSpeed:12,bulletSize:10,color:"#10b981",trio:"Starr Park",rarity:"Mythic",starPower:{name:"Chain Reaction",description:"Deals 10% more damage for each enemy in reach"}},
+          hank:{name:"Hank",type:"hank",emoji:"\u{1F990}",hp:5800,speed:4,reloadTime:1500,fireRate:800,damage:1000,range:300,bulletSpeed:10,bulletSize:30,color:"#166534",trio:"Candi",rarity:"Epic",starPower:{name:"It's Gonna Blow!",description:"Hank moves 10% faster while charging his bubble"}},
+          angelo:{name:"Angelo",type:"angelo",emoji:"\u{1FAB3}",hp:3000,speed:4.5,reloadTime:1200,fireRate:1000,damage:2200,range:700,bulletSpeed:15,bulletSize:8,color:"#a3e635",trio:"Swamp of Love",rarity:"Epic",starPower:{name:"Empowered",description:"Angelo heals 600 health per second in his Super"}}
         },
         d=2500,B=9,P=25,E=30,A=60,L={1:10,2:8,3:6,4:4,5:2,6:1,7:-1,8:-2,9:-3,10:-4};function R(){
     let v = localStorage.getItem("mini_brawl_trophies_v2"),
@@ -336,6 +336,14 @@ class Game {
         mapW = 2500;
         mapH = 2500;
         typedChars = "";
+        isOnlineMatch = false;
+        matchId = "";
+        onlinePlayers = [];
+        playerStates = {};
+        lastOnlineSync = 0;
+        matchmakingUnsubscribe = null;
+        matchUpdatesUnsubscribe = null;
+        onlineBulletsUnsubscribe = null;
         initJoysticks() {
           this.joysticks = {
               move: { active: false, startX: 0, startY: 0, currentX: 0, currentY: 0, dx: 0, dy: 0, id: null },
@@ -344,7 +352,7 @@ class Game {
           };
 
           const handleStart = (e) => {
-              if (!this.trophies.mobileControls) return;
+              if (!this.trophies.mobileControls || this.state !== "GAME" || !this.player) return;
               const touches = e.changedTouches;
               for (let i = 0; i < touches.length; i++) {
                   const t = touches[i];
@@ -394,7 +402,7 @@ class Game {
           };
 
           const handleMove = (e) => {
-              if (!this.trophies.mobileControls) return;
+              if (!this.trophies.mobileControls || this.state !== "GAME" || !this.player) return;
               const touches = e.changedTouches;
               for (let i = 0; i < touches.length; i++) {
                   const t = touches[i];
@@ -429,7 +437,7 @@ class Game {
           };
 
           const handleEnd = (e) => {
-              if (!this.trophies.mobileControls) return;
+              if (!this.trophies.mobileControls || this.state !== "GAME" || !this.player) return;
               const touches = e.changedTouches;
               for (let i = 0; i < touches.length; i++) {
                   const t = touches[i];
@@ -718,13 +726,13 @@ class Game {
                 ${claimableCount > 0 ? `<div class="absolute top-2 right-2 bg-red-500 w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-bold text-white shadow-lg animate-bounce">${claimableCount}</div>` : ""}
               </button>
               
-              <div id="mode-selector" class="flex-1 max-w-lg mx-6 h-24 bg-slate-800 rounded-2xl border-4 border-slate-700 flex items-center px-6 gap-4 cursor-pointer hover:border-yellow-400 transition-all shadow-2xl group active:scale-95">
+            <div id="mode-selector" class="flex-1 max-w-lg mx-6 h-24 bg-slate-800 rounded-2xl border-4 border-slate-700 flex items-center px-6 gap-4 cursor-pointer hover:border-yellow-400 transition-all shadow-2xl group active:scale-95">
                 <div class="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center text-4xl transform group-hover:rotate-6 transition-transform shadow-inner">
-                  ${this.gameMode === "SHOWDOWN" ? "☠️" : this.gameMode === "BRAWL_BALL" ? "⚽" : this.gameMode === "HOTZONE" ? "🚩" : this.gameMode === "GEM_GRAB" ? "💎" : "⭐"}
+                  ${this.gameMode === "SHOWDOWN" ? "☠️" : this.gameMode === "BRAWL_BALL" ? "⚽" : this.gameMode === "HOTZONE" ? "🚩" : this.gameMode === "GEM_GRAB" ? "💎" : this.gameMode === "FRIENDLY_ONLINE" ? "🌐" : "⭐"}
                 </div>
                 <div class="flex-1 text-left">
                   <div class="text-white text-2xl brawl-font italic leading-tight uppercase tracking-tight">${this.gameMode.replace("_", " ")}</div>
-                  <div class="text-blue-400 text-xs font-black uppercase tracking-widest mt-0.5">Two Thousand Lakes</div>
+                  <div class="text-blue-400 text-xs font-black uppercase tracking-widest mt-0.5">${this.gameMode === "FRIENDLY_ONLINE" ? "Online Multiplayer (No Trophies)" : "Two Thousand Lakes"}</div>
                 </div>
                 <div class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-xl hover:bg-white/20 transition-colors">ℹ️</div>
               </div>
@@ -747,7 +755,7 @@ class Game {
           document.getElementById("brawlers-btn").onclick = () => this.renderSelect();
           document.getElementById("play-button").onclick = () => this.startGame();
           document.getElementById("mode-selector").onclick = () => {
-            const modes = ["SHOWDOWN", "BRAWL_BALL", "HOTZONE", "GEM_GRAB", "BOUNTY"];
+            const modes = ["SHOWDOWN", "BRAWL_BALL", "HOTZONE", "GEM_GRAB", "BOUNTY", "FRIENDLY_ONLINE"];
             const nextIdx = (modes.indexOf(this.gameMode) + 1) % modes.length;
             this.gameMode = modes[nextIdx];
             this.renderMenu();
@@ -1586,6 +1594,22 @@ class Game {
                       <div class="w-full text-center mt-auto">
                         <div class="${isSelected ? "text-slate-900" : "text-white/40"} uppercase font-black text-[10px] tracking-widest mb-1">${l.trio} Trio</div>
                         <h3 class="text-3xl brawl-font italic uppercase ${isSelected ? "text-slate-900" : "text-white"} drop-shadow-md tracking-tighter">${l.name}</h3>
+                        
+                        ${level >= 9 ? `
+                          <!-- Star Power Display -->
+                          <div class="mt-4 p-3 bg-black/20 rounded-xl border-t-2 border-yellow-400/50 flex items-start gap-2 text-left">
+                            <span class="text-xl">⭐</span>
+                            <div>
+                                <div class="text-[10px] font-black italic uppercase leading-none ${isSelected ? "text-slate-900" : "text-yellow-400"}">Star Power</div>
+                                <div class="text-xs font-black leading-tight mt-1 ${isSelected ? "text-slate-800" : "text-white"}">${l.starPower.name}</div>
+                                <div class="text-[9px] font-bold opacity-60 leading-tight mt-0.5 ${isSelected ? "text-slate-700" : "text-white/80"}">${l.starPower.description}</div>
+                            </div>
+                          </div>
+                        ` : level >= 7 ? `
+                          <div class="mt-4 p-2 bg-black/20 rounded-xl border border-white/5 flex items-center justify-center gap-2">
+                             <span class="text-xs font-black italic text-white/30 uppercase">Unlock Star Power at Level 9</span>
+                          </div>
+                        ` : ""}
                       </div>
 
                       <div class="w-full mt-6">
@@ -1814,11 +1838,16 @@ class Game {
           document.getElementById("unlock-confirm-btn").onclick = () => this.renderSelect();
       }
       renderGameOver(e, l, customTitle) {
+        if (this.isOnlineMatch) {
+            if (this.matchUpdatesUnsubscribe) this.matchUpdatesUnsubscribe();
+            if (this.onlineBulletsUnsubscribe) this.onlineBulletsUnsubscribe();
+            this.isOnlineMatch = false;
+        }
         this.state = "GAMEOVER";
         this.clearUI();
         this.uiContainer.classList.remove("pointer-events-none");
         this.uiContainer.classList.add("pointer-events-auto", "flex", "flex-col", "items-center", "justify-center");
-        let s = L[e] || -5;
+        let s = (this.gameMode === "FRIENDLY_ONLINE") ? 0 : (L[e] || -5);
         this.trophies.brawlers[this.selectedBrawler.type] = Math.max(0, this.trophies.brawlers[this.selectedBrawler.type] + s);
         
         // Reward players
@@ -1851,6 +1880,205 @@ class Game {
           </div>`;
         document.getElementById("restart-button").onclick = () => this.renderMenu();
       }
+      async startOnlineMatchmaking() {
+        if (!this.trophies.isLoggedIn) {
+          await this.loginWithGoogle();
+          this.renderMenu();
+          return;
+        }
+
+        this.clearUI();
+        this.uiContainer.classList.remove("pointer-events-none");
+        this.uiContainer.classList.add("pointer-events-auto", "w-full", "h-full", "bg-black/80", "backdrop-blur-xl", "flex", "items-center", "justify-center");
+
+        this.uiContainer.innerHTML = `
+          <div class="flex flex-col items-center gap-8">
+            <div class="text-6xl brawl-font italic animate-bounce">🌐</div>
+            <div class="text-4xl brawl-font italic tracking-widest animate-pulse">SEARCHING FOR PLAYERS...</div>
+            <div class="flex gap-4" id="matchmaking-players">
+                <div class="w-16 h-16 bg-slate-800 rounded-2xl border-4 border-slate-700 animate-pulse"></div>
+            </div>
+            <p class="text-blue-400 font-bold uppercase text-sm">Online Showdown - No Trophies</p>
+            <button id="cancel-matchmaking" class="mt-8 px-12 py-4 bg-red-600 rounded-2xl brawl-font italic text-2xl hover:bg-red-700 transition-colors">CANCEL</button>
+          </div>
+        `;
+
+        document.getElementById("cancel-matchmaking").onclick = () => {
+            if (this.matchmakingUnsubscribe) this.matchmakingUnsubscribe();
+            // Try to remove self from lobby
+            if (this.currentLobbyId) {
+                const lobbyRef = doc(db, "lobbies", this.currentLobbyId);
+                getDoc(lobbyRef).then(snap => {
+                    if (snap.exists()) {
+                        const data = snap.data();
+                        const players = data.players.filter(p => p.id !== auth.currentUser.uid);
+                        if (players.length === 0) deleteDoc(lobbyRef);
+                        else updateDoc(lobbyRef, { players });
+                    }
+                });
+            }
+            this.renderMenu();
+        };
+
+        const lobbyId = "global_showdown";
+        this.currentLobbyId = lobbyId;
+        const lobbyRef = doc(db, "lobbies", lobbyId);
+        
+        try {
+            const snap = await getDoc(lobbyRef);
+            let lobbyData;
+            if (!snap.exists()) {
+                lobbyData = {
+                    hostId: auth.currentUser.uid,
+                    players: [{ id: auth.currentUser.uid, name: auth.currentUser.displayName || "Player", brawler: this.selectedBrawler.type, level: this.trophies.brawlerLevels[this.selectedBrawler.type] || 1 }],
+                    status: "waiting",
+                    mode: "FRIENDLY_ONLINE",
+                    createdAt: Date.now()
+                };
+                await setDoc(lobbyRef, lobbyData);
+            } else {
+                lobbyData = snap.data();
+                if (lobbyData.status === "started" && Date.now() - lobbyData.createdAt > 600000) { // Old lobby
+                    await setDoc(lobbyRef, {
+                        hostId: auth.currentUser.uid,
+                        players: [{ id: auth.currentUser.uid, name: auth.currentUser.displayName || "Player", brawler: this.selectedBrawler.type, level: this.trophies.brawlerLevels[this.selectedBrawler.type] || 1 }],
+                        status: "waiting",
+                        mode: "FRIENDLY_ONLINE",
+                        createdAt: Date.now()
+                    });
+                } else if (lobbyData.status !== "started") {
+                    if (!lobbyData.players.find(p => p.id === auth.currentUser.uid)) {
+                        lobbyData.players.push({ id: auth.currentUser.uid, name: auth.currentUser.displayName || "Player", brawler: this.selectedBrawler.type, level: this.trophies.brawlerLevels[this.selectedBrawler.type] || 1 });
+                        await updateDoc(lobbyRef, { players: lobbyData.players });
+                    }
+                } else {
+                    // Match in progress, wait or create sub-lobby? 
+                    // For simplicity, we just wait for the next cycle or force start if host
+                }
+            }
+
+            this.matchmakingUnsubscribe = onSnapshot(lobbyRef, (docSnap) => {
+                const data = docSnap.data();
+                if (!data) return;
+                
+                const display = document.getElementById("matchmaking-players");
+                if (display) {
+                    display.innerHTML = data.players.map(p => `
+                        <div class="w-16 h-16 bg-blue-600 rounded-2xl border-4 border-white flex items-center justify-center text-3xl shadow-xl relative group">
+                            ${w[p.brawler]?.emoji || "👤"}
+                            <div class="absolute -top-10 left-1/2 -translate-x-1/2 text-[10px] bg-black/80 px-2 rounded whitespace-nowrap opacity-100 transition-opacity">${p.name.split(" ")[0]}</div>
+                        </div>
+                    `).join("");
+                }
+
+                if (data.players.length >= 2 || data.status === "started") {
+                    if (data.hostId === auth.currentUser.uid && data.status !== "started") {
+                        setTimeout(async () => {
+                            await updateDoc(lobbyRef, { status: "started" });
+                        }, 3000);
+                    }
+                    
+                    if (data.status === "started") {
+                        if (this.matchmakingUnsubscribe) this.matchmakingUnsubscribe();
+                        this.initOnlineMatch(lobbyId, data.players);
+                    }
+                }
+            });
+
+        } catch (e) {
+            handleFirestoreError(e, OperationType.WRITE, `lobbies/${lobbyId}`);
+        }
+      }
+
+      async initOnlineMatch(matchId, players) {
+          this.isOnlineMatch = true;
+          this.matchId = matchId;
+          this.onlinePlayers = players;
+          this.startGame(); // This will set basic state
+          
+          // Clear bots and boxes to ensure same Seed or just empty for pure PvP
+          this.bots = [];
+          this.boxes = [];
+          
+          // Re-create boxes if host? No, let's keep it simple: no boxes for Friendly Online yet or fixed ones.
+          // Add other players as bots (dummies that we sync)
+          players.forEach(p => {
+              if (p.id === auth.currentUser.uid) return;
+              const config = w[p.brawler] || w.shelly;
+              const hp = getLeveledStat(config.hp, p.level || 1);
+              this.bots.push({
+                  id: p.id,
+                  name: p.name,
+                  x: d / 2, y: d / 2, // Will be updated by sync
+                  size: E, hp: hp, maxHp: hp,
+                  config: config,
+                  angle: 0, superCharge: 0, ammo: 3, lastShot: 0,
+                  team: p.id, level: p.level || 1,
+                  isOnlinePlayer: true
+              });
+          });
+
+          // Subscribe to player updates
+          const playersRef = collection(db, `matches/${matchId}/players`);
+          this.matchUpdatesUnsubscribe = onSnapshot(playersRef, (querySnap) => {
+              querySnap.docChanges().forEach(change => {
+                  const data = change.doc.data();
+                  if (data.id === auth.currentUser.uid) return;
+                  
+                  let bot = this.bots.find(b => b.id === data.id);
+                  if (bot) {
+                      bot.targetX = data.x;
+                      bot.targetY = data.y;
+                      bot.hp = data.hp;
+                      bot.angle = data.angle;
+                      bot.superCharge = data.super;
+                  }
+              });
+          });
+
+          // Subscribe to bullets/attacks
+          const bulletsRef = collection(db, `matches/${matchId}/bullets`);
+          this.onlineBulletsUnsubscribe = onSnapshot(bulletsRef, (querySnap) => {
+              querySnap.docChanges().forEach(change => {
+                  if (change.type === "added") {
+                      const data = change.doc.data();
+                      if (data.ownerId === auth.currentUser.uid) return;
+                      // Only add if not already in bullets
+                      if (!this.bullets.find(b => b.onlineId === change.doc.id)) {
+                          this.bullets.push({
+                              ...data,
+                              onlineId: change.doc.id
+                          });
+                      }
+                  }
+              });
+          });
+      }
+
+      syncOnlineState(now) {
+        if (now - this.lastOnlineSync > 100) { // 10 FPS sync to be safe with quotas
+            this.lastOnlineSync = now;
+            const playerRef = doc(db, `matches/${this.matchId}/players`, auth.currentUser.uid);
+            setDoc(playerRef, {
+                id: auth.currentUser.uid,
+                x: this.player.x,
+                y: this.player.y,
+                hp: this.player.hp,
+                angle: this.player.angle,
+                ammo: this.player.ammo,
+                super: this.player.superCharge
+            }).catch(e => console.error("Sync error", e));
+
+            // Smooth interpolation for other players
+            this.bots.forEach(b => {
+                if (b.isOnlinePlayer && b.targetX !== undefined) {
+                    b.x += (b.targetX - b.x) * 0.2;
+                    b.y += (b.targetY - b.y) * 0.2;
+                }
+            });
+        }
+      }
+
       startGame() {
           this.state = "GAME";
           this.clearUI();
@@ -1881,7 +2109,7 @@ class Game {
             
             const level = this.trophies.brawlerLevels[this.selectedBrawler.type] || 1;
             const hp = getLeveledStat(this.selectedBrawler.hp, level);
-            this.player = { id: "player", x: d / 2, y: d / 2, size: E, hp: hp, maxHp: hp, powerCubes: 0, config: this.selectedBrawler, lastShot: 0, angle: 0, superCharge: 0, ammo: 3, maxAmmo: 3, reloadTimer: 0, lastCombatTime: 0, team: "blue" };
+            this.player = { id: "player", x: d / 2, y: d / 2, size: E, hp: hp, maxHp: hp, powerCubes: 0, config: this.selectedBrawler, lastShot: 0, angle: 0, superCharge: 0, ammo: 3, maxAmmo: 3, reloadTimer: 0, lastCombatTime: 0, team: "blue", level: level, hasStarPower: level >= 9 };
             this.camera.x = this.player.x - this.viewport.w / 2;
             this.camera.y = this.player.y - this.viewport.h / 2;
             
@@ -1901,7 +2129,7 @@ class Game {
               for (let n = 0; n < 20 && (o = 100 * Math.floor(Math.random() * (d / 100)) + 50, a = 100 * Math.floor(Math.random() * (d / 100)) + 50, !(Math.hypot(o - d / 2, a - d / 2) > 400 && !this.walls.some(r => r.x <= o && r.x + 100 >= o && r.y <= a && r.y + 100 >= a) && !this.boxes.some(r => r.x === o && r.y === a))); n++);
               const level = Math.floor(Math.random() * 11) + 1;
               const hp = getLeveledStat(t.hp, level);
-              return { id: `bot-${l}`, x: o, y: a, size: E, hp: hp, maxHp: hp, powerCubes: 0, config: t, lastShot: 0, angle: 2 * Math.random() * Math.PI, superCharge: 0, ammo: 3, maxAmmo: 3, reloadTimer: 0, lastCombatTime: 0, team: `bot-${l}`, level };
+              return { id: `bot-${l}`, x: o, y: a, size: E, hp: hp, maxHp: hp, powerCubes: 0, config: t, lastShot: 0, angle: 2 * Math.random() * Math.PI, superCharge: 0, ammo: 3, maxAmmo: 3, reloadTimer: 0, lastCombatTime: 0, team: `bot-${l}`, level, hasStarPower: level >= 9 };
             });
             this.ball = null;
           } else if (this.gameMode === "BRAWL_BALL") {
@@ -1932,7 +2160,7 @@ class Game {
             
             const level = this.trophies.brawlerLevels[this.selectedBrawler.type] || 1;
             const hp = getLeveledStat(this.selectedBrawler.hp, level);
-            this.player = { id: "player", x: arenaW / 2, y: arenaH - 200, size: E, hp: hp, maxHp: hp, powerCubes: 0, config: this.selectedBrawler, lastShot: 0, angle: 0, superCharge: 0, ammo: 3, maxAmmo: 3, reloadTimer: 0, lastCombatTime: 0, team: "blue", respawnTimer: 0 };
+            this.player = { id: "player", x: arenaW / 2, y: arenaH - 200, size: E, hp: hp, maxHp: hp, powerCubes: 0, config: this.selectedBrawler, lastShot: 0, angle: 0, superCharge: 0, ammo: 3, maxAmmo: 3, reloadTimer: 0, lastCombatTime: 0, team: "blue", respawnTimer: 0, level: level, hasStarPower: level >= 9 };
             
             this.bots = [
                 { id: "bot-blue-1", x: arenaW / 2 - 200, y: arenaH - 200, size: E, hp: 4000, maxHp: 4000, powerCubes: 0, config: w.el_primo, lastShot: 0, angle: 0, superCharge: 0, ammo: 3, maxAmmo: 3, reloadTimer: 0, team: "blue", respawnTimer: 0, level: this.trophies.brawlerLevels.el_primo || 1 },
@@ -1940,7 +2168,7 @@ class Game {
                 { id: "bot-red-1", x: arenaW / 2, y: 200, size: E, hp: 3600, maxHp: 3600, powerCubes: 0, config: w.shelly, lastShot: 0, angle: 0, superCharge: 0, ammo: 3, maxAmmo: 3, reloadTimer: 0, team: "red", respawnTimer: 0, level: 7 },
                 { id: "bot-red-2", x: arenaW / 2 - 200, y: 200, size: E, hp: 4000, maxHp: 4000, powerCubes: 0, config: w.el_primo, lastShot: 0, angle: 0, superCharge: 0, ammo: 3, maxAmmo: 3, reloadTimer: 0, team: "red", respawnTimer: 0, level: 6 },
                 { id: "bot-red-3", x: arenaW / 2 + 200, y: 200, size: E, hp: 2800, maxHp: 2800, powerCubes: 0, config: w.colt, lastShot: 0, angle: 0, superCharge: 0, ammo: 3, maxAmmo: 3, reloadTimer: 0, team: "red", respawnTimer: 0, level: 5 },
-            ].map(b => ({ ...b, hp: getLeveledStat(b.hp, b.level || 1), maxHp: getLeveledStat(b.hp, b.level || 1) }));
+            ].map(b => ({ ...b, hp: getLeveledStat(b.hp, b.level || 1), maxHp: getLeveledStat(b.hp, b.level || 1), hasStarPower: (b.level || 1) >= 9 }));
             this.ball = { x: arenaW/2, y: arenaH/2, dx: 0, dy: 0, carrierId: null, radius: 25 };
             this.boxes = [];
             this.camera.x = this.player.x - this.viewport.w / 2;
@@ -1956,7 +2184,7 @@ class Game {
               </div>`;
             const hotLevel = this.trophies.brawlerLevels[this.selectedBrawler.type] || 1;
             const hotHp = getLeveledStat(this.selectedBrawler.hp, hotLevel);
-            this.player = { id: "player", x: arenaW / 2, y: arenaH - 200, size: E, hp: hotHp, maxHp: hotHp, powerCubes: 0, config: this.selectedBrawler, lastShot: 0, angle: 0, superCharge: 0, ammo: 3, maxAmmo: 3, reloadTimer: 0, lastCombatTime: 0, team: "blue", respawnTimer: 0 };
+            this.player = { id: "player", x: arenaW / 2, y: arenaH - 200, size: E, hp: hotHp, maxHp: hotHp, powerCubes: 0, config: this.selectedBrawler, lastShot: 0, angle: 0, superCharge: 0, ammo: 3, maxAmmo: 3, reloadTimer: 0, lastCombatTime: 0, team: "blue", respawnTimer: 0, level: hotLevel, hasStarPower: hotLevel >= 9 };
             
             this.bots = [
                 { id: "bot-blue-1", x: arenaW / 2 - 200, y: arenaH - 200, size: E, hp: 4000, maxHp: 4000, powerCubes: 0, config: w.el_primo, lastShot: 0, angle: 0, superCharge: 0, ammo: 3, maxAmmo: 3, reloadTimer: 0, team: "blue", respawnTimer: 0, level: this.trophies.brawlerLevels.el_primo || 1 },
@@ -1964,7 +2192,7 @@ class Game {
                 { id: "bot-red-1", x: arenaW / 2, y: 200, size: E, hp: 3600, maxHp: 3600, powerCubes: 0, config: w.shelly, lastShot: 0, angle: 0, superCharge: 0, ammo: 3, maxAmmo: 3, reloadTimer: 0, team: "red", respawnTimer: 0, level: 8 },
                 { id: "bot-red-2", x: arenaW / 2 - 200, y: 200, size: E, hp: 4000, maxHp: 4000, powerCubes: 0, config: w.el_primo, lastShot: 0, angle: 0, superCharge: 0, ammo: 3, maxAmmo: 3, reloadTimer: 0, team: "red", respawnTimer: 0, level: 7 },
                 { id: "bot-red-3", x: arenaW / 2 + 200, y: 200, size: E, hp: 2800, maxHp: 2800, powerCubes: 0, config: w.colt, lastShot: 0, angle: 0, superCharge: 0, ammo: 3, maxAmmo: 3, reloadTimer: 0, team: "red", respawnTimer: 0, level: 6 },
-            ].map(b => ({ ...b, hp: getLeveledStat(b.hp, b.level || 1), maxHp: getLeveledStat(b.hp, b.level || 1) }));
+            ].map(b => ({ ...b, hp: getLeveledStat(b.hp, b.level || 1), maxHp: getLeveledStat(b.hp, b.level || 1), hasStarPower: (b.level || 1) >= 9 }));
             
             this.walls = [
               {x: 200, y: arenaH/2 - 200, width: 80, height: 400},
@@ -1988,7 +2216,7 @@ class Game {
 
             const level = this.trophies.brawlerLevels[this.selectedBrawler.type] || 1;
             const hp = getLeveledStat(this.selectedBrawler.hp, level);
-            this.player = { id: "player", x: arenaW / 2, y: arenaH - 200, size: E, hp: hp, maxHp: hp, powerCubes: 0, config: this.selectedBrawler, lastShot: 0, angle: 0, superCharge: 0, ammo: 3, maxAmmo: 3, reloadTimer: 0, lastCombatTime: 0, team: "blue", respawnTimer: 0, gems: 0, stars: 2 };
+            this.player = { id: "player", x: arenaW / 2, y: arenaH - 200, size: E, hp: hp, maxHp: hp, powerCubes: 0, config: this.selectedBrawler, lastShot: 0, angle: 0, superCharge: 0, ammo: 3, maxAmmo: 3, reloadTimer: 0, lastCombatTime: 0, team: "blue", respawnTimer: 0, gems: 0, stars: 2, level: level, hasStarPower: level >= 9 };
             
             this.bots = [
                 { id: "bot-blue-1", x: arenaW / 2 - 200, y: arenaH - 200, size: E, hp: 4000, maxHp: 4000, powerCubes: 0, config: w.el_primo, lastShot: 0, angle: 0, superCharge: 0, ammo: 3, maxAmmo: 3, reloadTimer: 0, team: "blue", respawnTimer: 0, level: this.trophies.brawlerLevels.el_primo || 1, gems: 0, stars: 2 },
@@ -1996,7 +2224,7 @@ class Game {
                 { id: "bot-red-1", x: arenaW / 2, y: 200, size: E, hp: 3600, maxHp: 3600, powerCubes: 0, config: w.shelly, lastShot: 0, angle: 0, superCharge: 0, ammo: 3, maxAmmo: 3, reloadTimer: 0, team: "red", respawnTimer: 0, level: 8, gems: 0, stars: 2 },
                 { id: "bot-red-2", x: arenaW / 2 - 200, y: 200, size: E, hp: 4000, maxHp: 4000, powerCubes: 0, config: w.el_primo, lastShot: 0, angle: 0, superCharge: 0, ammo: 3, maxAmmo: 3, reloadTimer: 0, team: "red", respawnTimer: 0, level: 7, gems: 0, stars: 2 },
                 { id: "bot-red-3", x: arenaW / 2 + 200, y: 200, size: E, hp: 2800, maxHp: 2800, powerCubes: 0, config: w.colt, lastShot: 0, angle: 0, superCharge: 0, ammo: 3, maxAmmo: 3, reloadTimer: 0, team: "red", respawnTimer: 0, level: 6, gems: 0, stars: 2 },
-            ].map(b => ({ ...b, hp: getLeveledStat(b.hp, b.level || 1), maxHp: getLeveledStat(b.hp, b.level || 1) }));
+            ].map(b => ({ ...b, hp: getLeveledStat(b.hp, b.level || 1), maxHp: getLeveledStat(b.hp, b.level || 1), hasStarPower: (b.level || 1) >= 9 }));
             
             this.walls = [
               {x: 200, y: arenaH/2 - 300, width: 600, height: 100},
@@ -2009,6 +2237,9 @@ class Game {
             
             this.camera.x = this.player.x - this.viewport.w / 2;
             this.camera.y = this.player.y - this.viewport.h / 2;
+          } else if (this.gameMode === "FRIENDLY_ONLINE") {
+            this.startOnlineMatchmaking();
+            return;
           }
 
           this.uiContainer.innerHTML += `
@@ -2066,7 +2297,12 @@ class Game {
 
         let n = (r, c = 0, x = !1) => {
              let M = { id: Math.random().toString(36).substr(2, 9), ownerId: e.id, x: e.x, y: e.y, dx: Math.cos(r) * (x ? 1.2 * e.config.bulletSpeed : e.config.bulletSpeed), dy: Math.sin(r) * (x ? 1.2 * e.config.bulletSpeed : e.config.bulletSpeed), damage: (x ? 1.5 * baseDamage : baseDamage) * (1 + .1 * e.powerCubes) * dmgBuff, rangeRemaining: e.config.range + c, size: x ? 1.5 * e.config.bulletSize : e.config.bulletSize, color: x ? "#fbbf24" : e.config.color, type: e.config.type, isSuper: x, hitIds: [] };
-             this.bullets.push(M)
+             this.bullets.push(M);
+             if (this.isOnlineMatch && e.id === auth.currentUser.uid) {
+                 addDoc(collection(db, `matches/${this.matchId}/bullets`), M).then(docRef => {
+                     M.onlineId = docRef.id;
+                 }).catch(e => console.error("Bullet sync error", e));
+             }
         };
         if ("shelly" === e.config.type) if (t) for (let r = -4; r <= 4; r++) n(a + .15 * r, 100, !0); else for (let r = -1; r <= 1; r++) n(a + .2 * r); else if ("colt" === e.config.type) {
           let r = t ? 12 : 4, c = t ? 60 : 100;
@@ -2078,25 +2314,35 @@ class Game {
           } else n(a);
         } else if ("colette" === e.config.type) if (t) {
           let r = Math.min(Math.hypot(l - e.x, s - e.y), 450);
-          e.dashState = { origin: { x: e.x, y: e.y }, target: { x: e.x + Math.cos(a) * r, y: e.y + Math.sin(a) * r }, return: !1, isBounce: !0, speed: 25, hitIds: [] }
+          e.dashState = { origin: { x: e.x, y: e.y }, target: { x: e.x + Math.cos(a) * r, y: e.y + Math.sin(a) * r }, return: !1, isBounce: !0, speed: 25, hitIds: [] };
+          if (e.hasStarPower) e.shieldTimer = Date.now() + 5000;
         } else n(a); else if ("edgar" === e.config.type || "el_primo" === e.config.type) {
           if (t) {
             let maxDist = "edgar" === e.config.type ? 400 : 500;
             let dist = Math.min(Math.hypot(l - e.x, s - e.y), maxDist);
-            e.x += Math.cos(a) * dist, e.y += Math.sin(a) * dist, e.x = Math.max(0, Math.min(this.mapW, e.x)), e.y = Math.max(0, Math.min(this.mapH, e.y)), "el_primo" === e.config.type && (
+            e.x += Math.cos(a) * dist, e.y += Math.sin(a) * dist, e.x = Math.max(0, Math.min(this.mapW, e.x)), e.y = Math.max(0, Math.min(this.mapH, e.y));
+            if (e.hasStarPower && "edgar" === e.config.type) {
+                [...this.bots, this.player].forEach(x => {
+                    x.id !== e.id && Math.hypot(x.x - e.x, x.y - e.y) < 100 && (x.hp -= 1000);
+                });
+            }
+            "el_primo" === e.config.type && (
               [...this.bots, this.player].forEach(x => {
-                x.id !== e.id && Math.hypot(x.x - e.x, x.y - e.y) < 100 && (x.hp -= 1000, e.superCharge = Math.min(100, e.superCharge + 30))
+                x.id !== e.id && Math.hypot(x.x - e.x, x.y - e.y) < 100 && (x.hp -= 1000, e.superCharge = Math.min(100, e.superCharge + 30), e.hasStarPower && (x.poison = { ownerId: e.id, damage: 300 * (1 + 0.1 * e.powerCubes), ticks: 4, lastTick: Date.now() }))
               }),
               this.walls = this.walls.filter(w => Math.hypot(w.x + 50 - e.x, w.y + 50 - e.y) > 100)
             )
           } else if ("edgar" === e.config.type) setTimeout(() => n(a - .05), 0), setTimeout(() => n(a + .05), 150);
           else for (let r = 0; r < 4; r++) setTimeout(() => n(a + .1 * (Math.random() - .5)), 100 * r);
-        } else if ("griff" === e.config.type) if (t) for (let r = -2; r <= 2; r++) n(a + .15 * r, 200, !0); else for (let r = 0; r < 3; r++) setTimeout(() => {
-          n(a - .1), n(a), n(a + .1)
-        }, 150 * r); else if ("penny" === e.config.type) {
+        } else if ("griff" === e.config.type) if (t) for (let r = -2; r <= 2; r++) n(a + .15 * r, 200, !0); else {
+          let interval = e.hasStarPower ? 110 : 150;
+          for (let r = 0; r < 3; r++) setTimeout(() => {
+            n(a - .1), n(a), n(a + .1)
+          }, interval * r);
+        } else if ("penny" === e.config.type) {
           if (t) {
             let dist = Math.min(Math.hypot(l - e.x, s - e.y), 400);
-            this.creatures.push({ id: "turret-" + Math.random(), ownerId: e.id, type: "penny_cannon", x: e.x + Math.cos(a) * dist, y: e.y + Math.sin(a) * dist, hp: 2800, maxHp: 2800, size: 30, lastShot: 0 });
+            this.creatures.push({ id: "turret-" + Math.random(), ownerId: e.id, type: "penny_cannon", x: e.x + Math.cos(a) * dist, y: e.y + Math.sin(a) * dist, hp: 2800, maxHp: 2800, size: 30, lastShot: 0, hasStarPower: e.hasStarPower });
           } else n(a);
         } else if ("darryl" === e.config.type) if (t) e.dashState = { origin: { x: e.x, y: e.y }, target: { x: e.x + 500 * Math.cos(a), y: e.y + 500 * Math.sin(a) }, return: !1, isBounce: !1, speed: 22, hitIds: [] }; else for (let r = 0; r < 2; r++) for (let c = -2; c <= 2; c++) setTimeout(() => n(a + .1 * c, 0, !1), 150 * r); else if ("tick" === e.config.type) {
           let r = Math.min(Math.hypot(l - e.x, s - e.y), e.config.range);
@@ -2113,6 +2359,7 @@ class Game {
           }
         } else if ("barley" === e.config.type) {
           let r = Math.min(Math.hypot(l - e.x, s - e.y), e.config.range);
+          if (e.hasStarPower) e.hp = Math.min(e.maxHp, e.hp + 400);
           if (t) {
             this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: 12 * Math.cos(a), dy: 12 * Math.sin(a), damage: 400, rangeRemaining: r, size: 20, color: "#f97316", type: "barley_super", isSuper: !0 });
           } else {
@@ -2123,7 +2370,7 @@ class Game {
           if (t) {
             this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: 12 * Math.cos(a), dy: 12 * Math.sin(a), damage: 0, rangeRemaining: r, size: 25, color: "#4ade80", type: "sprout_wall", isSuper: !0 });
           } else {
-            this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: 11 * Math.cos(a), dy: 11 * Math.sin(a), damage: e.config.damage * (1 + .1 * e.powerCubes), rangeRemaining: r, size: 15, color: "#4ade80", type: "sprout_main", isSuper: !1, canBounce: !0 });
+            this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: 11 * Math.cos(a), dy: 11 * Math.sin(a), damage: e.config.damage * (1 + .1 * e.powerCubes), rangeRemaining: r, size: 15, color: "#4ade80", type: "sprout_main", isSuper: !1, canBounce: !0, isOvergrowth: e.hasStarPower });
           }
         } else if ("crow" === e.config.type) {
           if (t) {
@@ -2139,18 +2386,18 @@ class Game {
         } else if ("eightbit" === e.config.type) {
           if (t) {
             let dist = Math.min(Math.hypot(l - e.x, s - e.y), 400);
-            this.creatures.push({ id: "8bit-turret-" + Math.random(), ownerId: e.id, type: "8bit_turret", x: e.x + Math.cos(a) * dist, y: e.y + Math.sin(a) * dist, hp: 3500, maxHp: 3500, size: 25 });
+            this.creatures.push({ id: "8bit-turret-" + Math.random(), ownerId: e.id, type: "8bit_turret", x: e.x + Math.cos(a) * dist, y: e.y + Math.sin(a) * dist, hp: 3500, maxHp: 3500, size: 25, hasStarPower: e.hasStarPower });
           } else {
              for (let r = 0; r < 6; r++) setTimeout(() => n(a + (Math.random() - .5) * .05), 100 * r);
           }
         } else if ("rico" === e.config.type) {
           if (t) {
              for (let r = 0; r < 10; r++) setTimeout(() => {
-                this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: e.config.bulletSpeed * Math.cos(a + (Math.random() - .5) * .05), dy: e.config.bulletSpeed * Math.sin(a + (Math.random() - .5) * .05), damage: 320 * (1 + .1 * e.powerCubes), rangeRemaining: e.config.range * 1.5, size: 10, color: e.config.color, type: e.config.type, isSuper: !0, canBounce: !0 });
+                this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: e.config.bulletSpeed * Math.cos(a + (Math.random() - .5) * .05), dy: e.config.bulletSpeed * Math.sin(a + (Math.random() - .5) * .05), damage: 320 * (1 + .1 * e.powerCubes), rangeRemaining: e.config.range * 1.5, size: 10, color: e.config.color, type: e.config.type, isSuper: !0, canBounce: !0, isSuperBouncy: e.hasStarPower });
              }, 80 * r);
           } else {
              for (let r = 0; r < 5; r++) setTimeout(() => {
-                this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: e.config.bulletSpeed * Math.cos(a + (Math.random() - .5) * .05), dy: e.config.bulletSpeed * Math.sin(a + (Math.random() - .5) * .05), damage: 320 * (1 + .1 * e.powerCubes), rangeRemaining: e.config.range, size: e.config.bulletSize, color: e.config.color, type: e.config.type, isSuper: !1, canBounce: !0 });
+                this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: e.config.bulletSpeed * Math.cos(a + (Math.random() - .5) * .05), dy: e.config.bulletSpeed * Math.sin(a + (Math.random() - .5) * .05), damage: 320 * (1 + .1 * e.powerCubes), rangeRemaining: e.config.range, size: e.config.bulletSize, color: e.config.color, type: e.config.type, isSuper: !1, canBounce: !0, isSuperBouncy: e.hasStarPower });
              }, 80 * r);
           }
         } else if ("brock" === e.config.type) {
@@ -2161,11 +2408,11 @@ class Game {
                   let tx = e.x + Math.cos(a) * r + (Math.random() - .5) * 300;
                   let ty = e.y + Math.sin(a) * r + (Math.random() - .5) * 300;
                   let angle = Math.atan2(ty - e.y, tx - e.x);
-                  this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: 12 * Math.cos(angle), dy: 12 * Math.sin(angle), damage: 1040 * (1 + .1 * e.powerCubes), rangeRemaining: Math.hypot(tx - e.x, ty - e.y), size: 18, color: e.config.color, type: "brock_super", isSuper: !0 });
+                  this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: 12 * Math.cos(angle), dy: 12 * Math.sin(angle), damage: 1040 * (1 + .1 * e.powerCubes), rangeRemaining: Math.hypot(tx - e.x, ty - e.y), size: 18, color: e.config.color, type: "brock_super", isSuper: !0, hasStarPower: e.hasStarPower });
               }, i * 150);
             }
           } else {
-             n(a);
+             this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: Math.cos(a) * e.config.bulletSpeed, dy: Math.sin(a) * e.config.bulletSpeed, damage: baseDamage * (1 + .1 * e.powerCubes) * dmgBuff, rangeRemaining: e.config.range, size: e.config.bulletSize, color: e.config.color, type: e.config.type, isSuper: false, hitIds: [], hasStarPower: e.hasStarPower });
           }
         } else if ("ash" === e.config.type) {
           if (t) {
@@ -2174,7 +2421,11 @@ class Game {
               this.creatures.push({ id: "rat-" + Math.random(), ownerId: e.id, type: "ash_rat", x: e.x + Math.cos(ang) * 50, y: e.y + Math.sin(ang) * 50, hp: 1200, maxHp: 1200, size: 15, speed: 7, damage: 600 });
             }
           } else {
-            for (let r = -2; r <= 2; r++) n(a + .15 * r);
+            let bonusDamage = (e.hasStarPower && e.ammo === 3) ? 1.5 : 1;
+            for (let r = -2; r <= 2; r++) {
+               let M = { id: Math.random().toString(36).substr(2, 9), ownerId: e.id, x: e.x, y: e.y, dx: Math.cos(a + .15 * r) * e.config.bulletSpeed, dy: Math.sin(a + .15 * r) * e.config.bulletSpeed, damage: baseDamage * bonusDamage * (1 + .1 * e.powerCubes) * dmgBuff, rangeRemaining: e.config.range, size: e.config.bulletSize, color: e.config.color, type: e.config.type, isSuper: false, hitIds: [] };
+               this.bullets.push(M);
+            }
           }
         } else if ("grom" === e.config.type) {
           let r = Math.min(Math.hypot(l - e.x, s - e.y), e.config.range);
@@ -2186,7 +2437,8 @@ class Game {
         } else if ("dynamike" === e.config.type) {
           let r = Math.min(Math.hypot(l - e.x, s - e.y), e.config.range);
           if (t) {
-            this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: 10 * Math.cos(a), dy: 10 * Math.sin(a), damage: 3000, rangeRemaining: r, size: 30, color: "#dc2626", type: "dynamike_super", isSuper: !0, hitIds: [] });
+            let extraDamage = e.hasStarPower ? 1000 : 0;
+            this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: 10 * Math.cos(a), dy: 10 * Math.sin(a), damage: 3000 + extraDamage, rangeRemaining: r, size: 30, color: "#dc2626", type: "dynamike_super", isSuper: !0, hitIds: [] });
           } else {
             this.bullets.push({ id: Math.random() + "", ownerId: e.id, x: e.x, y: e.y, dx: 12 * Math.cos(a), dy: 12 * Math.sin(a), damage: e.config.damage, rangeRemaining: r, size: 15, color: "#dc2626", type: "dynamike_main", isSuper: !1, hitIds: [] });
           }
@@ -2195,7 +2447,8 @@ class Game {
             e.spinState = { startTime: Date.now(), duration: 3000 };
           } else if (!e.hasPickaxe) {
             e.hasPickaxe = true;
-            this.bullets.push({ id: "carl-pickaxe-" + e.id, ownerId: e.id, x: e.x, y: e.y, dx: 14 * Math.cos(a), dy: 14 * Math.sin(a), damage: e.config.damage, rangeRemaining: e.config.range, size: 18, color: "#4b5563", type: "carl_main", isSuper: !1, returning: false, hitIds: [] });
+            let speedMult = e.hasStarPower ? 1.15 : 1;
+            this.bullets.push({ id: "carl-pickaxe-" + e.id, ownerId: e.id, x: e.x, y: e.y, dx: 14 * speedMult * Math.cos(a), dy: 14 * speedMult * Math.sin(a), damage: e.config.damage, rangeRemaining: e.config.range, size: 18, color: "#4b5563", type: "carl_main", isSuper: !1, returning: false, hitIds: [] });
           }
         } else if ("jacky" === e.config.type) {
           if (t) {
@@ -2206,10 +2459,13 @@ class Game {
         } else if ("poco" === e.config.type) if (t) {
           e.hp = Math.min(e.maxHp, e.hp + 2500);
           for (let r = -2; r <= 2; r++) n(a + .3 * r, 200, !0)
-        } else for (let r = -2; r <= 2; r++) n(a + .2 * r); else if ("gus" === e.config.type) {
+        } else for (let r = -2; r <= 2; r++) {
+            let M = { id: Math.random().toString(36).substr(2, 9), ownerId: e.id, x: e.x, y: e.y, dx: Math.cos(a + .2 * r) * e.config.bulletSpeed, dy: Math.sin(a + .2 * r) * e.config.bulletSpeed, damage: baseDamage * (1 + .1 * e.powerCubes) * dmgBuff, rangeRemaining: e.config.range, size: e.config.bulletSize, color: e.config.color, type: e.config.type, isSuper: false, hitIds: [], healPercent: e.hasStarPower ? 700 : 0 };
+            this.bullets.push(M);
+        } else if ("gus" === e.config.type) {
           if (t) {
             let dist = Math.min(Math.hypot(l - e.x, s - e.y), 400);
-            this.zones.push({ id: Math.random() + "", ownerId: e.id, x: e.x + Math.cos(a) * dist, y: e.y + Math.sin(a) * dist, radius: 150, duration: 5000, createdAt: o, damage: -800, isShield: true });
+            this.zones.push({ id: Math.random() + "", ownerId: e.id, x: e.x + Math.cos(a) * dist, y: e.y + Math.sin(a) * dist, radius: 150, duration: 5000, createdAt: o, damage: -800, isShield: true, hasStarPower: e.hasStarPower });
           } else n(a);
         } else if ("chuck" === e.config.type) {
           if (t) {
@@ -2310,6 +2566,10 @@ class Game {
         let e = Date.now(), l = e - this.lastTick;
         this.lastTick = e;
 
+        if (this.isOnlineMatch) {
+            this.syncOnlineState(e);
+        }
+
         if (this.gameMode === "BRAWL_BALL" || this.gameMode === "HOTZONE" || this.gameMode === "GEM_GRAB" || this.gameMode === "BOUNTY") {
             [this.player, ...this.bots].forEach(b => {
                  if (b.hp <= 0) {
@@ -2400,6 +2660,25 @@ class Game {
           i.damageResist = 1;
           i.hasSynergy = false;
 
+          // Colt Star Power: Slick Boots
+          if (i.config.type === "colt" && i.hasStarPower) i.speedBuff *= 1.1;
+          // Jacky Star Power: Hardy Hard Hat
+          if (i.config.type === "jacky" && i.hasStarPower) i.damageResist *= 0.85;
+          // Grom Star Power: Foot Patrol
+          if (i.config.type === "grom" && i.hasStarPower && i.superCharge >= 100) i.speedBuff *= 1.15;
+          // Hank Star Power: It's Gonna Blow!
+          if (i.config.type === "hank" && i.hasStarPower && i.isCharging) i.speedBuff *= 1.1;
+          
+          // Slow effect
+          if (i.slowTimer && Date.now() < i.slowTimer) i.speedBuff *= 0.5;
+          // Frank Power Grab
+          if (i.powerGrabTimer && Date.now() < i.powerGrabTimer) i.damageBoost = 1.5; else i.damageBoost = 1;
+          // Colt/Chuck/Crow Shield (Colette star power or others)
+          if (i.shieldTimer && Date.now() < i.shieldTimer) i.damageResist *= 0.8;
+
+          // Darryl Steel Hoops
+          if (i.config.type === "darryl" && i.hasStarPower && i.dashState) i.damageResist *= 0.1;
+
           // Chuck Automatic Super Charge
           if (i.config.type === "chuck" && i.hp > 0) {
             i.superCharge = Math.min(100, i.superCharge + (l / 5000) * 100); // 5 seconds full charge
@@ -2409,9 +2688,27 @@ class Game {
           this.zones.forEach(z => {
             if (z.isShield && Math.hypot(i.x - z.x, i.y - z.y) < z.radius) {
               let isOwnerFamily = i.id === z.ownerId || (i.team && i.team === ([this.player, ...this.bots].find(n => n.id === z.ownerId)?.team));
-              if (isOwnerFamily) i.damageResist = 0.5; // 50% shield
+              if (isOwnerFamily) {
+                  i.damageResist *= 0.5; // 50% shield
+                  if (z.hasStarPower) i.damageBoost *= 1.25; // Gus Spirit Animal
+              }
+            }
+            if (i.hasStarPower && i.config.type === "spike" && z.type === "spike_super" && z.ownerId === i.id && Math.hypot(i.x - z.x, i.y - z.y) < z.radius) {
+                i.hp = Math.min(i.maxHp, i.hp + 800 * (l/1000));
+            }
+            if (i.hasStarPower && i.config.type === "angelo" && z.isAngeloSuper && z.ownerId === i.id && Math.hypot(i.x - z.x, i.y - z.y) < z.radius) {
+                i.hp = Math.min(i.maxHp, i.hp + 600 * (l/1000));
             }
           });
+          
+          // 8-Bit Speed boost from turret (Plugged In)
+          if (i.config.type === "eightbit" && i.hasStarPower) {
+              this.creatures.forEach(cr => {
+                if (cr.type === "8bit_turret" && cr.ownerId === i.id && Math.hypot(i.x - cr.x, i.y - cr.y) < 300) {
+                    i.speedBuff *= 1.3;
+                }
+              });
+          }
           
           if (i.config.type === "carl" && i.spinState) {
             if (Date.now() - i.spinState.startTime > i.spinState.duration) {
@@ -2567,7 +2864,7 @@ class Game {
         [this.player, ...this.bots].forEach(i => {
           if (i.hp <= 0) return; // Prevent dead bots/player from healing, reloading or dashing
 
-          if (i.ammo < i.maxAmmo ? (i.reloadTimer += l * (i.reloadSpeedBuff || 1), i.reloadTimer >= i.config.reloadTime && (i.ammo++, i.reloadTimer -= i.config.reloadTime)) : i.reloadTimer = 0, e - i.lastCombatTime > 3e3 && i.hp < i.maxHp && (i.hp = Math.min(i.maxHp, i.hp + i.maxHp * .13 * (l / 1e3))), i.dashState) {
+          if (i.ammo < i.maxAmmo ? (i.reloadTimer += l * (i.reloadSpeedBuff || 1), i.reloadTimer >= i.config.reloadTime && (i.ammo++, i.reloadTimer -= i.config.reloadTime)) : i.reloadTimer = 0, e - i.lastCombatTime > (i.hasStarPower && i.config.type === "tick" ? 1e3 : 3e3) && i.hp < i.maxHp && (i.hp = Math.min(i.maxHp, i.hp + i.maxHp * .13 * (l / 1e3))), i.dashState) {
             let f = i.dashState.queue ? i.dashState.target : (i.dashState.return ? i.dashState.origin : i.dashState.target);
             let u = Math.hypot(f.x - i.x, f.y - i.y);
             let ang = Math.atan2(f.y - i.y, f.x - i.x);
@@ -2918,7 +3215,7 @@ class Game {
                 if (mobileSuperBtn) mobileSuperBtn.classList.add('scale-0'), mobileSuperBtn.classList.remove('scale-100');
             }
         }
-        (this.gameMode === "SHOWDOWN" && (this.player.hp <= 0 || this.bots.filter(b => b.hp > 0).length === 0)) && this.renderGameOver(this.bots.filter(b => b.hp > 0).length + 1, this.player.powerCubes)
+        ((this.gameMode === "SHOWDOWN" || this.gameMode === "FRIENDLY_ONLINE") && (this.player.hp <= 0 || this.bots.filter(b => b.hp > 0).length === 0)) && this.renderGameOver(this.bots.filter(b => b.hp > 0).length + 1, this.player.powerCubes)
       }
 
       resetBall() {
@@ -2985,7 +3282,7 @@ class Game {
                 c.lastShot = e;
                 let angle = Math.atan2(nearest.y - c.y, nearest.x - c.x);
                 let dist = Math.hypot(nearest.x - c.x, nearest.y - c.y);
-                this.bullets.push({ id: Math.random() + "", ownerId: c.ownerId, x: c.x, y: c.y, dx: 8 * Math.cos(angle), dy: 8 * Math.sin(angle), damage: 500, rangeRemaining: dist, size: 15, color: "#f97316", type: "penny_cannon_shot", isSuper: !1, hitIds: [] });
+                this.bullets.push({ id: Math.random() + "", ownerId: c.ownerId, x: c.x, y: c.y, dx: 8 * Math.cos(angle), dy: 8 * Math.sin(angle), damage: 500, rangeRemaining: dist, size: 15, color: "#f97316", type: "penny_cannon_shot", isSuper: !1, hitIds: [], hasStarPower: c.hasStarPower });
               }
             }
           }
@@ -3043,10 +3340,18 @@ class Game {
                    }
                 } else if (!isOwnerFamily && t.damage > 0) {
                   let actualDamage = t.isPercentDamage ? (o.maxHp * 0.05) : t.damage;
+                  let a = [this.player, ...this.bots].find(n => n.id === t.ownerId);
+                  
+                  // Emz Star Power: Bad Karma
+                  if (a && a.config.type === "emz" && a.hasStarPower) {
+                      t.hits = t.hits || {};
+                      t.hits[o.id] = (t.hits[o.id] || 0) + 1;
+                      actualDamage *= (1 + 0.2 * t.hits[o.id]);
+                  }
+
                   o.hp -= actualDamage * (o.damageResist || 1);
                   if (o.hp < 0) o.hp = 0;
                   o.lastCombatTime = e;
-                  let a = [this.player, ...this.bots].find(n => n.id === t.ownerId);
                   if (a && !o.id.startsWith("box")) a.superCharge = Math.min(100, a.superCharge + 3);
                 }
               }
@@ -3080,6 +3385,9 @@ class Game {
           }
 
           if (t.rangeRemaining <= 0 && t.type !== "carl_main") {
+            if (this.isOnlineMatch && t.ownerId === auth.currentUser.uid && t.onlineId) {
+                deleteDoc(doc(db, `matches/${this.matchId}/bullets`, t.onlineId));
+            }
             if (t.type === "spike" && t.isSuper) {
               this.zones.push({ id: Math.random() + "", ownerId: t.ownerId, x: t.x, y: t.y, radius: 120, duration: 4000, createdAt: e, damage: 400 });
             } else if (t.type === "tick") {
@@ -3100,6 +3408,9 @@ class Game {
                 this.zones.push({ id: Math.random() + "", ownerId: t.ownerId, x: t.x, y: t.y, radius: t.type === "dynamike_super" ? 200 : 100, duration: 500, createdAt: e, damage: t.damage });
             } else if (t.type === "amber_oil" || t.type === "penny_cannon_shot") {
               this.zones.push({ id: Math.random() + "", ownerId: t.ownerId, x: t.x, y: t.y, radius: 100, duration: 6000, createdAt: e, damage: 500 });
+              if (t.type === "penny_cannon_shot" && t.hasStarPower) {
+                this.zones.push({ id: Math.random() + "", ownerId: t.ownerId, x: t.x, y: t.y, radius: 120, duration: 3000, createdAt: e, damage: 400 }); // Fire damage
+              }
             } else if (t.type === "barley_main") {
               this.zones.push({ id: Math.random() + "", ownerId: t.ownerId, x: t.x, y: t.y, radius: 80, duration: 2500, createdAt: e, damage: 600 });
             } else if (t.type === "barley_super") {
@@ -3108,9 +3419,13 @@ class Game {
               if (t.canBounce) {
                 t.rangeRemaining = 150; t.canBounce = false; continue;
               }
-              this.zones.push({ id: Math.random() + "", ownerId: t.ownerId, x: t.x, y: t.y, radius: 80, duration: 800, createdAt: e, damage: t.damage });
+              this.zones.push({ id: Math.random() + "", ownerId: t.ownerId, x: t.x, y: t.y, radius: t.isOvergrowth ? 120 : 80, duration: 800, createdAt: e, damage: t.damage });
             } else if (t.type === "sprout_wall") {
               this.tempWalls.push({ x: t.x - 50, y: t.y - 50, width: 100, height: 100, createdAt: e, duration: 6000 });
+            } else if (t.type === "brock" || t.type === "brock_super") {
+              if (t.hasStarPower) {
+                this.zones.push({ id: Math.random() + "", ownerId: t.ownerId, x: t.x, y: t.y, radius: 60, duration: 2000, createdAt: e, damage: 600 });
+              }
             }
             if (t.type !== "tick_mine") { this.bullets.splice(s, 1); continue; }
           }
@@ -3151,8 +3466,12 @@ class Game {
                   if (t.type === "sprout_main") {
                     t.canBounce = false;
                     t.rangeRemaining += 100;
-                  } else if (t.type === "rico") {
+                  } else if (t.type === "rico" || t.type === "ricos_super") {
                     t.rangeRemaining += 150;
+                    if (t.isSuperBouncy) {
+                        t.damage += 100;
+                        t.size = Math.min(20, t.size + 2);
+                    }
                   }
                 } else {
                   hit = true;
@@ -3168,7 +3487,15 @@ class Game {
               if (target.id !== t.ownerId && !t.hitIds?.includes(target.id) && Math.hypot(t.x - target.x, t.y - target.y) < target.size) {
                 let owner = [this.player, ...this.bots].find(n => n.id === t.ownerId);
                 // Friendly Fire Check for Brawl Ball
-                if (this.gameMode === "BRAWL_BALL" && target.team && owner && target.team === owner.team) continue;
+                if (this.gameMode === "BRAWL_BALL" && target.team && owner && target.team === owner.team) {
+                  if (owner.config.type === "poco" && owner.hasStarPower) {
+                    if (!t.hitIds?.includes(target.id)) {
+                      target.hp = Math.min(target.maxHp, target.hp + 700);
+                      if (t.hitIds) t.hitIds.push(target.id);
+                    }
+                  }
+                  continue;
+              }
 
                 if (t.type === "squeak_main") {
                   this.zones.push({ id: Math.random() + "", ownerId: t.ownerId, x: target.x, y: target.y, radius: 120, duration: 1000, createdAt: e, damage: t.damage, isSqueakBomb: true, attachedToId: target.id });
@@ -3179,7 +3506,26 @@ class Game {
                   hit = true; break;
                 }
 
-                target.hp -= (t.type === "colette" ? target.maxHp * 0.33 : t.damage) * (target.damageResist || 1); target.lastCombatTime = e;
+                let damageMod = (t.type === "colette" ? target.maxHp * 0.33 : (t.damage * (owner ? (owner.damageBoost || 1) : 1)));
+                let toxicMod = (target.poison && target.poison.isExtraToxic) ? 0.8 : 1;
+                
+                if (owner && owner.config.type === "squeak" && owner.hasStarPower) {
+                    let nearbyCount = targets.filter(te => te.id !== target.id && Math.hypot(te.x - target.x, te.y - target.y) < 150).length;
+                    damageMod *= (1 + 0.1 * nearbyCount);
+                }
+
+                target.hp -= damageMod * toxicMod * (target.damageResist || 1); target.lastCombatTime = e;
+                
+                // Jacky Star Power: Counter-Crush
+                if (target.config && target.config.type === "jacky" && target.hasStarPower && owner && owner.hp > 0) {
+                    owner.hp -= (damageMod * 0.15); // Reflect 15% damage
+                }
+                if (t.isSuper && t.type === "shelly" && owner && owner.hasStarPower) {
+                    target.slowTimer = Date.now() + 2500;
+                }
+                if (t.isSuperBouncy && t.dx !== t.lastDx && t.dy !== t.lastDy) { // Simplified bounce check
+                    // Rico Super Bouncy extra damage is handled by modifying bullet damage on bounce in next step or here
+                }
                 if (t.hitIds) t.hitIds.push(target.id);
                 if (target.hp <= 0) target.killerId = owner.id; // Track killer for Bounty
                 if (owner && !target.id.startsWith("box")) {
@@ -3187,7 +3533,7 @@ class Game {
                   let chargeRate = t.isSuper ? 60 : 30;
                   owner.superCharge = Math.min(100, owner.superCharge + t.damage / chargeRate);
                   if (owner.config.type === "crow" && "hp" in target) {
-                    target.poison = { ownerId: owner.id, damage: 80 * (1 + 0.1 * owner.powerCubes), ticks: 4, lastTick: e };
+                    target.poison = { ownerId: owner.id, damage: 80 * (1 + 0.1 * owner.powerCubes), ticks: 4, lastTick: e, isExtraToxic: owner.hasStarPower };
                   }
                   if (owner.config.type === "carl" && t.type === "carl_main") {
                     owner.hasPickaxe = false;
@@ -3201,13 +3547,18 @@ class Game {
         }
         [this.player, ...this.bots].forEach((s, t) => { 
           if (s.hp <= 0) { 
-            if (this.gameMode === "SHOWDOWN") {
+            if (this.gameMode === "SHOWDOWN" || this.gameMode === "FRIENDLY_ONLINE") {
               if (s.id !== "player") {
                 this.cubes.push({ x: s.x, y: s.y, size: 20, createdAt: e }); 
                 this.bots = this.bots.filter(b => b.id !== s.id);
               }
             } else {
               if (!s.deathHandled) {
+                const killer = [this.player, ...this.bots].find(b => b.id === s.killerId);
+                if (killer && killer.hasStarPower) {
+                    if (killer.config.type === "mortis") killer.hp = Math.min(killer.maxHp, killer.hp + 1000);
+                    if (killer.config.type === "frank") killer.powerGrabTimer = Date.now() + 10000;
+                }
                 if (this.gameMode === "BOUNTY") {
                   const killer = [this.player, ...this.bots].find(b => b.id === s.killerId);
                   if (killer) {

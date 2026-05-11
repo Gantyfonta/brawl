@@ -62,12 +62,49 @@
         "credits",
         "passXp"
       ]
+    },
+    "Lobby": {
+      "title": "Lobby",
+      "description": "A waiting room for an online match",
+      "type": "object",
+      "properties": {
+        "hostId": { "type": "string" },
+        "players": { "type": "array" },
+        "status": { "type": "string", "enum": ["waiting", "ready", "started"] },
+        "mode": { "type": "string" },
+        "createdAt": { "type": "integer" }
+      }
+    },
+    "OnlineMatch": {
+      "title": "Online Match",
+      "description": "Active game data",
+      "type": "object",
+      "properties": {
+        "mode": { "type": "string" },
+        "startTime": { "type": "integer" },
+        "players": { "type": "object" },
+        "bullets": { "type": "array" },
+        "zones": { "type": "array" },
+        "status": { "type": "string" }
+      }
     }
   },
   "firestore": {
     "/users/{userId}": {
       "schema": "User",
       "description": "Stores user progress indexed by their authentication UID"
+    },
+    "/lobbies/{lobbyId}": {
+      "schema": "Lobby",
+      "description": "Active waiting rooms"
+    },
+    "/matches/{matchId}": {
+      "schema": "OnlineMatch",
+      "description": "Live game states"
+    },
+    "/matches/{matchId}/players/{userId}": {
+      "schema": "object",
+      "description": "Individual player states in a match"
     }
   }
 }
